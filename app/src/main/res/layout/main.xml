@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="#0099cc"
+    tools:context=".MainActivity">
+
+    <!-- The primary full-screen view. This can be replaced with whatever view
+         is needed to present your content, e.g. VideoView, SurfaceView,
+         TextureView, etc. -->
+    <RelativeLayout
+        android:id="@+id/main_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+        <TextureView
+            android:id="@+id/main_camera_texture"
+            android:layout_centerInParent="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+        </TextureView>
+
+        <include
+            android:id="@+id/main_response_debug_view"
+            layout="@layout/main_response_debug"/>
+
+        <include
+            android:id="@+id/main_person_view"
+            layout="@layout/main_person"/>
+    </RelativeLayout>
+
+    <!-- This FrameLayout insets its children based on system windows using
+         android:fitsSystemWindows. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fitsSystemWindows="true">
+
+        <LinearLayout
+            android:id="@+id/main_layer"
+            style="?metaButtonBarStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="top|right"
+            android:orientation="horizontal">
+
+            <ImageButton
+                android:id="@+id/main_menu_button"
+                style="?metaButtonBarButtonStyle"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:layout_marginTop="20dp"
+                android:layout_marginRight="20dp"
+                android:src="@drawable/icon_profile" />
+
+        </LinearLayout>
+    </FrameLayout>
+
+</FrameLayout>

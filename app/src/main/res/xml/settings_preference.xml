@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+	xmlns:app="http://schemas.android.com/apk/res-auto"
+	android:title="设置">
+	
+	<PreferenceCategory
+		android:title="一般"
+		>
+		<EditTextPreference
+			android:dialogTitle="刷脸检测频率(毫秒)"
+			android:key="FACE_FREQUENCY"
+			android:summary="检测间隔"
+			android:persistent="true"
+			android:title="设置刷脸检测间隔"
+			android:inputType="number"
+			android:defaultValue="2000"
+			/>
+
+		<ListPreference
+			android:dialogTitle="刷脸摄像头"
+			android:key="FACE_CAMERA"
+			android:entries="@array/camera_name"
+			android:entryValues="@array/camera_id"
+			android:summary="摄像头"
+			android:persistent="true"
+			android:title="选择摄像头"
+			android:defaultValue="0"
+			/>
+
+		<SeekBarPreference
+			android:dialogTitle="上传人脸照片的质量"
+			android:key="FACE_IMAGE_QUALITY"
+			android:summary="人脸照片的质量"
+			android:persistent="true"
+			android:max="100"
+			app:min="10"
+			android:title="设置人脸照片的质量"
+			android:defaultValue="50"
+			/>
+	</PreferenceCategory>
+
+	<PreferenceCategory
+		android:title="串口"
+		>
+		<EditTextPreference
+			android:dialogTitle="串口地址"
+			android:key="SERIAL_PATH"
+			android:summary="串口地址"
+			android:persistent="true"
+			android:title="设置串口地址"
+			android:defaultValue="/dev/ttyS1"
+			/>
+		<ListPreference
+			android:dialogTitle="选择串口地址"
+			android:key="SERIAL_PATH_SELECT"
+			android:summary="串口地址"
+			android:persistent="true"
+			android:title="设置串口地址"
+			android:defaultValue="/dev/ttyS1"
+			/>
+		<EditTextPreference
+			android:dialogTitle="串口Baudrate"
+			android:key="SERIAL_BAUDRATE"
+			android:summary="串口Baudrate(大于等于0)"
+			android:inputType="number"
+			android:persistent="true"
+			android:title="串口Baudrate"
+			android:defaultValue="115200"
+			/>
+	</PreferenceCategory>
+
+	<PreferenceCategory
+		android:title="系统"
+		>
+		<ListPreference
+			android:dialogTitle="串口读写驱动"
+			android:key="SERIAL_DRIVER"
+			android:summary="串口读写方式"
+			android:persistent="true"
+			android:title="设置串口读写驱动"
+			android:entries="@array/serial_driver_name"
+			android:entryValues="@array/serial_driver_key"
+			android:defaultValue="uart"
+			/>
+	</PreferenceCategory>
+
+</PreferenceScreen>

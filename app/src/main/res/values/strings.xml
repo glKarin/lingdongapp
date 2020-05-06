@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">灵动App</string>
+    <string name="title_activity_file_browser">FileBrowserActivity</string>
+
+</resources>

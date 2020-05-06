@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+	<string-array name="rotation">
+		<item>0</item>
+		<item>90</item>
+		<item>180</item>
+		<item>270</item>
+	</string-array>
+
+	<string-array name="camera_id">
+		<item>0</item>
+		<item>1</item>
+		<item>2</item>
+	</string-array>
+
+	<string-array name="camera_name">
+		<item>前置摄像头</item>
+		<item>后置摄像头</item>
+		<item>外置摄像头</item>
+	</string-array>
+
+	<string-array name="serial_driver_key">
+		<item>uart</item>
+		<item>cepr</item>
+	</string-array>
+	<string-array name="serial_driver_name">
+		<item>UART方案</item>
+		<item>原始方案</item>
+	</string-array>
+
+
+	<string-array name="update_info">
+		<item>新增串口读写方式设置.</item>
+		<item>新增API接口调用测试.</item>
+	</string-array>
+</resources>

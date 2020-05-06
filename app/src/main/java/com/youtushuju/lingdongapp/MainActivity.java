@@ -1,0 +1,820 @@
+package com.youtushuju.lingdongapp;
+
+import android.Manifest;
+import android.annotation.SuppressLint;
+
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
+import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Context;
+import android.content.DialogInterface;
+import android.content.Intent;
+import android.content.SharedPreferences;
+import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.Color;
+import android.graphics.Matrix;
+import android.graphics.SurfaceTexture;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
+import android.hardware.camera2.CameraAccessException;
+import android.hardware.camera2.CameraCaptureSession;
+import android.hardware.camera2.CameraCharacteristics;
+import android.hardware.camera2.CameraDevice;
+import android.hardware.camera2.CameraManager;
+import android.hardware.camera2.CaptureRequest;
+import android.hardware.camera2.TotalCaptureResult;
+import android.hardware.camera2.params.Face;
+import android.hardware.camera2.params.StreamConfigurationMap;
+import android.net.Uri;
+import android.os.Bundle;
+import android.os.Handler;
+import android.os.HandlerThread;
+import android.preference.PreferenceManager;
+import android.provider.Settings;
+import android.util.Size;
+import android.view.MotionEvent;
+import android.view.Surface;
+import android.view.TextureView;
+import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
+import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.TextView;
+import android.widget.Toast;
+
+import com.youtushuju.lingdongapp.api.DeviceApi;
+import com.youtushuju.lingdongapp.api.DeviceApiResp;
+import com.youtushuju.lingdongapp.common.Logf;
+import com.youtushuju.lingdongapp.common.Sys;
+import com.youtushuju.lingdongapp.device.LingDongApi_real;
+import com.youtushuju.lingdongapp.device.LingDongApi;
+import com.youtushuju.lingdongapp.common.Common;
+import com.youtushuju.lingdongapp.common.Configs;
+import com.youtushuju.lingdongapp.common.Constants;
+import com.youtushuju.lingdongapp.gui.ActivityUtility;
+import com.youtushuju.lingdongapp.gui.App;
+import com.youtushuju.lingdongapp.json.JsonMap;
+
+import java.io.ByteArrayOutputStream;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.function.Predicate;
+
+/**
+ * An example full-screen activity that shows and hides the system UI (i.e.
+ * status bar and navigation/system bar) with user interaction.
+ */
+public class MainActivity extends AppCompatActivity {
+    /**
+     * Whether or not the system UI should be auto-hidden after
+     * {@link #AUTO_HIDE_DELAY_MILLIS} milliseconds.
+     */
+    private static final boolean AUTO_HIDE = true;
+
+    /**
+     * If {@link #AUTO_HIDE} is set, the number of milliseconds to wait after
+     * user interaction before hiding the system UI.
+     */
+    private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
+
+    private static final int ID_HIDE_PERSON_PANEL_DELAY = 3500;
+
+    /**
+     * Some older devices needs a small delay between UI widget updates
+     * and a change of the status and navigation bar.
+     */
+    private static final int UI_ANIMATION_DELAY = 300;
+    private final Handler mHideHandler = new Handler();
+    private View mContentView;
+    private final Runnable mHidePart2Runnable = new Runnable() {
+        @SuppressLint("InlinedApi")
+        @Override
+        public void run() {
+            // Delayed removal of status and navigation bar
+
+            // Note that some of these constants are new as of API 16 (Jelly Bean)
+            // and API 19 (KitKat). It is safe to use them, as they are inlined
+            // at compile-time and do nothing on earlier devices.
+            mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LOW_PROFILE
+                    | View.SYSTEM_UI_FLAG_FULLSCREEN
+                    | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                    | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                    | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                    | View.SYSTEM_UI_FLAG_HIDE_NAVIGATION);
+        }
+    };
+    private View mControlsView;
+    private final Runnable mShowPart2Runnable = new Runnable() {
+        @Override
+        public void run() {
+            // Delayed display of UI elements
+            /*ActionBar actionBar = getSupportActionBar();
+            if (actionBar != null) {
+                actionBar.show();
+            }*/
+            mControlsView.setVisibility(View.VISIBLE);
+        }
+    };
+    private boolean mVisible;
+    private final Runnable mHideRunnable = new Runnable() {
+        @Override
+        public void run() {
+            hide();
+        }
+    };
+    /**
+     * Touch listener to use for in-layout UI controls to delay hiding the
+     * system UI. This is to prevent the jarring behavior of controls going away
+     * while interacting with activity UI.
+     */
+    private final View.OnTouchListener mDelayHideTouchListener = new View.OnTouchListener() {
+        @Override
+        public boolean onTouch(View view, MotionEvent motionEvent) {
+            if (AUTO_HIDE) {
+                delayedHide(AUTO_HIDE_DELAY_MILLIS);
+            }
+            return false;
+        }
+    };
+
+    private static final String ID_TAG = "MainActivity";
+    private LingDongApi m_lingdongApi;
+    private CameraDevice m_cameraDevice = null;
+    private TextureView m_textureView = null;
+    private CameraCaptureSession m_cameraCaptureSession = null;
+    private HandlerThread m_threadHandlerThread = null;
+    private Handler m_threadHandler = null; // new thread
+    private int m_captureInterval = 3000;
+    private long m_lastCaptureTime = 0;
+    private ImageView m_previewImage;
+    private TextView m_personName;
+    private TextView m_personTime;
+    private View m_personView;
+    private List<CameraInfoModel> m_cameraList;
+    private int m_textureWidth = 0;
+    private int m_textureHeight = 0;
+    private Surface m_surface;
+    private boolean m_alwaysCapture = true;
+    private boolean m_cameraAccessed = false;
+    private CameraInfoModel m_currentCamera = new CameraInfoModel();
+
+    private class CameraInfoModel
+    {
+        String camera_id; // ID
+        int face; // 前置/后置/外置
+        int face_mode = 0; // 不支持/简易/全
+        int orientation = 0; // 摄像头传感器方向
+        // 选择的分辨率
+        int width = 0;
+        int height = 0;
+        int max_face_count = 0; // 最大人脸检测数
+        List<Size> support_size_list = null;
+
+        public void Reset()
+        {
+            camera_id = null;
+            face = 0;
+            face_mode = CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF;
+            orientation = 0;
+            width = height = 0;
+            max_face_count = 0;
+            support_size_list = null;
+        }
+
+        public boolean IsValid()
+        {
+            return camera_id != null;
+        }
+    }
+
+    private Runnable m_hideFacePanel = new Runnable() {
+        @Override
+        public void run() {
+            m_personView.setVisibility(View.GONE);
+            m_previewImage.setImageDrawable(new ColorDrawable(Color.BLACK));
+            m_personName.setText("");
+            m_personTime.setText("");
+            mHideHandler.removeCallbacks(m_hideFacePanel);
+        }
+    };
+
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
+
+        requestWindowFeature(Window.FEATURE_NO_TITLE);
+        getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
+
+        super.onCreate(savedInstanceState);
+
+        ImageButton button;
+
+        setContentView(R.layout.main);
+
+        m_lingdongApi = new LingDongApi_real(this);
+
+        mVisible = true;
+        mControlsView = findViewById(R.id.main_layer);
+        mContentView = findViewById(R.id.main_content);
+
+        // Set up the user interaction to manually show or hide the system UI.
+        mContentView.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                toggle();
+            }
+        });
+
+        // Upon interacting with UI controls, delay any scheduled hide()
+        // operations to prevent the jarring behavior of controls going away
+        // while interacting with the UI.
+        //findViewById(R.id.main_menu_button).setOnTouchListener(mDelayHideTouchListener);
+
+        button = (ImageButton)findViewById(R.id.main_menu_button);
+        button.setOnClickListener(new View.OnClickListener(){
+            @Override
+            public void onClick(View v) {
+                Intent intent;
+
+                intent = new Intent(MainActivity.this, ProfileActivity.class);
+                MainActivity.this.startActivity(intent);
+            }
+        });
+
+        m_previewImage = (ImageView)findViewById(R.id.main_preview_image);
+        m_personName = (TextView) findViewById(R.id.main_person_name);
+        m_personTime = (TextView) findViewById(R.id.main_person_time);
+        m_personView = findViewById(R.id.main_person_view);
+
+        m_cameraList = new ArrayList<CameraInfoModel>();
+
+        SetupUI();
+
+        App.Instance().PushActivity(this);
+    }
+
+    private void SetupUI()
+    {
+        m_personView.setVisibility(View.GONE);
+        m_threadHandlerThread = new HandlerThread("preview_capture_thread");
+        m_threadHandlerThread.start();
+        m_threadHandler = new Handler(m_threadHandlerThread.getLooper());
+
+        m_textureView = (TextureView)findViewById(R.id.main_camera_texture);
+        m_textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener(){
+            public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height)
+            {
+                m_textureWidth = width; // 512;
+                m_textureHeight = height; // 512;
+                Logf.d(ID_TAG, "纹理视图(%d, %d)", m_textureWidth, m_textureHeight);
+                //StartCamera();
+                InitCamera();
+            }
+
+            public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height)
+            {
+            }
+
+            public void onSurfaceTextureUpdated(SurfaceTexture surface)
+            {
+            }
+
+            public boolean onSurfaceTextureDestroyed(SurfaceTexture surface)
+            {
+                return false;
+            }
+        });
+    }
+
+    // 打开相机预览对话
+    private void OpenCameraSession(int width, int height)
+    {
+        SurfaceTexture surfaceTexture = m_textureView.getSurfaceTexture();
+
+        surfaceTexture.setDefaultBufferSize(width, height);
+        //Logf.d(ID_TAG, "(%d %d) (%d %d)", width, height, m_textureWidth, m_textureHeight);
+        if(m_surface == null)
+            m_surface = new Surface(surfaceTexture);
+
+        try
+        {
+            final CaptureRequest.Builder captureRequestBuilder = m_cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            captureRequestBuilder.addTarget(m_surface);
+
+            captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, m_currentCamera.face_mode);
+            m_cameraDevice.createCaptureSession(Arrays.asList(m_surface), new CameraCaptureSession.StateCallback(){
+                public void onConfigured(CameraCaptureSession session)
+                {
+                    m_cameraCaptureSession = session;
+                    m_cameraAccessed = true;
+                    CaptureRequest captureRequest = captureRequestBuilder.build();
+                    try
+                    {
+                        session.setRepeatingRequest(captureRequest, new CameraCaptureSession.CaptureCallback(){
+                            public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
+                            {
+                                long now = System.currentTimeMillis();
+                                if(m_lastCaptureTime == 0)
+                                {
+                                    m_lastCaptureTime = now;
+                                    return;
+                                }
+                                if(now - m_lastCaptureTime > m_captureInterval)
+                                {
+                                    m_lastCaptureTime = now - (now - m_lastCaptureTime - m_captureInterval);
+                                    Face faces[] = result.get(TotalCaptureResult.STATISTICS_FACES);
+                                    // TODO: 测试
+                                    if(!Common.ArrayIsEmpty(faces))
+                                        ShowToast("检测到人脸", Toast.LENGTH_LONG);
+
+                                    if(m_alwaysCapture || (m_currentCamera.face_mode == CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF || !Common.ArrayIsEmpty(faces))) // 仅有人脸时
+                                    {
+                                        final Bitmap bitmap = m_textureView.getBitmap();
+                                        runOnUiThread(new Runnable(){
+                                            public void run()
+                                            {
+                                                HandleCapturePreview(bitmap);
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+                        }, m_threadHandler);
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+
+                public void onConfigureFailed(CameraCaptureSession session)
+                {
+                    ShowToast("相机预览对话配置错误", Toast.LENGTH_LONG);
+                    session.close();
+                    m_cameraCaptureSession = null;
+                }
+            }, m_threadHandler);
+
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    private void StartCamera()
+    {
+        if(m_textureWidth <= 0 || m_textureHeight <= 0)
+            return;
+
+        CloseCamera();
+        Size size = SetupCamera(m_textureWidth, m_textureHeight);
+        OpenCamera(size.getWidth(), size.getHeight());
+
+        /*Matrix mat = new Matrix();
+        //float scale = Math.max((float)size.getWidth() / (float)m_textureWidth, (float)size.getHeight() / (float)m_textureHeight);
+        float scale = Math.max((float)m_textureWidth / (float)size.getWidth(), (float)m_textureHeight / (float)size.getHeight());
+        mat.setScale(scale, scale);
+        Logf.d(ID_TAG, "纹理图层缩放比例(%f)", scale);
+        m_textureView.setTransform(mat);*/
+    }
+
+    private void CloseCamera()
+    {
+        if(m_cameraCaptureSession != null)
+        {
+            try
+            {
+                m_cameraCaptureSession.stopRepeating();
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+            m_cameraCaptureSession.close();
+            m_cameraCaptureSession = null;
+        }
+        if(m_cameraDevice != null)
+        {
+            m_cameraDevice.close();
+            m_cameraDevice = null;
+        }
+    }
+
+    private void HandleCapturePreview(final Bitmap bitmap)
+    {
+        //if(true) return;
+        m_threadHandler.post(new Runnable(){
+            public void run()
+            {
+                VerifyFace(bitmap);
+            }
+        });
+    }
+
+    // 打开相机
+    private void OpenCamera(final int width, final int height)
+    {
+        CameraManager manager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
+
+        try
+        {
+            manager.openCamera(m_currentCamera.camera_id, new CameraDevice.StateCallback(){
+                public void onOpened(CameraDevice device)
+                {
+                    m_cameraDevice = device;
+                    OpenCameraSession(width, height);
+                }
+
+                public void onDisconnected(CameraDevice device)
+                {
+                    device.close();
+                    m_cameraDevice = null;
+                }
+
+                public void onError(CameraDevice device, int error)
+                {
+                    m_cameraDevice = null;
+                    device.close();
+                    ShowToast("相机错误" + error, Toast.LENGTH_LONG);
+                }
+            }, m_threadHandler);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    // TODO: 计算相机视图宽高
+    private Size SetupCamera(int width, int height)
+    {
+        // 竖屏
+        int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
+        boolean needSwap = WidthAndHeightNeedSwap(displayRotation, m_currentCamera.orientation);
+        int w = needSwap ? height : width;
+        int h = needSwap ? width : height;
+        Logf.d(ID_TAG, "屏幕方向(%d), 相机传感器方向(%d), 交换宽高(%b)", displayRotation, m_currentCamera.orientation, needSwap);
+
+        final float p = (float)w / (float)h;
+        Map<Float, List<Size> > res = new HashMap<Float, List<Size> >();
+        for (Size s : m_currentCamera.support_size_list)
+        {
+            if(s.getWidth() > w || s.getHeight() > h)
+                continue;
+            float dp = (float)s.getWidth() / (float)s.getHeight();
+            if(!res.containsKey(dp))
+                res.put(dp, new ArrayList<Size>());
+            res.get(dp).add(s);
+        }
+        float min = Collections.min(res.keySet(), new Comparator<Float>(){
+            public int compare(Float a, Float b)
+            {
+                float f = (Math.abs(p - a) - Math.abs(p - b));
+                if(f < 0)
+                    return -1;
+                else if(f > 0)
+                    return 1;
+                else
+                    return 0;
+            }
+        });
+        Size max = Collections.max(res.get(min), new Comparator<Size>(){
+            public int compare(Size a, Size b)
+            {
+                return (a.getWidth() * a.getHeight()) - (b.getWidth() * b.getHeight());
+            }
+        });
+        Logf.e(ID_TAG, "分辨率排序(%s), 当前纹理比例(%f), 最适合比例(%f)", res.toString(), p, min);
+        Logf.d(ID_TAG, "选择相机分辨率(%s)", max.toString());
+
+        //Size size = needSwap ? new Size(max.getHeight(), max.getWidth()) : max;
+        Size size = max;
+        //Size size = needSwap ? max : new Size(max.getHeight(), max.getWidth());
+        m_currentCamera.width = size.getWidth();
+        m_currentCamera.height = size.getHeight();
+
+        return size;
+    }
+
+    @Override
+    protected void onPostCreate(Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Trigger the initial hide() shortly after the activity has been
+        // created, to briefly hint to the user that UI controls
+        // are available.
+        delayedHide(100);
+    }
+
+    private void toggle() {
+        if (mVisible) {
+            hide();
+        } else {
+            show();
+        }
+    }
+
+    private void hide() {
+        // Hide UI first
+        /*ActionBar actionBar = getSupportActionBar();
+        if (actionBar != null) {
+            actionBar.hide();
+        }*/
+        mControlsView.setVisibility(View.GONE);
+        mVisible = false;
+
+        // Schedule a runnable to remove the status and navigation bar after a delay
+        mHideHandler.removeCallbacks(mShowPart2Runnable);
+        mHideHandler.postDelayed(mHidePart2Runnable, UI_ANIMATION_DELAY);
+    }
+
+    @SuppressLint("InlinedApi")
+    private void show() {
+        // Show the system bar
+        //mContentView.setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION);
+        mVisible = true;
+
+        // Schedule a runnable to display UI elements after a delay
+        mHideHandler.removeCallbacks(mHidePart2Runnable);
+        mHideHandler.postDelayed(mShowPart2Runnable, UI_ANIMATION_DELAY);
+    }
+
+    /**
+     * Schedules a call to hide() in delay milliseconds, canceling any
+     * previously scheduled calls.
+     */
+    private void delayedHide(int delayMillis) {
+        mHideHandler.removeCallbacks(mHideRunnable);
+        mHideHandler.postDelayed(mHideRunnable, delayMillis);
+    }
+
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if(!ActivityUtility.IsGrantPermission(this, Manifest.permission.CAMERA))
+        {
+            if(!ActivityUtility.RequestPermission(this, Manifest.permission.CAMERA))
+                OpenPermissionGrantFailDialog();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        SharedPreferences preference;
+
+        findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+        m_lastCaptureTime = 0;
+        m_currentCamera.Reset();
+        preference = PreferenceManager.getDefaultSharedPreferences(this);
+        m_captureInterval = Integer.parseInt(preference.getString(Constants.ID_PREFERENCE_FACE_FREQUENCY, "" + Configs.ID_PREFERENCE_DEFAULT_FACE_FREQUENCY));
+
+        if(ActivityUtility.IsGrantPermission(this, Manifest.permission.CAMERA) && !CameraAvailable())
+        {
+            InitCamera();
+        }
+    }
+
+    private boolean CameraAvailable()
+    {
+        return m_cameraDevice != null;
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+
+        mHideHandler.postDelayed(m_hideFacePanel, 100);
+        delayedHide(100);
+
+        CloseCamera();
+        m_lastCaptureTime = 0;
+        m_currentCamera.Reset();
+    }
+
+    // 对于异线程
+    private void ShowToast(final String msg, final int delay)
+    {
+        runOnUiThread(new Runnable(){
+            public void run()
+            {
+                Toast.makeText(MainActivity.this, msg, delay).show();
+            }
+        });
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        CloseCamera();
+        App.Instance().PopActivity();
+    }
+
+    private void InitCamera()
+    {
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        try
+        {
+            CameraManager manager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
+            String cameraId = preferences.getString(Constants.ID_PREFERENCE_FACE_CAMERA, "" + Configs.ID_PREFERENCE_DEFAULT_FACE_CAMERA);
+            String cameraIds[] = manager.getCameraIdList();
+            String toggleCameraId = null;
+            int cameraFace = CameraCharacteristics.LENS_FACING_FRONT;
+            for (String str : cameraIds)
+            {
+                CameraCharacteristics cc = manager.getCameraCharacteristics(str);
+                int face = cc.get(CameraCharacteristics.LENS_FACING);
+                if(("" + face).equals(cameraId))
+                {
+                    toggleCameraId = str;
+                    cameraFace = face;
+                }
+            }
+            if(toggleCameraId == null)
+            {
+                toggleCameraId = cameraIds[0];
+                CameraCharacteristics cc = manager.getCameraCharacteristics(toggleCameraId);
+                cameraFace = cc.get(CameraCharacteristics.LENS_FACING);
+                Toast.makeText(this, "设备不支持该摄像头类型, 将打开摄像头默认", Toast.LENGTH_LONG).show();
+                SharedPreferences.Editor editor = preferences.edit();
+                editor.putString(Constants.ID_PREFERENCE_FACE_CAMERA, "" + cameraFace);
+                editor.commit();
+            }
+            m_currentCamera.camera_id = toggleCameraId;
+            m_currentCamera.face = cameraFace;
+            CameraCharacteristics cc = manager.getCameraCharacteristics(m_currentCamera.camera_id);
+            int faceDetectCount = cc.get(CameraCharacteristics.STATISTICS_INFO_MAX_FACE_COUNT);
+            int faceDetectModes[] = cc.get(CameraCharacteristics.STATISTICS_INFO_AVAILABLE_FACE_DETECT_MODES);
+
+            int faceMode = CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF;
+            for (int m : faceDetectModes)
+            {
+                if(m == CaptureRequest.STATISTICS_FACE_DETECT_MODE_FULL)
+                    faceMode = CaptureRequest.STATISTICS_FACE_DETECT_MODE_FULL;
+                if(m == CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE && faceMode == CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF)
+                    faceMode = CaptureRequest.STATISTICS_FACE_DETECT_MODE_SIMPLE;
+            }
+            if(faceMode == CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF)
+                Toast.makeText(this, "该摄像头可能不支持人脸检测", Toast.LENGTH_LONG).show();
+            m_currentCamera.face_mode = faceMode;
+            m_currentCamera.max_face_count = faceDetectCount;
+
+            StreamConfigurationMap map = cc.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            List<Size> sizes = Arrays.asList(map.getOutputSizes(SurfaceTexture.class));
+            Logf.d(ID_TAG, "当前相机支持分辨率(%s)", sizes.toString());
+            m_currentCamera.support_size_list = sizes;
+            m_currentCamera.orientation = cc.get(CameraCharacteristics.SENSOR_ORIENTATION);
+
+            StartCamera();
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == ActivityUtility.ID_REQUEST_PERMISSION_RESULT)
+        {
+            int index = 0; // only camera
+            if(grantResults[index] != PackageManager.PERMISSION_GRANTED)
+            {
+                OpenPermissionGrantFailDialog();
+            }
+        }
+    }
+
+    private void OpenPermissionGrantFailDialog()
+    {
+        final DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                switch (which) {
+                    case DialogInterface.BUTTON_POSITIVE:
+                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
+                        Uri uri = Uri.fromParts("package", MainActivity.this.getPackageName(), null);
+                        intent.setData(uri);
+                        startActivity(intent);
+                        break;
+                    case DialogInterface.BUTTON_NEGATIVE:
+                    default:
+                        App.Instance().Exit(1);
+                        break;
+                }
+            }
+        };
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("程序无权限访问摄像头设备!");
+        builder.setMessage("请前往系统设置手动授权程序访问摄像头");
+        builder.setIcon(R.drawable.icon_profile);
+        builder.setPositiveButton("确定", listener);
+        builder.setNegativeButton("退出", listener);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+    private String VerifyFace(final Bitmap bitmap)
+    {
+        int quality = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).getInt(Constants.ID_PREFERENCE_FACE_IMAGE_QUALITY, Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY);
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out);
+        String image = android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP);
+        final DeviceApiResp resp = DeviceApi.VerifyFace(Sys.GetIMEI(MainActivity.this), image); // TODO: 当前后台线程
+        if(resp != null)
+        {
+            if(resp.IsSuccess())
+            {
+                if(resp.data == null || resp.data instanceof String) // MISMATCHED
+                {
+                    ShowFacePanel(bitmap/*null*/, "未识别身份", Common.Now());
+                }
+                else
+                {
+                    try
+                    {
+                        JsonMap data = (JsonMap)resp.data;
+                        String name = data.<String>GetT("username");
+                        ShowFacePanel(bitmap, name, Common.Now());
+                    }
+                    catch (Throwable e)
+                    {
+                        e.printStackTrace();
+                        ShowFacePanel(bitmap/*null*/, "识别失败", Common.Now());
+                    }
+                }
+            }
+            else
+            {
+                ShowToast("人脸识别服务器错误!", Toast.LENGTH_LONG);
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
+                    ((TextView)findViewById(R.id.main_response_debug_text)).setText(resp.json);
+                }
+            });
+        }
+        else
+            ShowToast("请求人脸识别服务器异常!", Toast.LENGTH_LONG);
+
+        return null;
+    }
+
+    private void ShowFacePanel(final Bitmap face, final String name, final String time)
+    {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                m_personView.setVisibility(View.VISIBLE);
+                if(face != null)
+                    m_previewImage.setImageBitmap(face);
+                else
+                    m_previewImage.setImageDrawable(new ColorDrawable(Color.BLACK));
+                // new String[]{"Ada", "徐天龙", "Leon", "Jill", "张三", "李四", "王五", "赵二"}[Common.Rand(0, 7)]
+                m_personName.setText(name);
+                m_personTime.setText(time);
+                mHideHandler.postDelayed(m_hideFacePanel, ID_HIDE_PERSON_PANEL_DELAY);
+            }
+        });
+    }
+
+    private boolean WidthAndHeightNeedSwap(int displayRotation, int sensorOrientation)
+    {
+        boolean exchange = false;
+
+        switch (displayRotation)
+        {
+            case Surface.ROTATION_0:
+            case Surface.ROTATION_180:
+                if (sensorOrientation == 90 || sensorOrientation == 270)
+                {
+                    exchange = true;
+                }
+                break;
+            case Surface.ROTATION_90:
+            case Surface.ROTATION_270:
+                if (sensorOrientation == 0 || sensorOrientation == 180)
+                {
+                    exchange = true;
+                }
+                break;
+            default:
+                break;
+        }
+
+        return exchange;
+    }
+}

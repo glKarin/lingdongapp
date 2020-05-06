@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="320dp"
+android:layout_height="wrap_content"
+android:orientation="vertical"
+android:layout_alignParentTop="true"
+android:layout_alignParentLeft="true"
+android:layout_marginTop="10dp"
+android:layout_marginLeft="10dp"
+android:background="@drawable/main_person_background"
+    >
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:textStyle="bold"
+        android:padding="5dp"
+        android:textSize="16dp"
+        android:textColor="@color/main_person_text_color"
+        android:text="响应json"
+        />
+    <TextView
+        android:id="@+id/main_response_debug_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="5dp"
+        android:textSize="12dp"
+        android:textColor="@color/main_person_text_color"
+        android:text=""
+        />
+</LinearLayout>

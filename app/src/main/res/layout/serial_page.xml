@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:fitsSystemWindows="true"
+    tools:context=".ProfileActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="20dp"
+            android:textStyle="bold"
+            android:textColor="@color/colorPrimary"
+            android:text="输入"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_marginLeft="18dp"
+            android:layout_marginRight="18dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:background="@color/colorPrimaryDark"
+            android:layout_height="1dp"/>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:orientation="horizontal"
+            android:padding="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="match_parent"
+                android:gravity="center_vertical"
+                android:textSize="18dp"
+                android:text="类型"/>
+
+            <Spinner
+                android:id="@+id/serial_type"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_gravity="center_vertical"
+                android:spinnerMode="dialog"
+                android:layout_marginLeft="10dp"
+                >
+            </Spinner>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textSize="18dp"
+                android:text="门ID"/>
+
+            <EditText
+                android:id="@+id/serial_door_id"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:inputType="text"
+                android:text="01"
+                android:layout_marginLeft="10dp"
+                >
+            </EditText>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:textSize="18dp"
+                android:inputType="number"
+                android:text="时间"/>
+
+            <EditText
+                android:id="@+id/serial_time"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:hint="格式为yyyyMMddHHmm (为空时自动填充)"
+                android:layout_marginLeft="10dp"
+                >
+            </EditText>
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:padding="10dp">
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:textSize="18dp"
+                android:inputType="text"
+                android:text="Token"/>
+
+            <EditText
+                android:id="@+id/serial_token"
+                android:layout_width="0dp"
+                android:layout_weight="1"
+                android:layout_height="wrap_content"
+                android:text="123456"
+                android:layout_marginLeft="10dp"
+                >
+            </EditText>
+        </LinearLayout>
+
+        <Button
+            android:id="@+id/serial_send"
+            android:layout_width="@dimen/control_button_width"
+            android:layout_height="wrap_content"
+            android:text="发送"/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="20dp"
+            android:textStyle="bold"
+            android:textColor="@color/colorPrimary"
+            android:text="数据"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_marginLeft="18dp"
+            android:layout_marginRight="18dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:background="@color/colorPrimaryDark"
+            android:layout_height="1dp"/>
+
+        <TextView
+            android:id="@+id/serial_req_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16dp"
+            android:text=""/>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:gravity="center"
+            android:textSize="20dp"
+            android:textStyle="bold"
+            android:textColor="@color/colorPrimary"
+            android:text="输出"/>
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_marginLeft="18dp"
+            android:layout_marginRight="18dp"
+            android:layout_marginTop="5dp"
+            android:layout_marginBottom="5dp"
+            android:background="@color/colorPrimaryDark"
+            android:layout_height="1dp"/>
+
+        <TextView
+            android:id="@+id/serial_resp_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textSize="16dp"
+            android:text=""/>
+
+    </LinearLayout>
+
+</ScrollView>
