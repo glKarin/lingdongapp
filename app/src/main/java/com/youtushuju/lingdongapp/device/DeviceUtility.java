@@ -23,7 +23,7 @@ public final class DeviceUtility {
         boolean empty = Common.StringIsEmpty(prefix);
         for (String str : files)
         {
-            if(empty || prefix.startsWith(prefix))
+            if(empty || str.startsWith(prefix))
                 ret.add("/dev/" + str);
         }
         return ret;

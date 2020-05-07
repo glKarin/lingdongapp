@@ -121,7 +121,7 @@ public class SerialActivity extends AppCompatActivity {
 
     private void Send(SerialReqStruct d)
     {
-        String json = d.Dump() + "\n"; // 添加换行符
+        String json = d.Dump() + '\r'; // 添加回车符
         Logf.d(ID_TAG, json);
         m_reqText.setText(json);
 

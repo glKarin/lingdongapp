@@ -29,9 +29,17 @@
 		<item>原始方案</item>
 	</string-array>
 
+	<string-array name="face_capture_scheme_key">
+		<item>face_only</item>
+		<item>always</item>
+	</string-array>
+	<string-array name="face_capture_scheme_name">
+		<item>仅当检测到人脸</item>
+		<item>总是</item>
+	</string-array>
+
 
 	<string-array name="update_info">
-		<item>新增串口读写方式设置.</item>
-		<item>新增API接口调用测试.</item>
+		<item>修复相机预览图像拉伸.</item>
 	</string-array>
 </resources>

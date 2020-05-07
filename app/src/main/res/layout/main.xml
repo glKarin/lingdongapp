@@ -13,12 +13,18 @@
         android:id="@+id/main_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <TextureView
+        <com.youtushuju.lingdongapp.gui.DynamicTextureView
             android:id="@+id/main_camera_texture"
             android:layout_centerInParent="true"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-        </TextureView>
+        </com.youtushuju.lingdongapp.gui.DynamicTextureView>
+
+        <com.youtushuju.lingdongapp.gui.FaceRectView
+            android:id="@+id/main_face_rect_layer"
+            android:layout_centerInParent="true"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
 
         <include
             android:id="@+id/main_response_debug_view"
@@ -42,7 +48,8 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="top|right"
-            android:orientation="horizontal">
+            android:gravity="right"
+            android:orientation="vertical">
 
             <ImageButton
                 android:id="@+id/main_menu_button"
@@ -52,6 +59,14 @@
                 android:layout_marginTop="20dp"
                 android:layout_marginRight="20dp"
                 android:src="@drawable/icon_profile" />
+
+            <TextView
+                android:id="@+id/main_camera_info_text"
+                android:layout_marginTop="48dp"
+                android:layout_width="240dp"
+                android:textSize="16dp"
+                android:textColor="#FFFFFFFF"
+                android:layout_height="wrap_content"/>
 
         </LinearLayout>
     </FrameLayout>

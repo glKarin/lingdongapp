@@ -79,7 +79,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
 		preference = findPreference(Constants.ID_PREFERENCE_SERIAL_PATH_SELECT);
 		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_SERIAL_PATH);
-		List<String> devs = DeviceUtility.GetDevList(null);
+		List<String> devs = DeviceUtility.GetDevList("ttyS");
 		if(devs != null && !devs.isEmpty())
 		{
 			String devArr[] = new String[devs.size()];
@@ -90,8 +90,9 @@ public class SettingsFragment extends PreferenceFragmentCompat
 		}
 		else
 		{
-			((ListPreference)preference).setEntries(new String[]{});
-			((ListPreference)preference).setEntryValues(new String[]{});
+			String devArr[] = new String[]{"/dev/ttyS1", "/dev/ttyS2", "/dev/ttyS3", "/dev/ttyS5"};
+			((ListPreference)preference).setEntries(devArr);
+			((ListPreference)preference).setEntryValues(devArr);
 		}
 		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 			@Override
@@ -100,6 +101,16 @@ public class SettingsFragment extends PreferenceFragmentCompat
 				SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(getContext()).edit();
 				editor.putString(Constants.ID_PREFERENCE_SERIAL_PATH, newValue.toString());
 				editor.commit();
+				return true;
+			}
+		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_FACE_CAPTURE_SCHEME);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_FACE_CAPTURE_SCHEME);
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
 				return true;
 			}
 		});

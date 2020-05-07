@@ -12,13 +12,14 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
+import android.content.res.Configuration;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Matrix;
+import android.graphics.Rect;
+import android.graphics.RectF;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
-import android.hardware.camera2.CameraAccessException;
 import android.hardware.camera2.CameraCaptureSession;
 import android.hardware.camera2.CameraCharacteristics;
 import android.hardware.camera2.CameraDevice;
@@ -40,6 +41,8 @@ import android.view.TextureView;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.webkit.WebSettings;
+import android.webkit.WebView;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -56,6 +59,8 @@ import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
+import com.youtushuju.lingdongapp.gui.DynamicTextureView;
+import com.youtushuju.lingdongapp.gui.FaceRectView;
 import com.youtushuju.lingdongapp.json.JsonMap;
 
 import java.io.ByteArrayOutputStream;
@@ -66,7 +71,6 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -148,7 +152,7 @@ public class MainActivity extends AppCompatActivity {
     private static final String ID_TAG = "MainActivity";
     private LingDongApi m_lingdongApi;
     private CameraDevice m_cameraDevice = null;
-    private TextureView m_textureView = null;
+    private DynamicTextureView m_textureView = null;
     private CameraCaptureSession m_cameraCaptureSession = null;
     private HandlerThread m_threadHandlerThread = null;
     private Handler m_threadHandler = null; // new thread
@@ -164,6 +168,7 @@ public class MainActivity extends AppCompatActivity {
     private Surface m_surface;
     private boolean m_alwaysCapture = true;
     private boolean m_cameraAccessed = false;
+    private FaceRectView m_faceRectView = null;
     private CameraInfoModel m_currentCamera = new CameraInfoModel();
 
     private class CameraInfoModel
@@ -171,12 +176,13 @@ public class MainActivity extends AppCompatActivity {
         String camera_id; // ID
         int face; // 前置/后置/外置
         int face_mode = 0; // 不支持/简易/全
-        int orientation = 0; // 摄像头传感器方向
+        int orientation = 0; // 摄像头传感器方向 // 一般前摄像头是270度 后摄像头是90度
         // 选择的分辨率
         int width = 0;
         int height = 0;
         int max_face_count = 0; // 最大人脸检测数
         List<Size> support_size_list = null;
+        Rect rect = null; // 成像区域
 
         public void Reset()
         {
@@ -187,11 +193,27 @@ public class MainActivity extends AppCompatActivity {
             width = height = 0;
             max_face_count = 0;
             support_size_list = null;
+            rect = null;
         }
 
         public boolean IsValid()
         {
             return camera_id != null;
+        }
+
+        @NonNull
+        @Override
+        public String toString() {
+            StringBuffer sb = new StringBuffer();
+            sb.append("摄像头ID: " + camera_id).append('\n');
+            sb.append("位置: " + face).append('\n');
+            sb.append("人脸检测模式: " + face_mode).append('\n');
+            sb.append("最大人脸检测数: " + max_face_count).append('\n');
+            sb.append("传感器角度: " + orientation).append('\n');
+            sb.append("支持分辨率: " + support_size_list != null ? support_size_list.toString() : "未获取").append('\n');
+            sb.append("成像区域: " + rect != null ? rect.toString() : "未获取").append('\n');
+            sb.append("选择分辨率: " + String.format("(%d x %d)", width, height)).append('\n');
+            return sb.toString();
         }
     }
 
@@ -252,6 +274,8 @@ public class MainActivity extends AppCompatActivity {
         m_personName = (TextView) findViewById(R.id.main_person_name);
         m_personTime = (TextView) findViewById(R.id.main_person_time);
         m_personView = findViewById(R.id.main_person_view);
+        m_faceRectView = (FaceRectView)findViewById(R.id.main_face_rect_layer);
+        m_faceRectView.setVisibility(View.GONE);
 
         m_cameraList = new ArrayList<CameraInfoModel>();
 
@@ -267,12 +291,13 @@ public class MainActivity extends AppCompatActivity {
         m_threadHandlerThread.start();
         m_threadHandler = new Handler(m_threadHandlerThread.getLooper());
 
-        m_textureView = (TextureView)findViewById(R.id.main_camera_texture);
+        m_textureView = (DynamicTextureView) findViewById(R.id.main_camera_texture);
+        m_textureView.SetFileScheme(DynamicTextureView.ID_FILL_SCHEME_WIDTH_PREFER);
         m_textureView.setSurfaceTextureListener(new TextureView.SurfaceTextureListener(){
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height)
             {
-                m_textureWidth = width; // 512;
-                m_textureHeight = height; // 512;
+                m_textureWidth = width;
+                m_textureHeight = height;
                 Logf.d(ID_TAG, "纹理视图(%d, %d)", m_textureWidth, m_textureHeight);
                 //StartCamera();
                 InitCamera();
@@ -280,6 +305,10 @@ public class MainActivity extends AppCompatActivity {
 
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height)
             {
+                m_textureWidth = width;
+                m_textureHeight = height;
+                Logf.d(ID_TAG, "纹理视图更新(%d, %d)", m_textureWidth, m_textureHeight);
+                TransformTextureView(m_textureWidth, m_textureHeight);
             }
 
             public void onSurfaceTextureUpdated(SurfaceTexture surface)
@@ -300,8 +329,7 @@ public class MainActivity extends AppCompatActivity {
 
         surfaceTexture.setDefaultBufferSize(width, height);
         //Logf.d(ID_TAG, "(%d %d) (%d %d)", width, height, m_textureWidth, m_textureHeight);
-        if(m_surface == null)
-            m_surface = new Surface(surfaceTexture);
+        m_surface = new Surface(surfaceTexture);
 
         try
         {
@@ -309,6 +337,7 @@ public class MainActivity extends AppCompatActivity {
             captureRequestBuilder.addTarget(m_surface);
 
             captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, m_currentCamera.face_mode);
+            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             m_cameraDevice.createCaptureSession(Arrays.asList(m_surface), new CameraCaptureSession.StateCallback(){
                 public void onConfigured(CameraCaptureSession session)
                 {
@@ -332,17 +361,23 @@ public class MainActivity extends AppCompatActivity {
                                     Face faces[] = result.get(TotalCaptureResult.STATISTICS_FACES);
                                     // TODO: 测试
                                     if(!Common.ArrayIsEmpty(faces))
+                                    {
                                         ShowToast("检测到人脸", Toast.LENGTH_LONG);
+                                        /*List<RectF> rects = new ArrayList<RectF>();
+                                        rects.add(CaleFaceRect(faces[0]));
+                                        m_faceRectView.SetFaces(rects);*/
+                                    }
 
                                     if(m_alwaysCapture || (m_currentCamera.face_mode == CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF || !Common.ArrayIsEmpty(faces))) // 仅有人脸时
                                     {
                                         final Bitmap bitmap = m_textureView.getBitmap();
-                                        runOnUiThread(new Runnable(){
+                                        VerifyFace(bitmap);
+                                        /*runOnUiThread(new Runnable(){
                                             public void run()
                                             {
-                                                HandleCapturePreview(bitmap);
+                                            HandleCapturePreview(bitmap);
                                             }
-                                        });
+                                        });*/
                                     }
                                 }
                             }
@@ -375,15 +410,17 @@ public class MainActivity extends AppCompatActivity {
             return;
 
         CloseCamera();
-        Size size = SetupCamera(m_textureWidth, m_textureHeight);
-        OpenCamera(size.getWidth(), size.getHeight());
+        Size size = CalePreferPreviewSize(m_textureWidth, m_textureHeight);
+        TransformTextureView(m_textureWidth, m_textureHeight);
+        int orientation = getResources().getConfiguration().orientation;
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE)
+            m_textureView.SetAspectRatio(size.getWidth(), size.getHeight());
+        else
+            m_textureView.SetAspectRatio(size.getHeight(), size.getWidth());
 
-        /*Matrix mat = new Matrix();
-        //float scale = Math.max((float)size.getWidth() / (float)m_textureWidth, (float)size.getHeight() / (float)m_textureHeight);
-        float scale = Math.max((float)m_textureWidth / (float)size.getWidth(), (float)m_textureHeight / (float)size.getHeight());
-        mat.setScale(scale, scale);
-        Logf.d(ID_TAG, "纹理图层缩放比例(%f)", scale);
-        m_textureView.setTransform(mat);*/
+        ((TextView)findViewById(R.id.main_camera_info_text)).setText(m_currentCamera.toString());
+
+        OpenCamera(size.getWidth(), size.getHeight());
     }
 
     private void CloseCamera()
@@ -406,6 +443,7 @@ public class MainActivity extends AppCompatActivity {
             m_cameraDevice.close();
             m_cameraDevice = null;
         }
+        m_surface = null;
     }
 
     private void HandleCapturePreview(final Bitmap bitmap)
@@ -454,9 +492,8 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // TODO: 计算相机视图宽高
-    private Size SetupCamera(int width, int height)
+    private Size CalePreferPreviewSize(int width, int height)
     {
-        // 竖屏
         int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
         boolean needSwap = WidthAndHeightNeedSwap(displayRotation, m_currentCamera.orientation);
         int w = needSwap ? height : width;
@@ -467,8 +504,8 @@ public class MainActivity extends AppCompatActivity {
         Map<Float, List<Size> > res = new HashMap<Float, List<Size> >();
         for (Size s : m_currentCamera.support_size_list)
         {
-            if(s.getWidth() > w || s.getHeight() > h)
-                continue;
+            /*if(s.getWidth() > w || s.getHeight() > h)
+                continue;*/ // 获取全部
             float dp = (float)s.getWidth() / (float)s.getHeight();
             if(!res.containsKey(dp))
                 res.put(dp, new ArrayList<Size>());
@@ -477,22 +514,34 @@ public class MainActivity extends AppCompatActivity {
         float min = Collections.min(res.keySet(), new Comparator<Float>(){
             public int compare(Float a, Float b)
             {
-                float f = (Math.abs(p - a) - Math.abs(p - b));
+                float pa = a - p;
+                float pb = b - p;
+                float f = (Math.abs(pa) - Math.abs(pb));
                 if(f < 0)
                     return -1;
                 else if(f > 0)
                     return 1;
                 else
-                    return 0;
+                {
+                    float d = pa - pb;
+                    return d < 0 ? -1 : (d > 0 ? 1 : 0);
+                }
             }
         });
-        Size max = Collections.max(res.get(min), new Comparator<Size>(){
-            public int compare(Size a, Size b)
-            {
-                return (a.getWidth() * a.getHeight()) - (b.getWidth() * b.getHeight());
-            }
-        });
-        Logf.e(ID_TAG, "分辨率排序(%s), 当前纹理比例(%f), 最适合比例(%f)", res.toString(), p, min);
+        List<Size> prefer = res.get(min);
+        List<Size> upper = new ArrayList<Size>();
+        List<Size> lower = new ArrayList<Size>();
+        for(Size s : prefer)
+        {
+            if(s.getWidth() >= w || s.getHeight() >= h)
+                upper.add(s);
+            else
+                lower.add(s);
+        }
+        Size upperMin = Collections.max(upper, m_sizeComparator);
+        Size lowerMax = Collections.min(lower, m_sizeComparator);
+        Logf.e(ID_TAG, "分辨率排序(%s), 当前纹理比例(%f), 上下浮分辨率(%s, %s), 最适合比例(%f)", res.toString(), p, upperMin != null ? upperMin.toString() : "不存在", lowerMax != null ? lowerMax.toString() : "不存在", min);
+        Size max = upperMin != null ? upperMin : (lowerMax != null ? lowerMax : prefer.get(0));
         Logf.d(ID_TAG, "选择相机分辨率(%s)", max.toString());
 
         //Size size = needSwap ? new Size(max.getHeight(), max.getWidth()) : max;
@@ -572,16 +621,21 @@ public class MainActivity extends AppCompatActivity {
         super.onResume();
         SharedPreferences preference;
 
-        findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
         m_lastCaptureTime = 0;
         m_currentCamera.Reset();
+
+        findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
         preference = PreferenceManager.getDefaultSharedPreferences(this);
         m_captureInterval = Integer.parseInt(preference.getString(Constants.ID_PREFERENCE_FACE_FREQUENCY, "" + Configs.ID_PREFERENCE_DEFAULT_FACE_FREQUENCY));
+        String faceCaptureScheme = preference.getString(Constants.ID_PREFERENCE_FACE_CAPTURE_SCHEME, Configs.ID_PREFERENCE_DEFAULT_FACE_CAPTURE_SCHEME);
+        m_alwaysCapture = Constants.ID_CONFIG_FACE_CAPTURE_SCHEME_ALWAYS.equals(faceCaptureScheme);
 
         if(ActivityUtility.IsGrantPermission(this, Manifest.permission.CAMERA) && !CameraAvailable())
         {
             InitCamera();
         }
+
+        ((TextView)findViewById(R.id.main_camera_info_text)).setText(m_currentCamera.toString());
     }
 
     private boolean CameraAvailable()
@@ -599,6 +653,8 @@ public class MainActivity extends AppCompatActivity {
         CloseCamera();
         m_lastCaptureTime = 0;
         m_currentCamera.Reset();
+
+        ((TextView)findViewById(R.id.main_camera_info_text)).setText("");
     }
 
     // 对于异线程
@@ -673,6 +729,7 @@ public class MainActivity extends AppCompatActivity {
             Logf.d(ID_TAG, "当前相机支持分辨率(%s)", sizes.toString());
             m_currentCamera.support_size_list = sizes;
             m_currentCamera.orientation = cc.get(CameraCharacteristics.SENSOR_ORIENTATION);
+            m_currentCamera.rect = cc.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
 
             StartCamera();
         }
@@ -817,4 +874,69 @@ public class MainActivity extends AppCompatActivity {
 
         return exchange;
     }
+
+    private RectF CaleFaceRect(Face face)
+    {
+        boolean mirror = (m_currentCamera.face == CameraCharacteristics.LENS_FACING_FRONT);
+        int displayRotation = getWindowManager().getDefaultDisplay().getRotation();
+        boolean needSwap = WidthAndHeightNeedSwap(displayRotation, m_currentCamera.orientation);
+
+        float w = (float)m_currentCamera.width;
+        float h = (float)m_currentCamera.height;
+
+        float scaledWidth = w / (float)m_currentCamera.rect.width();
+        float scaledHeight = h / (float)m_currentCamera.rect.height();
+        Logf.e(ID_TAG, "%d, %b | %f, %f | %b | %f, %f", displayRotation, needSwap, scaledWidth, scaledHeight, mirror, w, h);
+        Matrix mFaceDetectMatrix = new Matrix();
+        mFaceDetectMatrix.setRotate(m_currentCamera.orientation);
+        mFaceDetectMatrix.postScale(mirror ? -scaledWidth : scaledWidth, scaledHeight);
+        if (needSwap)
+            mFaceDetectMatrix.postTranslate(h, w);
+
+        Rect bounds = face.getBounds();
+        float left = bounds.left;
+        float top = bounds.top;
+        float right = bounds.right;
+        float bottom = bounds.bottom;
+        RectF rawFaceRect = new RectF(left, top, right, bottom);
+        mFaceDetectMatrix.mapRect(rawFaceRect);
+
+        //0, 0 - 2608, 1960
+        RectF resultFaceRect = mirror ? rawFaceRect : new RectF(rawFaceRect.left, rawFaceRect.top - w, rawFaceRect.right, rawFaceRect.bottom - w);
+
+        Logf.e(ID_TAG, "Face(%s) | (%s) -> Screen(%s) | (%s)", face.getBounds().toString(), m_currentCamera.rect, resultFaceRect.toString(), rawFaceRect.toString());
+        //return dstRect;
+
+        return resultFaceRect;
+    }
+
+    private void TransformTextureView(int viewWidth, int viewHeight)
+    {
+        int rotation = getWindowManager().getDefaultDisplay().getRotation();
+        Matrix matrix = new Matrix();
+        RectF viewRect = new RectF(0, 0, viewWidth, viewHeight);
+        RectF bufferRect = new RectF(0, 0, m_currentCamera.height, m_currentCamera.width);
+        float centerX = viewRect.centerX();
+        float centerY = viewRect.centerY();
+        if (Surface.ROTATION_90 == rotation || Surface.ROTATION_270 == rotation)
+        {
+            bufferRect.offset(centerX - bufferRect.centerX(), centerY - bufferRect.centerY());
+            matrix.setRectToRect(viewRect, bufferRect, Matrix.ScaleToFit.FILL);
+            float scale = Math.max((float)viewHeight / (float)m_currentCamera.height, (float)viewWidth / (float)m_currentCamera.width);
+            matrix.postScale(scale, scale, centerX, centerY);
+            matrix.postRotate((float)(90 * (rotation - 2)), centerX, centerY);
+        }
+        else if (Surface.ROTATION_180 == rotation)
+        {
+            matrix.postRotate(180, centerX, centerY);
+        }
+        m_textureView.setTransform(matrix);
+    }
+
+    private Comparator<Size> m_sizeComparator = new Comparator<Size>(){
+        public int compare(Size a, Size b)
+        {
+            return (a.getWidth() * a.getHeight()) - (b.getWidth() * b.getHeight());
+        }
+    };
 }
