@@ -29,7 +29,9 @@ public final class Constants
 	public static final String ID_CONFIG_FACE_CAPTURE_SCHEME_WHEN_FACE = "face_only";
 
 	public static final String ID_CONFIG_CAMERA_RESOLUTION_HIGHER = "higher";
-	public static final String ID_CONFIG_CAMERA_RESOLUTION_LOWER = "lower";
+	public static final String ID_CONFIG_CAMERA_RESOLUTION_LOWER = "lower";;
+	public static final String ID_CONFIG_CAMERA_RESOLUTION_HIGHEST = "highest";
+	public static final String ID_CONFIG_CAMERA_RESOLUTION_LOWEST = "lowest";
 	
 	private Constants(){}
 }

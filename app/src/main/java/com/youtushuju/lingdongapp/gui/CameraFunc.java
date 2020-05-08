@@ -348,73 +348,89 @@ public class CameraFunc {
     // 选择最适合当前屏幕的相机分辨率
     private Size CalePreferPreviewSize(int width, int height)
     {
-        int displayRotation = m_activity.getWindowManager().getDefaultDisplay().getRotation();
-        boolean needSwap = WidthAndHeightNeedSwap(displayRotation, m_currentCamera.orientation);
-        int w = needSwap ? height : width;
-        int h = needSwap ? width : height;
-        Logf.d(ID_TAG, "屏幕方向(%d), 相机传感器方向(%d), 交换宽高(%b)", displayRotation, m_currentCamera.orientation, needSwap);
+        Size max = null;
 
-        final float p = (float)w / (float)h;
-        Map<Float, List<Size> > res = new HashMap<Float, List<Size> >();
-        for (Size s : m_currentCamera.support_size_list)
+        if(Constants.ID_CONFIG_CAMERA_RESOLUTION_HIGHEST.equals(m_cameraResolution))
         {
+            max =  Collections.max(m_currentCamera.support_size_list, m_sizeComparator);
+            Logf.d(ID_TAG, "直接选择最大支持(%s)", max);
+        }
+        else if(Constants.ID_CONFIG_CAMERA_RESOLUTION_LOWEST.equals(m_cameraResolution))
+        {
+            max =  Collections.min(m_currentCamera.support_size_list, m_sizeComparator);
+            Logf.d(ID_TAG, "直接选择最小支持(%s)", max);
+        }
+        else
+        {
+            int displayRotation = m_activity.getWindowManager().getDefaultDisplay().getRotation();
+            boolean needSwap = WidthAndHeightNeedSwap(displayRotation, m_currentCamera.orientation);
+            int w = needSwap ? height : width;
+            int h = needSwap ? width : height;
+            Logf.d(ID_TAG, "选择最优比例: 屏幕方向(%d), 相机传感器方向(%d), 交换宽高(%b)", displayRotation, m_currentCamera.orientation, needSwap);
+
+            final float p = (float)w / (float)h;
+            Map<Float, List<Size> > res = new HashMap<Float, List<Size> >();
+            for (Size s : m_currentCamera.support_size_list)
+            {
             /*if(s.getWidth() > w || s.getHeight() > h)
                 continue;*/ // 获取全部
-            float dp = (float)s.getWidth() / (float)s.getHeight();
-            if(!res.containsKey(dp))
-                res.put(dp, new ArrayList<Size>());
-            res.get(dp).add(s);
-        }
-        float min = Collections.min(res.keySet(), new Comparator<Float>(){
-            public int compare(Float a, Float b)
-            {
-                float pa = a - p;
-                float pb = b - p;
-                float f = (Math.abs(pa) - Math.abs(pb));
-                if(f < 0)
-                    return -1;
-                else if(f > 0)
-                    return 1;
-                else
-                {
-                    float d = pa - pb;
-                    return d < 0 ? -1 : (d > 0 ? 1 : 0);
-                }
+                float dp = (float)s.getWidth() / (float)s.getHeight();
+                if(!res.containsKey(dp))
+                    res.put(dp, new ArrayList<Size>());
+                res.get(dp).add(s);
             }
-        });
-        List<Size> prefer = res.get(min);
-        Logf.e(ID_TAG, "比较适合的分辨率: 宽高比(%f), 列表(%s)", min, prefer.toString());
-        List<Size> upper = new ArrayList<Size>();
-        List<Size> lower = new ArrayList<Size>();
-        for(Size s : prefer)
-        {
-            if(s.getWidth() >= w || s.getHeight() >= h)
-                upper.add(s);
-            else
-                lower.add(s);
-        }
-        Size upperMin = null, lowerMax = null;
-        if(upper != null && !upper.isEmpty())
-            upperMin = Collections.max(upper, m_sizeComparator);
-        if(lower != null && !lower.isEmpty())
-            lowerMax = Collections.min(lower, m_sizeComparator);
-        Logf.e(ID_TAG, "分辨率排序(%s), 当前纹理比例(%f), 上下浮分辨率(%s, %s)", res.toString(), p, upperMin != null ? upperMin.toString() : "不存在", lowerMax != null ? lowerMax.toString() : "不存在");
+            float min = Collections.min(res.keySet(), new Comparator<Float>(){
+                public int compare(Float a, Float b)
+                {
+                    float pa = a - p;
+                    float pb = b - p;
+                    float f = (Math.abs(pa) - Math.abs(pb));
+                    if(f < 0)
+                        return -1;
+                    else if(f > 0)
+                        return 1;
+                    else
+                    {
+                        float d = pa - pb;
+                        return d < 0 ? -1 : (d > 0 ? 1 : 0);
+                    }
+                }
+            });
+            List<Size> prefer = res.get(min);
+            Logf.e(ID_TAG, "比较适合的分辨率: 宽高比(%f), 列表(%s)", min, prefer.toString());
+            List<Size> upper = new ArrayList<Size>();
+            List<Size> lower = new ArrayList<Size>();
+            for(Size s : prefer)
+            {
+                if(s.getWidth() >= w || s.getHeight() >= h)
+                    upper.add(s);
+                else
+                    lower.add(s);
+            }
+            Size upperMin = null, lowerMax = null;
+            if(upper != null && !upper.isEmpty())
+                upperMin = Collections.max(upper, m_sizeComparator);
+            if(lower != null && !lower.isEmpty())
+                lowerMax = Collections.min(lower, m_sizeComparator);
+            Logf.e(ID_TAG, "分辨率排序(%s), 当前纹理比例(%f), 上下浮分辨率(%s, %s)", res.toString(), p, upperMin != null ? upperMin.toString() : "不存在", lowerMax != null ? lowerMax.toString() : "不存在");
 
-        Size max = prefer.get(0);
-        if(Constants.ID_CONFIG_CAMERA_RESOLUTION_LOWER.equals(m_cameraResolution))
-        {
-            if(lowerMax != null)
-                max = lowerMax;
-            else if(upperMin != null)
-                max = upperMin;
+            max = prefer.get(0);
+            if(Constants.ID_CONFIG_CAMERA_RESOLUTION_LOWER.equals(m_cameraResolution))
+            {
+                if(lowerMax != null)
+                    max = lowerMax;
+                else if(upperMin != null)
+                    max = upperMin;
+            }
+            else if(Constants.ID_CONFIG_CAMERA_RESOLUTION_HIGHER.equals(m_cameraResolution))
+            {
+                if(upperMin != null)
+                    max = upperMin;
+                else if(lowerMax != null)
+                    max = lowerMax;
+            }
         }
-        else if(Constants.ID_CONFIG_CAMERA_RESOLUTION_HIGHER.equals(m_cameraResolution))
-        {
-            if(upperMin != null)
-                max = upperMin;
-            else if(lowerMax != null)
-                max = lowerMax;
-        }
+
         Logf.d(ID_TAG, "最终选择相机分辨率(%s)", max.toString());
 
         //Size size = needSwap ? new Size(max.getHeight(), max.getWidth()) : max;
@@ -612,7 +628,7 @@ public class CameraFunc {
         public int compare(Size a, Size b)
         {
             return
-                    Long.signum
+                    //Long.signum
                             (a.getWidth() * a.getHeight()) - (b.getWidth() * b.getHeight());
         }
     };

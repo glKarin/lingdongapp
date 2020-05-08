@@ -41,10 +41,14 @@
 	<string-array name="camera_resolution_key">
 		<item>higher</item>
 		<item>lower</item>
+		<item>highest</item>
+		<item>lowest</item>
 	</string-array>
 	<string-array name="camera_resolution_name">
 		<item>不会比屏幕小(较大)</item>
 		<item>不会比屏幕大(较小)</item>
+		<item>最大支持</item>
+		<item>最小支持</item>
 	</string-array>
 
 
