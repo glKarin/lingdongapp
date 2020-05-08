@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="vertical"
+android:layout_centerInParent="true"
+android:background="@drawable/main_person_background"
+    >
+
+<com.youtushuju.lingdongapp.gui.ScreenSaverView
+    android:id="@+id/main_screensaver_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_centerInParent="true"
+/>
+
+    <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="48dp"
+        android:orientation="vertical"
+        android:alpha="0.6"
+        >
+
+        <Button
+            android:id="@+id/main_screensaver_refresh"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="刷新"/>
+
+    </LinearLayout>
+
+
+</RelativeLayout>

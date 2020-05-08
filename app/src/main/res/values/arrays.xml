@@ -38,6 +38,15 @@
 		<item>总是</item>
 	</string-array>
 
+	<string-array name="camera_resolution_key">
+		<item>higher</item>
+		<item>lower</item>
+	</string-array>
+	<string-array name="camera_resolution_name">
+		<item>不会比屏幕小(较大)</item>
+		<item>不会比屏幕大(较小)</item>
+	</string-array>
+
 
 	<string-array name="update_info">
 		<item>修复相机预览图像拉伸.</item>

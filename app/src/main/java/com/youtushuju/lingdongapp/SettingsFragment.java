@@ -2,9 +2,7 @@ package com.youtushuju.lingdongapp;
 
 import android.content.SharedPreferences;
 import android.os.Bundle;
-import androidx.preference.EditTextPreference;
 import androidx.preference.ListPreference;
-import android.text.InputType;
 
 import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
@@ -107,6 +105,16 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
 		preference = findPreference(Constants.ID_PREFERENCE_FACE_CAPTURE_SCHEME);
 		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_FACE_CAPTURE_SCHEME);
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
+				return true;
+			}
+		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_CAMERA_RESOLUTION);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_CAMERA_RESOLUTION);
 		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 			@Override
 			public boolean onPreferenceChange(Preference preference, Object newValue) {

@@ -10,6 +10,7 @@ public final class Constants
 	public static final String ID_PREFERENCE_FACE_IMAGE_QUALITY = "FACE_IMAGE_QUALITY";
 	public static final String ID_PREFERENCE_SERIAL_PATH_SELECT = "SERIAL_PATH_SELECT";
 	public static final String ID_PREFERENCE_FACE_CAPTURE_SCHEME = "FACE_CAPTURE_SCHEME";
+	public static final String ID_PREFERENCE_CAMERA_RESOLUTION = "CAMERA_RESOLUTION";
 	
 	public static final int ID_REQUEST_RESULT_SUCCESS = 0;
 	public static final int ID_REQUEST_RESULT_FAIL = 1;
@@ -26,6 +27,9 @@ public final class Constants
 
 	public static final String ID_CONFIG_FACE_CAPTURE_SCHEME_ALWAYS = "always";
 	public static final String ID_CONFIG_FACE_CAPTURE_SCHEME_WHEN_FACE = "face_only";
+
+	public static final String ID_CONFIG_CAMERA_RESOLUTION_HIGHER = "higher";
+	public static final String ID_CONFIG_CAMERA_RESOLUTION_LOWER = "lower";
 	
 	private Constants(){}
 }

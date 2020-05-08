@@ -5,10 +5,10 @@ android {
     buildToolsVersion "29.0.3"
     defaultConfig {
         applicationId "com.youtushuju.lingdongapp"
-        minSdkVersion 25
+        minSdkVersion 21
         targetSdkVersion 29
         versionCode 1
-        versionName "1.0.0harmattan8"
+        versionName "1.0.0harmattan9"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         externalNativeBuild {
             cmake {

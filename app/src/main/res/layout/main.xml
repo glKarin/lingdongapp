@@ -39,8 +39,12 @@
          android:fitsSystemWindows. -->
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:fitsSystemWindows="true">
+        android:layout_height="match_parent">
+
+        <include
+            android:id="@+id/main_screensaver_view"
+            layout="@layout/main_screensaver"
+            />
 
         <LinearLayout
             android:id="@+id/main_layer"
@@ -60,9 +64,17 @@
                 android:layout_marginRight="20dp"
                 android:src="@drawable/icon_profile" />
 
+            <Button
+                android:id="@+id/main_menu_open_screensaver"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:layout_marginRight="20dp"
+                android:text="测试屏保" />
+
             <TextView
                 android:id="@+id/main_camera_info_text"
-                android:layout_marginTop="48dp"
+                android:layout_marginTop="20dp"
                 android:layout_width="240dp"
                 android:textSize="16dp"
                 android:textColor="#FFFFFFFF"

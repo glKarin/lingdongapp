@@ -32,6 +32,7 @@ public final class Configs
 	public static final String ID_PREFERENCE_DEFAULT_SERIAL_DRIVER = Constants.ID_CONFIG_SERIAL_DRIVER_UART;
 	public static final int ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY = 50;
 	public static final String ID_PREFERENCE_DEFAULT_FACE_CAPTURE_SCHEME = Constants.ID_CONFIG_FACE_CAPTURE_SCHEME_WHEN_FACE;
+	public static final String ID_PREFERENCE_DEFAULT_CAMERA_RESOLUTION = Constants.ID_CONFIG_CAMERA_RESOLUTION_HIGHER;
 
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";

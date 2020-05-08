@@ -39,6 +39,17 @@
 			/>
 
 		<ListPreference
+			android:dialogTitle="设置摄像头优先分辨率"
+			android:key="CAMERA_RESOLUTION"
+			android:summary="摄像头优先分辨率"
+			android:persistent="true"
+			android:title="设置摄像头优先分辨率"
+			android:entries="@array/camera_resolution_name"
+			android:entryValues="@array/camera_resolution_key"
+			android:defaultValue="higher"
+			/>
+
+		<ListPreference
 			android:dialogTitle="设置人脸检测控制"
 			android:key="FACE_CAPTURE_SCHEME"
 			android:summary="人脸检测控制"
