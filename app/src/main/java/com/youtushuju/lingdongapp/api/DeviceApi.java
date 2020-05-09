@@ -2,6 +2,7 @@ package com.youtushuju.lingdongapp.api;
 
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Logf;
+import com.youtushuju.lingdongapp.device.SerialDataDef;
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
 import com.youtushuju.lingdongapp.network.NetworkAccessManager;
@@ -26,6 +27,11 @@ public class DeviceApi {
 
     public static final String ID_DEVICE_API_COMMAND_VERIFY_FACE = "113";
 
+    public static final String ID_KITCHEN_WASTE_DOOR_ID = SerialDataDef.ID_DOOR_ID_1; // 厨余垃圾
+    public static final String ID_OTHER_WASTE_DOOR_ID = SerialDataDef.ID_DOOR_ID_2; // 其他垃圾
+    public static final String ID_KITCHEN_WASTE_RECYCLE_DOOR_ID = SerialDataDef.ID_DOOR_ID_3; // 厨余垃圾回收
+    public static final String ID_OTHER_WASTE_RECYCLE_DOOR_ID = SerialDataDef.ID_DOOR_ID_4; // 其他垃圾回收
+
     private DeviceApi() {}
 
     public interface OnResponse
@@ -45,10 +51,14 @@ public class DeviceApi {
         map = new HashMap<String, Object>();
         map.put("c", ID_DEVICE_API_COMMAND_VERIFY_FACE);
         map.put("imei", imei);
+        map.put("m", "IMAGE_BASE64_CODE......");
+        data = JSON.Utility.InstanceJsonMap(map);
+        String json = JSON.Stringify(data);
+        Logf.d(ID_TAG, "人脸验证请求数据(%s)", json);
         map.put("m", image);
 
         data = JSON.Utility.InstanceJsonMap(map);
-        String json = JSON.Stringify(data);
+        json = JSON.Stringify(data);
 
         if(Common.StringIsBlank(json))
             return null;
@@ -60,7 +70,7 @@ public class DeviceApi {
 
         req = new NetworkRequest(url);
         req.AddHeader("Content-type", "application/json");
-        Logf.d(ID_TAG, "人脸验证请求数据(%s)", json);
+        //Logf.d(ID_TAG, "人脸验证请求数据(%s)", json);
         reply = manager.SyncPost(req, json.getBytes());
 
         if(reply == null)

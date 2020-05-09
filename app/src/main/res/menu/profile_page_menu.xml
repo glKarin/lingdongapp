@@ -1,0 +1,9 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.youtushuju.lingdongapp.ProfileActivity">
+
+    <item android:id="@+id/profile_menu_view_log"
+        android:title="查看当前日志文件"
+        app:showAsAction="never"/>
+</menu>

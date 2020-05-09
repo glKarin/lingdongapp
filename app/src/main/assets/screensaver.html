@@ -60,7 +60,7 @@
                 <p>调用函数Call(): <span id="TEST_CALL_RES"></span></p>
                 <form id="TEST_CALL_FORM">
                     名称: <input name="name" value="func"/>
-                    <input type="button" value="执行" onclick="Call();"/>
+                    <input type="button" value="执行" onclick="ToFace();"/>
                 </form>
             </div>
         </div>
@@ -131,6 +131,15 @@
     {
         document.getElementById("TEST_CALL_RES").innerText = res;
         console.log('Call()返回: ' + res);
+    }
+
+    function ToFace()
+    {
+        var form = document.getElementById("TEST_CALL_FORM");
+
+        var name = form.name.value;
+        console.log(name);
+        native_object.ToFace(name);
     }
 
 </script>

@@ -23,10 +23,12 @@
 	<string-array name="serial_driver_key">
 		<item>uart</item>
 		<item>cepr</item>
+		<item>test</item>
 	</string-array>
 	<string-array name="serial_driver_name">
 		<item>UART方案</item>
 		<item>原始方案</item>
+		<item>仅供本地开发测试</item>
 	</string-array>
 
 	<string-array name="face_capture_scheme_key">
@@ -53,6 +55,10 @@
 
 
 	<string-array name="update_info">
-		<item>修复相机预览图像拉伸.</item>
+		<item>文件浏览中文件排序, 打开文件.</item>
+		<item>信息页面添加查看当前日志菜单.</item>
+		<item>系统信息更多条目.</item>
+		<item>屏保支持.</item>
+		<item>扫脸开门测试.</item>
 	</string-array>
 </resources>

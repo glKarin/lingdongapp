@@ -13,6 +13,7 @@ import com.youtushuju.lingdongapp.device.LingDongApi;
 import com.youtushuju.lingdongapp.device.LingDongApi_emulate;
 import com.youtushuju.lingdongapp.device.SerialPortFunc;
 import com.youtushuju.lingdongapp.device.SerialPortFunc_cepr;
+import com.youtushuju.lingdongapp.device.SerialPortFunc_test;
 import com.youtushuju.lingdongapp.device.SerialPortFunc_uc;
 
 import java.io.File;
@@ -33,13 +34,15 @@ public final class Configs
 	public static final int ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY = 50;
 	public static final String ID_PREFERENCE_DEFAULT_FACE_CAPTURE_SCHEME = Constants.ID_CONFIG_FACE_CAPTURE_SCHEME_WHEN_FACE;
 	public static final String ID_PREFERENCE_DEFAULT_CAMERA_RESOLUTION = Constants.ID_CONFIG_CAMERA_RESOLUTION_HIGHER;
+	public static final int ID_PREFERENCE_DEFAULT_OPEN_SCREEN_SAVER_MAX_INTERVAL = 10000;
 
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";
+	public static final String ID_CONFIG_DEBUG = "debug";
 
 	private static final String ID_CONFIG_LOG_FILE_PREFIX = "ling_dong_app.";
 	private static final String ID_CONFIG_LOG_FILE_SUFFIX = ".log.txt";
-	private static final String ID_CONFIG_LOG_DIRECTORY = "log";
+	public static final String ID_CONFIG_LOG_DIRECTORY = "log";
 	public static final String ID_CONFIG_WORK_DIRECTORY = "ling_dong_app";
 
 	private static Configs _configs;
@@ -50,6 +53,7 @@ public final class Configs
 		m_configs = new HashMap<String, Object>();
 		m_configs.put(ID_CONFIG_LINGDONG_API, Constants.ID_CONFIG_API_REAL); // 默认真机
 		m_configs.put(ID_CONFIG_LOG_FILE, GetFile(ID_CONFIG_LOG_DIRECTORY + File.separator + ID_CONFIG_LOG_FILE_PREFIX + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + ID_CONFIG_LOG_FILE_SUFFIX, true));
+		m_configs.put(ID_CONFIG_DEBUG, 1);
 	}
 
 	public static Configs Instance()
@@ -81,6 +85,8 @@ public final class Configs
 		String driver = preferences.getString(Constants.ID_PREFERENCE_SERIAL_DRIVER, Constants.ID_CONFIG_SERIAL_DRIVER_CEPR);
 		if(Constants.ID_CONFIG_SERIAL_DRIVER_CEPR.equals(driver))
 			return new SerialPortFunc_cepr();
+		else if(Constants.ID_CONFIG_SERIAL_DRIVER_TEST.equals(driver))
+			return new SerialPortFunc_test();
 		else
 			return new SerialPortFunc_uc();
 	}
@@ -104,6 +110,7 @@ public final class Configs
 		String path = Environment.getExternalStorageDirectory().getPath() + File.separator + ID_CONFIG_WORK_DIRECTORY;
 		if(!Common.StringIsBlank(path))
 			path += File.separator + name;
+		Log.e(ID_TAG, path);
 		return path;
 	}
 
@@ -111,10 +118,10 @@ public final class Configs
 	{
 		File file = null;
 		String path = GetFilePath(name);
+		file = new File(path);
 		boolean isDir = path.endsWith(File.separator);
 		if(create)
 		{
-			file = new File(path);
 			if(file.exists())
 			{
 				if(isDir && !file.isDirectory())

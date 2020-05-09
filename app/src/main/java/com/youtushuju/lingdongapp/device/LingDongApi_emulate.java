@@ -1,8 +1,12 @@
 package com.youtushuju.lingdongapp.device;
+import android.app.Activity;
 import android.content.Context;
+import android.content.res.Resources;
 import android.os.Build;
 import android.os.Environment;
 import android.os.StatFs;
+import android.util.DisplayMetrics;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import com.youtushuju.lingdongapp.common.FS;
@@ -30,7 +34,7 @@ public class LingDongApi_emulate extends LingDongApi
 
     public String GetSystemAndroidOsVersion()
     {
-        return System.getProperty("os.version");
+        return android.os.Build.VERSION.RELEASE;
     }
 
     public String GetSystemKernelVersion()
@@ -128,5 +132,32 @@ public class LingDongApi_emulate extends LingDongApi
     {
         Toast.makeText(m_context, String.format(type, args), Toast.LENGTH_LONG).show();
         Logf.d(ID_TAG, type, args);
+    }
+
+    public int GetSystemScreenWidth()
+    {
+        return GetMetrics().widthPixels;
+    }
+
+    public int GetSystemScreenHeight()
+    {
+        return GetMetrics().heightPixels;
+    }
+
+    private DisplayMetrics GetMetrics()
+    {
+        DisplayMetrics dm = null;
+        if(m_context instanceof Activity)
+        {
+            WindowManager manager = ((Activity)m_context).getWindowManager();
+            dm = new DisplayMetrics();
+            manager.getDefaultDisplay().getMetrics(dm);
+        }
+        else
+        {
+            Resources resources = m_context.getResources();
+            dm = resources.getDisplayMetrics();
+        }
+        return dm;
     }
 }

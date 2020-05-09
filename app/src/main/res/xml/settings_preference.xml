@@ -89,11 +89,7 @@
 			android:title="串口Baudrate"
 			android:defaultValue="115200"
 			/>
-	</PreferenceCategory>
 
-	<PreferenceCategory
-		android:title="系统"
-		>
 		<ListPreference
 			android:dialogTitle="串口读写驱动"
 			android:key="SERIAL_DRIVER"
@@ -104,6 +100,32 @@
 			android:entryValues="@array/serial_driver_key"
 			android:defaultValue="uart"
 			/>
+	</PreferenceCategory>
+
+	<PreferenceCategory
+		android:title="其他"
+		>
+		<EditTextPreference
+			android:dialogTitle="自动进入屏保时间当没有人脸被检测到(毫秒)"
+			android:key="OPEN_SCREEN_SAVER_MAX_INTERVAL"
+			android:summary="自动进入屏保时间"
+			android:inputType="number"
+			android:persistent="true"
+			android:title="设置自动进入屏保时间"
+			android:defaultValue="10000"
+			>
+		</EditTextPreference>
+	</PreferenceCategory>
+
+	<PreferenceCategory
+		android:title="功能"
+		>
+		<Preference
+			android:key="CLEAN_LOG"
+			android:summary=""
+			android:title="清空日志目录"
+			android:persistent="false">
+		</Preference>
 	</PreferenceCategory>
 
 </PreferenceScreen>

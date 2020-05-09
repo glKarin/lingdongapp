@@ -133,7 +133,7 @@ public class SerialActivity extends AppCompatActivity {
             int baudrate = Configs.ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE;
             try
             {
-                baudrate = Integer.parseInt(preferences.getString(Constants.ID_PREFERENCE_SERIAL_PATH, "" + Configs.ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE));
+                baudrate = Integer.parseInt(preferences.getString(Constants.ID_PREFERENCE_SERIAL_BAUDRATE, "" + Configs.ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE));
             }
             catch (Exception e)
             {

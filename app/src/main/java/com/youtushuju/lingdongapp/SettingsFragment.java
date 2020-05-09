@@ -1,7 +1,11 @@
 package com.youtushuju.lingdongapp;
 
+import android.content.DialogInterface;
 import android.content.SharedPreferences;
 import android.os.Bundle;
+import android.widget.Toast;
+
+import androidx.appcompat.app.AlertDialog;
 import androidx.preference.ListPreference;
 
 import androidx.preference.Preference;
@@ -10,13 +14,15 @@ import androidx.preference.PreferenceManager;
 
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
+import com.youtushuju.lingdongapp.common.FS;
 import com.youtushuju.lingdongapp.device.DeviceUtility;
+import com.youtushuju.lingdongapp.gui.App;
 
 import java.util.List;
 
 public class SettingsFragment extends PreferenceFragmentCompat
 {
-	private static final String ID_TAG = "SettingsActivity";
+	private static final String ID_TAG = "SettingsFragment";
 
 	@Override
 	public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
@@ -88,7 +94,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 		}
 		else
 		{
-			String devArr[] = new String[]{"/dev/ttyS1", "/dev/ttyS2", "/dev/ttyS3", "/dev/ttyS5"};
+			String devArr[] = new String[]{"/dev/ttyS1", "/dev/ttyS2", "/dev/ttyS3", "/dev/ttyS5", Configs.Instance().GetFilePath("test_serial_port_device.txt")};
 			((ListPreference)preference).setEntries(devArr);
 			((ListPreference)preference).setEntryValues(devArr);
 		}
@@ -115,6 +121,46 @@ public class SettingsFragment extends PreferenceFragmentCompat
 
 		preference = findPreference(Constants.ID_PREFERENCE_CAMERA_RESOLUTION);
 		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_CAMERA_RESOLUTION);
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
+				return true;
+			}
+		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_CLEAN_LOG);
+		preference.setSummary(FS.FormatSize(App.Instance().GetLogSize()));
+		preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+			@Override
+			public boolean onPreferenceClick(final Preference preference) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+				builder.setTitle("警告");
+				builder.setMessage("确定要清空所有日志文件?");
+				builder.setIcon(R.drawable.icon_profile);
+				builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						boolean res = App.Instance().CleanLog();
+						if(res)
+						{
+							preference.setSummary("无");
+							Toast.makeText(getContext(), "日志文件已清空", Toast.LENGTH_SHORT).show();
+						}
+						else
+							Toast.makeText(getContext(), "清空日志文件失败", Toast.LENGTH_LONG).show();
+					}
+				});
+				builder.setNegativeButton("取消", null);
+				AlertDialog dialog = builder.create();
+				dialog.show();
+				return true;
+			}
+		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_OPEN_SCREEN_SAVER_MAX_INTERVAL);
+		//((EditTextPreference)(preference)).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_OPEN_SCREEN_SAVER_MAX_INTERVAL);
 		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
 			@Override
 			public boolean onPreferenceChange(Preference preference, Object newValue) {

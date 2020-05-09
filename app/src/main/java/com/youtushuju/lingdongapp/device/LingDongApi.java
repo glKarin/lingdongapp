@@ -24,6 +24,9 @@ public abstract class LingDongApi
     public abstract String GetSystemSdcardPath();
     public abstract String GetSystemUSBPath();
 
+    public abstract int GetSystemScreenWidth();
+    public abstract int GetSystemScreenHeight();
+
     public abstract void DeviceSleep();
     public abstract void DeviceWakeUp();
     public abstract void DeviceReset();

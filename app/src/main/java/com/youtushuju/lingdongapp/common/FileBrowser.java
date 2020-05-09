@@ -2,6 +2,9 @@ package com.youtushuju.lingdongapp.common;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -66,14 +69,6 @@ public class FileBrowser {
         if(m_onCurrentChangedListener != null)
             m_onCurrentChangedListener.OnCurrentChanged(this, FileBrowserCurrentChangedListener.ID_FILE_BROWSER_CURRENT_CHANGE_LIST);
 
-        // 添加上级目录
-        item = new FileModel();
-        item.name = "../";
-        item.path = dir.getParent();
-        item.size = dir.length();
-        item.type = dir.isDirectory() ? FileModel.ID_FILE_TYPE_DIRECTORY : FileModel.ID_FILE_TYPE_FILE;
-        m_fileList.add(item);
-
         for(File f : files)
         {
             String name = f.getName();
@@ -89,6 +84,17 @@ public class FileBrowser {
             item.type = f.isDirectory() ? FileModel.ID_FILE_TYPE_DIRECTORY : FileModel.ID_FILE_TYPE_FILE;
             m_fileList.add(item);
         }
+
+        Collections.sort(m_fileList, m_fileComparator);
+        //m_fileList.sort(m_fileComparator);
+
+        // 添加上级目录
+        item = new FileModel();
+        item.name = "../";
+        item.path = dir.getParent();
+        item.size = dir.length();
+        item.type = dir.isDirectory() ? FileModel.ID_FILE_TYPE_DIRECTORY : FileModel.ID_FILE_TYPE_FILE;
+        m_fileList.add(0, item);
 
         int mask = FileBrowserCurrentChangedListener.ID_FILE_BROWSER_CURRENT_CHANGE_LIST;
         if(m_currentPath != path)
@@ -169,4 +175,22 @@ public class FileBrowser {
         public static final int ID_FILE_BROWSER_CURRENT_CHANGE_ALL = 0xff;
         public void OnCurrentChanged(FileBrowser browser, int mask);
     }
+
+    private Comparator<FileModel> m_fileComparator = new Comparator<FileModel>(){
+        @Override
+        public int compare(FileModel a, FileModel b) {
+            if("./".equals(a.name))
+                return -1;
+            if("../".equals(a.name))
+                return -1;
+            if(a.type != b.type)
+            {
+                if(a.type == FileModel.ID_FILE_TYPE_DIRECTORY)
+                    return -1;
+                if(b.type == FileModel.ID_FILE_TYPE_DIRECTORY)
+                    return 1;
+            }
+            return a.name.compareToIgnoreCase(b.name);
+        }
+    };
 }

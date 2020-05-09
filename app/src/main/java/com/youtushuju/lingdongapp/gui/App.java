@@ -6,8 +6,12 @@ import android.os.Build;
 
 import androidx.core.app.ActivityCompat;
 
+import com.youtushuju.lingdongapp.common.Configs;
+import com.youtushuju.lingdongapp.common.FS;
 import com.youtushuju.lingdongapp.common.Logf;
 
+import java.io.File;
+import java.util.Collections;
 import java.util.Iterator;
 import java.util.Stack;
 import java.util.function.Predicate;
@@ -52,12 +56,14 @@ public final class App {
     {
         if(!m_activityStack.empty())
         {
-            m_activityStack.removeIf(new Predicate<Activity>() {
+            // SDK >= 24
+            /*m_activityStack.removeIf(new Predicate<Activity>() {
                 @Override
                 public boolean test(Activity activity) {
                     return activity == a;
                 }
-            });
+            });*/
+             m_activityStack.remove(a);
         }
         Logf.d(ID_TAG, m_activityStack.toString());
         return this;
@@ -80,5 +86,22 @@ public final class App {
         Clear();
         Logf.e("asdasd", m_activityStack.size());
         System.exit(code);
+    }
+
+    public boolean CleanLog()
+    {
+        File file = Configs.Instance().GetFile(Configs.ID_CONFIG_LOG_DIRECTORY);
+        if(file == null || !file.isDirectory())
+            return false;
+        FS.rm(file);
+        return true;
+    }
+
+    public long GetLogSize()
+    {
+        File file = Configs.Instance().GetFile(Configs.ID_CONFIG_LOG_DIRECTORY);
+        if(file == null || !file.isDirectory())
+            return 0L;
+        return FS.du(file);
     }
 }

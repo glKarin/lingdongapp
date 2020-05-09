@@ -1,5 +1,7 @@
 package com.youtushuju.lingdongapp;
 
+import java.io.File;
+
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -8,6 +10,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Bundle;
 
+import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.device.LingDongApi;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.FS;
@@ -19,6 +22,7 @@ import com.youtushuju.lingdongapp.gui.ArrayAdapter_base;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -30,6 +34,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -40,6 +45,8 @@ import java.util.List;
 
 public class FileBrowserActivity extends AppCompatActivity {
     private static final String ID_TAG = "FileBrowserActivity";
+    public static final String ID_CURRENT_PAGE_PATH = "CURRENT_PAGE_PATH";
+
     private ListView m_menuView;
     private ViewPager m_viewPager;
     private DrawerLayout m_drawerLayout;
@@ -114,6 +121,14 @@ public class FileBrowserActivity extends AppCompatActivity {
 
             ((FileMenuListAdapter)m_menuView.getAdapter()).SetData(menuList);
             m_viewPager.setAdapter(new FileViewPagerAdapter(menuList));
+
+            Bundle bundle = getIntent().getExtras();
+            if(bundle != null)
+            {
+                int current = bundle.getInt(ID_CURRENT_PAGE_PATH);
+                Logf.e(ID_TAG, "请求进入视图目录: " + current);
+                m_viewPager.setCurrentItem(current);
+            }
         }
     }
 
@@ -127,7 +142,7 @@ public class FileBrowserActivity extends AppCompatActivity {
                     m_drawerLayout.openDrawer(Gravity.LEFT, true);
                 break;
             default:
-                break;
+                return super.onOptionsItemSelected(item);
         }
 
         return true;
@@ -144,7 +159,7 @@ public class FileBrowserActivity extends AppCompatActivity {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
         if(requestCode == ActivityUtility.ID_REQUEST_PERMISSION_RESULT)
         {
-            int index = 0; // only camera
+            int index = 0; // only storage
             if(grantResults[index] != PackageManager.PERMISSION_GRANTED)
             {
                 OpenPermissionGrantFailDialog();
@@ -226,15 +241,8 @@ public class FileBrowserActivity extends AppCompatActivity {
                 return;
             if(item.type != FileBrowser.FileModel.ID_FILE_TYPE_DIRECTORY) // TODO: 处理符号链接文件
             {
-                // TODO: 打卡任意文件
-                /*String url = "file://" + item.path;
-                Uri uri = Uri.parse(url);
-                Intent intent = new Intent();
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-                intent.setAction(Intent.ACTION_VIEW);
-                String mimeType = MimeTypeMap.getSingleton().getMimeTypeFromExtension(MimeTypeMap.getFileExtensionFromUrl(url));
-                intent.setDataAndType(uri, mimeType);
-                startActivity(intent);*/
+                Logf.d(ID_TAG, "打开文件(%s)", item.path);
+                ActivityUtility.OpenExternally(FileBrowserActivity.this, item.path);
                 return;
             }
 

@@ -128,10 +128,9 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
         try
         {
             m_thread.output_stream.write(data);
-            //m_thread.output_stream.write('\n');
             m_thread.output_stream.flush();
             Logf.d(ID_TAG, "串口写入: " + new String(data));
-            return data.length/* + 1*/;
+            return data.length;
         }
         catch (IOException e)
         {

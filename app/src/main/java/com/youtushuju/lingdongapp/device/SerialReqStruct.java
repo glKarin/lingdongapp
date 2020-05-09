@@ -16,6 +16,13 @@ public class SerialReqStruct extends JsonDataStruct {
         super();
     }
 
+    public SerialReqStruct(String type)
+    {
+        super();
+        this.type = type;
+        Finish();
+    }
+
     public SerialReqStruct(String type, String door_id)
     {
         super();

@@ -62,7 +62,6 @@ public final class SerialPortFunc_uc extends SerialPortFunc {
     public void ShutdownSerialPort()
     {
         Close();
-        mRunning = false;
         if (uart_fd >= 0)
         {
             UC.uartDestroy(uart_fd);
@@ -83,9 +82,10 @@ public final class SerialPortFunc_uc extends SerialPortFunc {
             Logf.e(ID_TAG, "请先调用初始化函数");
             return false;
         }
+        mRunning = true;
         thread = new HandlerThread("UartRecvThread");
-        thread.start();//创建一个HandlerThread并启动它
         mRecvHandler = new Handler(thread.getLooper());//使用HandlerThread的looper对象创建Handler，如果使用默认的构造方法，很有可能阻塞UI线程
+        thread.start();//创建一个HandlerThread并启动它
         m_isOpened = true;
         mNeedSendData = false;
         Logf.d(ID_TAG, "串口读写打开");
@@ -96,12 +96,13 @@ public final class SerialPortFunc_uc extends SerialPortFunc {
     {
         if(!m_isOpened)
             return true;
+        mRunning = false;
         if(thread != null)
         {
-            thread.quit();
-            thread = null;
             mRecvHandler.removeCallbacks(mRecvRunnable);
             mRecvHandler = null;
+            thread.quit();
+            thread = null;
         }
         m_isOpened = false;
         mNeedSendData = false;

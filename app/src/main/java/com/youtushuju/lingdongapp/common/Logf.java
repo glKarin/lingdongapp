@@ -21,7 +21,7 @@ public final class Logf
 
 	public static void f(String tag, String format, Object ...args)
 	{
-		File file =  (File)(Configs.Instance().GetConfig(Configs.ID_CONFIG_LOG_FILE));
+		File file = (File)(Configs.Instance().GetConfig(Configs.ID_CONFIG_LOG_FILE));
 		if(file == null)
 			return;
 

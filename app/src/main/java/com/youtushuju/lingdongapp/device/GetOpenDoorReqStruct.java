@@ -4,7 +4,7 @@ public final class GetOpenDoorReqStruct extends SerialReqStruct {
 
     public GetOpenDoorReqStruct()
     {
-        super();
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR);
     }
 
     public GetOpenDoorReqStruct(String doorId)

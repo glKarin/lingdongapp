@@ -11,17 +11,23 @@ import android.os.Bundle;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.youtushuju.lingdongapp.common.Common;
+import com.youtushuju.lingdongapp.common.Configs;
+import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.gui.ArrayAdapter_base;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -152,6 +158,28 @@ public class ProfileActivity extends AppCompatActivity {
                 }
             }
         });
+    }
+
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.profile_page_menu, menu);
+        return true;
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId())
+        {
+            case R.id.profile_menu_view_log:
+                File file = (File)(Configs.Instance().GetConfig(Configs.ID_CONFIG_LOG_FILE));
+                if(file != null && file.isFile())
+                    ActivityUtility.OpenExternally(this, file.getAbsolutePath());
+                else
+                    Toast.makeText(this, "当前日志文件未被创建", Toast.LENGTH_LONG).show();
+                break;
+            default:
+                return super.onOptionsItemSelected(item);
+        }
+
+        return true;
     }
 
     private void OpenAboutDialog()

@@ -160,4 +160,18 @@ public class LingDongApi_real extends LingDongApi
             return;
         m_smatekManager.setLcdBlackLight(on);
     }
+
+    public int GetSystemScreenWidth()
+    {
+        if(!IsValid())
+            return -1;
+        return m_smatekManager.getScreenWidth(m_context);
+    }
+
+    public int GetSystemScreenHeight()
+    {
+        if(!IsValid())
+            return -1;
+        return m_smatekManager.getScreenHeight(m_context);
+    }
 }

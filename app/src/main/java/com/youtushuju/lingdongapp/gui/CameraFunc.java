@@ -77,10 +77,10 @@ public class CameraFunc {
     private CameraInfoModel m_currentCamera = new CameraInfoModel();
     private OnCameraListener m_cameraListener = null;
 
-    private int m_captureInterval = 3000;
+    private int m_captureInterval = Configs.ID_PREFERENCE_DEFAULT_FACE_FREQUENCY;
     private boolean m_cameraAccessed = false;
     private boolean m_alwaysCapture = true;
-    private Surface m_surface;
+    private Surface m_surface = null;
     private int m_textureWidth = 0;
     private int m_textureHeight = 0;
     private String m_cameraResolution = null;
@@ -88,6 +88,9 @@ public class CameraFunc {
 
     private CameraDevice m_cameraDevice = null;
     private CameraCaptureSession m_cameraCaptureSession = null;
+    private CaptureRequest.Builder m_captureRequestBuilder = null;
+    private CaptureRequest m_captureRequest = null;
+
     private HandlerThread m_threadHandlerThread = null;
     private Handler m_threadHandler = null; // on new thread
     private long m_lastCaptureTime = 0L; // 最后抓图时间
@@ -98,7 +101,7 @@ public class CameraFunc {
         public void OnCameraOpenPreviewResult(boolean success); // 当打开相机会话后结果回调
         public void OnPreviewStart();
         public void OnPreviewStop();
-        public void OnPreviewCapture(TotalCaptureResult result);
+        public void OnPreviewCapture(TotalCaptureResult result, Face faces[], long time, boolean always, int face_mode);
         public void OnClose();
         public void OnWarning(String message);
         public void OnError(String message);
@@ -152,14 +155,11 @@ public class CameraFunc {
         }
     }
 
-    public CameraFunc(Activity activity, DynamicTextureView textureView)
+    public CameraFunc(Activity activity, DynamicTextureView textureView, Handler handler)
     {
         m_activity = activity;
         m_textureView = textureView;
-
-        m_threadHandlerThread = new HandlerThread("preview_capture_thread");
-        m_threadHandlerThread.start();
-        m_threadHandler = new Handler(m_threadHandlerThread.getLooper());
+        m_threadHandler = handler;
     }
 
     // 打开相机
@@ -210,67 +210,18 @@ public class CameraFunc {
 
         try
         {
-            final CaptureRequest.Builder captureRequestBuilder = m_cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            captureRequestBuilder.addTarget(m_surface);
+            m_captureRequestBuilder = m_cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            m_captureRequestBuilder.addTarget(m_surface);
 
-            captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, m_currentCamera.face_mode);
-            captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
+            m_captureRequestBuilder.set(CaptureRequest.STATISTICS_FACE_DETECT_MODE, m_currentCamera.face_mode);
+            m_captureRequestBuilder.set(CaptureRequest.CONTROL_AF_MODE, CaptureRequest.CONTROL_AF_MODE_CONTINUOUS_PICTURE);
             m_cameraDevice.createCaptureSession(Arrays.asList(m_surface), new CameraCaptureSession.StateCallback(){
                 public void onConfigured(CameraCaptureSession session)
                 {
                     m_cameraCaptureSession = session;
-                    m_cameraAccessed = true;
-                    CaptureRequest captureRequest = captureRequestBuilder.build();
-                    try
-                    {
-                        session.setRepeatingRequest(captureRequest, new CameraCaptureSession.CaptureCallback(){
-                            public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
-                            {
-                            long now = System.currentTimeMillis();
-                            if(m_lastCaptureTime == 0)
-                            {
-                                m_lastCaptureTime = now;
-                                if(m_cameraListener != null)
-                                    m_cameraListener.OnPreviewStart();
-                                return;
-                            }
-                            if(now - m_lastCaptureTime > m_captureInterval)
-                            {
-                                m_lastCaptureTime = now - (now - m_lastCaptureTime - m_captureInterval);
-                                Face faces[] = result.get(TotalCaptureResult.STATISTICS_FACES);
-                                // TODO: 测试
-                                if(!Common.ArrayIsEmpty(faces))
-                                {
-                                    if(m_cameraListener != null)
-                                        m_cameraListener.OnDebug("检测到人脸: " + faces.length);
-                                    /*List<RectF> rects = new ArrayList<RectF>();
-                                    rects.add(CaleFaceRect(faces[0]));
-                                    m_faceRectView.SetFaces(rects);*/
-                                }
+                    m_captureRequest = m_captureRequestBuilder.build();
 
-                                if(m_alwaysCapture || (m_currentCamera.face_mode == CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF || !Common.ArrayIsEmpty(faces))) // 仅有人脸时
-                                {
-                                    //final Bitmap bitmap = m_textureView.getBitmap();
-                                    if(m_cameraListener != null)
-                                        m_cameraListener.OnPreviewCapture(result);
-                                    /*runOnUiThread(new Runnable(){
-                                        public void run()
-                                        {
-                                        HandleCapturePreview(bitmap);
-                                        }
-                                    });*/
-                                }
-                            }
-                            }
-                        }, m_threadHandler);
-                        if(m_cameraListener != null)
-                            m_cameraListener.OnCameraOpenPreviewResult(true);
-                    }
-                    catch(Exception e)
-                    {
-                        e.printStackTrace();
-                        m_cameraListener.OnCameraOpenPreviewResult(false);
-                    }
+                    // StartPreview(); // TODO: 不自动预览
                 }
 
                 public void onConfigureFailed(CameraCaptureSession session)
@@ -278,6 +229,8 @@ public class CameraFunc {
                     if(m_cameraListener != null)
                         m_cameraListener.OnFail("相机预览对话配置错误");
                     session.close();
+                    m_captureRequestBuilder = null;
+                    m_captureRequest = null;
                     m_cameraCaptureSession = null;
                     m_cameraAccessed = false;
                     if(m_cameraListener != null)
@@ -292,6 +245,86 @@ public class CameraFunc {
         }
     }
 
+    // 开始预览
+    public void StartPreview()
+    {
+        if(m_cameraCaptureSession == null)
+            return;
+        if(m_cameraAccessed)
+            return;
+
+        if(m_captureRequest == null)
+            return;
+        m_cameraAccessed = true;
+        m_lastCaptureTime = 0;
+
+        try
+        {
+            m_cameraCaptureSession.setRepeatingRequest(m_captureRequest, new CameraCaptureSession.CaptureCallback(){
+                public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
+                {
+                    long now = System.currentTimeMillis();
+                    if(m_lastCaptureTime == 0)
+                    {
+                        m_lastCaptureTime = now;
+                        if(m_cameraListener != null)
+                            m_cameraListener.OnPreviewStart();
+                        return;
+                    }
+                    if(now - m_lastCaptureTime > m_captureInterval)
+                    {
+                        m_lastCaptureTime = now - (now - m_lastCaptureTime - m_captureInterval);
+                        Face faces[] = result.get(TotalCaptureResult.STATISTICS_FACES);
+                        // TODO: 测试
+                        if(!Common.ArrayIsEmpty(faces))
+                        {
+                            /*if(m_cameraListener != null)
+                                m_cameraListener.OnDebug("检测到人脸: " + faces.length);*/
+                                        /*List<RectF> rects = new ArrayList<RectF>();
+                                        rects.add(CaleFaceRect(faces[0]));
+                                        m_faceRectView.SetFaces(rects);*/
+                        }
+
+                        // 仅有人脸时
+                        //boolean ava = m_alwaysCapture || (m_currentCamera.face_mode == CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF || !Common.ArrayIsEmpty(faces));
+
+                        //final Bitmap bitmap = m_textureView.getBitmap();
+                        if(m_cameraListener != null)
+                            m_cameraListener.OnPreviewCapture(result, faces, now, m_alwaysCapture, m_currentCamera.face_mode);
+                    }
+                }
+            }, m_threadHandler);
+            if(m_cameraListener != null)
+                m_cameraListener.OnCameraOpenPreviewResult(true);
+        }
+        catch(Exception e)
+        {
+            e.printStackTrace();
+            m_cameraListener.OnCameraOpenPreviewResult(false);
+        }
+    }
+
+    // 结束预览
+    public void StopPreview()
+    {
+        if(m_cameraCaptureSession == null)
+            return;
+        if(!m_cameraAccessed)
+            return;
+        m_lastCaptureTime = 0;
+        try
+        {
+            m_cameraCaptureSession.stopRepeating();
+            if(m_cameraListener != null)
+                m_cameraListener.OnPreviewStop();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+        m_cameraAccessed = false;
+    }
+
     // 打开摄像头
     public void StartCamera()
     {
@@ -302,7 +335,8 @@ public class CameraFunc {
         Size size = CalePreferPreviewSize(m_textureWidth, m_textureHeight);
         TransformTextureView(m_textureWidth, m_textureHeight);
         int orientation = m_activity.getResources().getConfiguration().orientation;
-        if (orientation == Configuration.ORIENTATION_LANDSCAPE)
+        if (orientation == Configuration.ORIENTATION_LANDSCAPE
+                || (m_currentCamera.orientation != 90 && m_currentCamera.orientation != 270)) // 如果摄像头传感器度数为0
             m_textureView.SetAspectRatio(size.getWidth(), size.getHeight());
         else
             m_textureView.SetAspectRatio(size.getHeight(), size.getWidth());
@@ -313,18 +347,12 @@ public class CameraFunc {
     // 关闭摄像头
     public void CloseCamera()
     {
+        StopPreview();
+        m_captureRequest = null;
+        m_captureRequestBuilder = null;
+        //m_captureRequestBuilder.removeTarget(m_surface);
         if(m_cameraCaptureSession != null)
         {
-            try
-            {
-                m_cameraCaptureSession.stopRepeating();
-                if(m_cameraListener != null)
-                    m_cameraListener.OnPreviewStop();
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
             m_cameraCaptureSession.close();
             m_cameraCaptureSession = null;
         }
