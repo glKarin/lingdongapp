@@ -263,35 +263,38 @@ public class CameraFunc {
             m_cameraCaptureSession.setRepeatingRequest(m_captureRequest, new CameraCaptureSession.CaptureCallback(){
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
                 {
-                    long now = System.currentTimeMillis();
-                    if(m_lastCaptureTime == 0)
-                    {
-                        m_lastCaptureTime = now;
-                        if(m_cameraListener != null)
-                            m_cameraListener.OnPreviewStart();
-                        return;
-                    }
-                    if(now - m_lastCaptureTime > m_captureInterval)
-                    {
-                        m_lastCaptureTime = now - (now - m_lastCaptureTime - m_captureInterval);
-                        Face faces[] = result.get(TotalCaptureResult.STATISTICS_FACES);
-                        // TODO: 测试
-                        if(!Common.ArrayIsEmpty(faces))
-                        {
-                            /*if(m_cameraListener != null)
-                                m_cameraListener.OnDebug("检测到人脸: " + faces.length);*/
-                                        /*List<RectF> rects = new ArrayList<RectF>();
-                                        rects.add(CaleFaceRect(faces[0]));
-                                        m_faceRectView.SetFaces(rects);*/
-                        }
+                long now = System.currentTimeMillis();
+                if(m_lastCaptureTime == 0)
+                {
+                    m_lastCaptureTime = now;
+                    if(m_cameraListener != null)
+                        m_cameraListener.OnPreviewStart();
+                    return;
+                }
 
-                        // 仅有人脸时
-                        //boolean ava = m_alwaysCapture || (m_currentCamera.face_mode == CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF || !Common.ArrayIsEmpty(faces));
-
-                        //final Bitmap bitmap = m_textureView.getBitmap();
-                        if(m_cameraListener != null)
-                            m_cameraListener.OnPreviewCapture(result, faces, now, m_alwaysCapture, m_currentCamera.face_mode);
+                if(now - m_lastCaptureTime >= m_captureInterval)
+                {
+                    //m_lastCaptureTime = now - (now - m_lastCaptureTime - m_captureInterval); // 固定时间间隔
+                    //Logf.e(ID_TAG, "%d - %d = %d(%d)", now, m_lastCaptureTime, now - m_lastCaptureTime, m_captureInterval);
+                    m_lastCaptureTime = now;
+                    Face faces[] = result.get(TotalCaptureResult.STATISTICS_FACES);
+                    // TODO: 测试
+                    if(!Common.ArrayIsEmpty(faces))
+                    {
+                        /*if(m_cameraListener != null)
+                            m_cameraListener.OnDebug("检测到人脸: " + faces.length);*/
+                                    /*List<RectF> rects = new ArrayList<RectF>();
+                                    rects.add(CaleFaceRect(faces[0]));
+                                    m_faceRectView.SetFaces(rects);*/
                     }
+
+                    // 仅有人脸时
+                    //boolean ava = m_alwaysCapture || (m_currentCamera.face_mode == CaptureRequest.STATISTICS_FACE_DETECT_MODE_OFF || !Common.ArrayIsEmpty(faces));
+
+                    //final Bitmap bitmap = m_textureView.getBitmap();
+                    if(m_cameraListener != null)
+                        m_cameraListener.OnPreviewCapture(result, faces, now, m_alwaysCapture, m_currentCamera.face_mode);
+                }
                 }
             }, m_threadHandler);
             if(m_cameraListener != null)

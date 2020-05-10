@@ -35,6 +35,7 @@ public final class Configs
 	public static final String ID_PREFERENCE_DEFAULT_FACE_CAPTURE_SCHEME = Constants.ID_CONFIG_FACE_CAPTURE_SCHEME_WHEN_FACE;
 	public static final String ID_PREFERENCE_DEFAULT_CAMERA_RESOLUTION = Constants.ID_CONFIG_CAMERA_RESOLUTION_HIGHER;
 	public static final int ID_PREFERENCE_DEFAULT_OPEN_SCREEN_SAVER_MAX_INTERVAL = 10000;
+	public static final int ID_PREFERENCE_DEFAULT_OPERATE_DEVICE_TIMEOUT = 10000;
 
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";
@@ -44,6 +45,7 @@ public final class Configs
 	private static final String ID_CONFIG_LOG_FILE_SUFFIX = ".log.txt";
 	public static final String ID_CONFIG_LOG_DIRECTORY = "log";
 	public static final String ID_CONFIG_WORK_DIRECTORY = "ling_dong_app";
+	public static final String ID_CONFIG_CORE_DUMP_FILE = "app_crash.dump.txt";
 
 	private static Configs _configs;
 	private Map<String, Object> m_configs;

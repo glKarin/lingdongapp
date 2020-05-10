@@ -168,5 +168,16 @@ public class SettingsFragment extends PreferenceFragmentCompat
 				return true;
 			}
 		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_OPERATE_DEVICE_TIMEOUT);
+		//((EditTextPreference)(preference)).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_OPERATE_DEVICE_TIMEOUT);
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
+				return true;
+			}
+		});
 	}
 }

@@ -43,12 +43,10 @@ import com.youtushuju.lingdongapp.device.LingDongApi;
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
-import com.youtushuju.lingdongapp.device.PutOpenDoorReqStruct;
-import com.youtushuju.lingdongapp.device.SerialPortFunc;
-import com.youtushuju.lingdongapp.device.SerialReqStruct;
 import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.gui.CameraFunc;
+import com.youtushuju.lingdongapp.gui.DeviceFunc;
 import com.youtushuju.lingdongapp.gui.DynamicTextureView;
 import com.youtushuju.lingdongapp.gui.FaceRectView;
 import com.youtushuju.lingdongapp.gui.ScreenSaverView;
@@ -76,7 +74,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
 
-    private static final int ID_HIDE_PERSON_PANEL_DELAY = 3500;
+    private static final int ID_HIDE_PERSON_PANEL_DELAY = 5000;
 
     /**
      * Some older devices needs a small delay between UI widget updates
@@ -99,11 +97,11 @@ public class MainActivity extends AppCompatActivity {
     private FaceRectView m_faceRectView = null;
     private ScreenSaverView m_webView = null;
     private View m_screenSaverView = null;
+    private int m_operateDeviceTimeout = Configs.ID_PREFERENCE_DEFAULT_OPERATE_DEVICE_TIMEOUT; // 操作设备超时
 
     // 设备交互
-    private LingDongApi m_lingdongApi;
-    private SerialPortFunc m_serialPortDriver = null;
-    private SerialReqStruct m_serialReq = null;
+    private LingDongApi m_lingdongApi = null;
+    private DeviceFunc m_deviceFunc = null;
 
     // 测试
     private View m_apiDebugView = null;
@@ -111,8 +109,12 @@ public class MainActivity extends AppCompatActivity {
     private long m_lastVerifyTime = 0L; // 上次检测到人脸的时间
     private int m_verifyFaceMaxInterval = Configs.ID_PREFERENCE_DEFAULT_OPEN_SCREEN_SAVER_MAX_INTERVAL; // 检测不到人脸则进入屏保的间隔
 
-    private HandlerThread m_threadHandlerThread = null;
-    private Handler m_threadHandler = null; // new thread
+    // 相机线程
+    private HandlerThread m_cameraHandlerThread = null;
+    private Handler m_cameraHandler = null; // new thread
+    // 网络/设备线程
+    private HandlerThread m_deviceHandlerThread = null;
+    private Handler m_deviceHandler = null; // new thread
 
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
@@ -205,9 +207,13 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void OnPreviewCapture(TotalCaptureResult result, Face faces[], long time, boolean always, int face_mode) {
+            if(m_deviceFunc.IsRunning())
+                return; // 正在操作设备
+
             // TODO: 测试
             if(!Common.ArrayIsEmpty(faces))
             {
+                Logf.e(ID_TAG, "检测到人脸: " + faces.length);
                  ShowToast("检测到人脸: " + faces.length, Toast.LENGTH_LONG);
             }
 
@@ -216,9 +222,13 @@ public class MainActivity extends AppCompatActivity {
 
             if(available)
             {
-                final Bitmap bitmap = m_textureView.getBitmap();
-                m_lastVerifyTime = time;
-                HandleCapturePreview(bitmap);
+                if(m_deviceFunc.IsCanStart())
+                {
+                    m_deviceFunc.Reset();
+                    final Bitmap bitmap = m_textureView.getBitmap();
+                    m_lastVerifyTime = time;
+                    HandleCapturePreview(bitmap);
+                }
             }
             else
             {
@@ -231,11 +241,11 @@ public class MainActivity extends AppCompatActivity {
                         runOnUiThread(new Runnable() {
                             @Override
                             public void run() {
-                                m_camera.StopPreview();
-                                m_lastVerifyTime = 0;
-                                OpenScreenSaver();
+                            m_camera.StopPreview();
+                            m_lastVerifyTime = 0;
+                            OpenScreenSaver();
 
-                                findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+                            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
                             }
                         });
                     }
@@ -280,42 +290,105 @@ public class MainActivity extends AppCompatActivity {
             m_handler.post(new Runnable(){
                 @Override
                 public void run() {
-                    Logf.i(ID_TAG, "设置垃圾类别: " + name);
-                    if("waste".equals(name))
-                        m_serialReq.door_id = DeviceApi.ID_KITCHEN_WASTE_DOOR_ID;
-                    else if("other".equals(name))
-                        m_serialReq.door_id = DeviceApi.ID_OTHER_WASTE_DOOR_ID;
-                    else
-                    {
-                        OpenWarningDialog("门类型无效!");
-                        return;
-                    }
+                Logf.i(ID_TAG, "设置垃圾类别: " + name);
+                if("waste".equals(name))
+                    m_deviceFunc.SetDoorId(DeviceApi.ID_KITCHEN_WASTE_DOOR_ID);
+                else if("other".equals(name))
+                    m_deviceFunc.SetDoorId(DeviceApi.ID_OTHER_WASTE_DOOR_ID);
+                else
+                {
+                    OpenWarningDialog("门类型无效!");
+                    return;
+                }
 
-                    m_camera.StartPreview();
-                    m_lastVerifyTime = System.currentTimeMillis();
-                    CloseScreenSaver();
+                m_camera.StartPreview();
+                m_lastVerifyTime = System.currentTimeMillis();
+                CloseScreenSaver();
 
-                    findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+                findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
                 }
             });
         }
     };
-    private SerialPortFunc.OnDataReceivedListener m_dataReceivedListener = new SerialPortFunc.OnDataReceivedListener() {
+    private DeviceFunc.OnSerialPortListener m_deviceFuncListener = new DeviceFunc.OnSerialPortListener() {
         @Override
-        public void OnDataReceived(byte[] data, int length) {
-        final String json = new String(data);
-        Logf.d(ID_TAG, "从串口接收数据(%s), 长度(%d)", json, length);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
+        public void OnOpened() {
+            Logf.d(ID_TAG, "开始串口读写");
+        }
+
+        @Override
+        public void OnClosed() {
+            Logf.d(ID_TAG, "关闭串口读写");
+        }
+
+        @Override
+        public void OnMessage(String msg) {
+            ShowToast(msg, Toast.LENGTH_SHORT);
+        }
+
+        @Override
+        public void OnError(final String error) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    OpenWarningDialog(error);
+                }
+            });
+        }
+
+        @Override
+        public void OnRecv(final String recvData, String sendData) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                int debugMode = (int)(Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG));
+                if(debugMode != 0)
+                {
+                    findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
+                    ((TextView)m_serialPortDebugView.findViewById(R.id.main_response_debug_text)).setText(recvData);
+                }
+                }
+            });
+            mHideHandler.postDelayed(m_hideFacePanel, ID_HIDE_PERSON_PANEL_DELAY);
+            //m_deviceFunc.Reset();
+        }
+
+        @Override
+        public void OnSend(final String data, boolean success) {
             int debugMode = (int)(Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG));
             if(debugMode != 0)
             {
-                findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
-                ((TextView)m_serialPortDebugView.findViewById(R.id.main_response_debug_text)).setText(json);
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                    findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
+                    ((TextView)m_serialPortDebugView.findViewById(R.id.main_response_debug_text)).setText("");
+                    ((TextView)m_serialPortDebugView.findViewById(R.id.main_request_debug_text)).setText(data);
+                    }
+                });
             }
+            if(!success)
+            {
+                ShowToast("串口数据发送成功", Toast.LENGTH_SHORT);
             }
-        });
+        }
+
+        @Override
+        public void OnStateChanged(int state) {
+            Logf.e(ID_TAG, "串口读写状态变更: " + state);
+            m_lastVerifyTime = 0L; //System.currentTimeMillis();
+        }
+
+        @Override
+        public void OnTimeout(String sendData, final int timeout) {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    OpenWarningDialog("读取数据超时: " + timeout);
+                }
+            });
+            //m_deviceFunc.Reset();
+            mHideHandler.postDelayed(m_hideFacePanel, ID_HIDE_PERSON_PANEL_DELAY);
         }
     };
 
@@ -331,7 +404,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.main);
 
         m_lingdongApi = Configs.Instance().GetLingDongApi(this);
-        m_serialReq = new PutOpenDoorReqStruct();
 
         mVisible = true;
         mControlsView = findViewById(R.id.main_layer);
@@ -376,15 +448,22 @@ public class MainActivity extends AppCompatActivity {
         m_apiDebugView = findViewById(R.id.main_api_debug_panel);
         m_serialPortDebugView = findViewById(R.id.main_serial_port_debug_panel);
 
-        m_threadHandlerThread = new HandlerThread("_Preview_capture_thread");
-        m_threadHandlerThread.start();
-        m_threadHandler = new Handler(m_threadHandlerThread.getLooper());
+        m_cameraHandlerThread = new HandlerThread("_Camera_preview_thread");
+        m_cameraHandlerThread.start();
+        m_cameraHandler = new Handler(m_cameraHandlerThread.getLooper());
+
+        m_deviceHandlerThread = new HandlerThread("_Network_device_thread");
+        m_deviceHandlerThread.start();
+        m_deviceHandler = new Handler(m_deviceHandlerThread.getLooper());
 
         SetupUI();
 
-        m_camera = new CameraFunc(this, m_textureView, m_threadHandler);
+        m_camera = new CameraFunc(this, m_textureView, m_cameraHandler);
         m_currentCamera = m_camera.CurrentCamera();
         m_camera.SetOnCameraListener(m_onCameraListener);
+
+        m_deviceFunc = new DeviceFunc(this, m_deviceHandler);
+        m_deviceFunc.SetOnSerialPortListener(m_deviceFuncListener);
 
         App.Instance().PushActivity(this);
     }
@@ -451,7 +530,7 @@ public class MainActivity extends AppCompatActivity {
     private void HandleCapturePreview(final Bitmap bitmap)
     {
         //if(true) return;
-        /*m_threadHandler.post(new Runnable(){
+        /*m_cameraHandler.post(new Runnable(){
             public void run()
             {
                 VerifyFace(bitmap);
@@ -467,7 +546,13 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        VerifyFace(bitmap);
+        // 新线程执行
+        m_deviceHandler.post(new Runnable() {
+            @Override
+            public void run() {
+                VerifyFace(bitmap);
+            }
+        });
     }
 
     @Override
@@ -541,6 +626,7 @@ public class MainActivity extends AppCompatActivity {
         try
         {
             m_verifyFaceMaxInterval = Integer.parseInt(preferences.getString(Constants.ID_PREFERENCE_OPEN_SCREEN_SAVER_MAX_INTERVAL, "" + Configs.ID_PREFERENCE_DEFAULT_OPEN_SCREEN_SAVER_MAX_INTERVAL));
+            m_operateDeviceTimeout = Integer.parseInt(preferences.getString(Constants.ID_PREFERENCE_OPERATE_DEVICE_TIMEOUT, "" + Configs.ID_PREFERENCE_DEFAULT_OPERATE_DEVICE_TIMEOUT));
         }
         catch (Exception e)
         {
@@ -593,8 +679,13 @@ public class MainActivity extends AppCompatActivity {
         super.onDestroy();
         m_camera.ShutdownCamera();
         m_handler = null;
-        m_threadHandlerThread.quit();
-        m_threadHandlerThread = null;
+        m_cameraHandler = null;
+        m_cameraHandlerThread.quit();
+        m_cameraHandlerThread = null;
+
+        m_deviceHandler = null;
+        m_deviceHandlerThread.quit();
+        m_deviceHandlerThread = null;
         App.Instance().PopActivity();
     }
 
@@ -656,12 +747,11 @@ public class MainActivity extends AppCompatActivity {
                 public void run() {
                 findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
                 ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-                HashMap map = new HashMap<String, Object>();
+                JsonMap map = new JsonMap();
                 map.put("c", DeviceApi.ID_DEVICE_API_COMMAND_VERIFY_FACE);
                 map.put("imei", Sys.GetIMEI(MainActivity.this));
                 map.put("m", "IMAGE_BASE64_CODE......");
-                JsonMap data = JSON.Utility.InstanceJsonMap(map);
-                String json = JSON.Stringify(data);
+                String json = JSON.Stringify(map);
                 ((TextView)m_apiDebugView.findViewById(R.id.main_request_debug_text)).setText(json);
                 }
             });
@@ -670,16 +760,25 @@ public class MainActivity extends AppCompatActivity {
         final DeviceApiResp resp = DeviceApi.VerifyFace(Sys.GetIMEI(MainActivity.this), image); // TODO: 当前后台线程
         if(resp != null)
         {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(debugMode != 0)
+                    {
+                        findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
+                        ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText(resp.json);
+                    }
+                }
+            });
             if(resp.IsSuccess())
             {
                 if(resp.data == null || resp.data instanceof String) // MISMATCHED
                 {
                     ShowFacePanel(bitmap/*null*/, "未识别身份", Common.Now());
-                    if(false) // TODO: 仅开发测试
+                    if(true) // TODO: 仅开发测试
                     {
-                        m_serialReq.door_id = DeviceApi.ID_KITCHEN_WASTE_DOOR_ID;
-                        m_serialReq.Finish();
-                        OpenDoor(m_serialReq);
+                        m_deviceFunc.SetDoorId(DeviceApi.ID_KITCHEN_WASTE_DOOR_ID);
+                        OpenDoor();
                     }
                 }
                 else
@@ -689,8 +788,7 @@ public class MainActivity extends AppCompatActivity {
                         JsonMap data = (JsonMap)resp.data;
                         String name = data.<String>GetT("username");
                         ShowFacePanel(bitmap, name, Common.Now());
-                        m_serialReq.Finish();
-                        OpenDoor(m_serialReq);
+                        OpenDoor();
                     }
                     catch (Throwable e)
                     {
@@ -703,16 +801,6 @@ public class MainActivity extends AppCompatActivity {
             {
                 ShowToast("人脸识别服务器错误!", Toast.LENGTH_LONG);
             }
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                if(debugMode != 0)
-                {
-                    findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
-                    ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText(resp.json);
-                }
-                }
-            });
         }
         else
         {
@@ -735,7 +823,6 @@ public class MainActivity extends AppCompatActivity {
             // new String[]{"Ada", "徐天龙", "Leon", "Jill", "张三", "李四", "王五", "赵二"}[Common.Rand(0, 7)]
             m_personName.setText(name);
             m_personTime.setText(time);
-            mHideHandler.postDelayed(m_hideFacePanel, ID_HIDE_PERSON_PANEL_DELAY);
             }
         });
     }
@@ -752,46 +839,11 @@ public class MainActivity extends AppCompatActivity {
         m_screenSaverView.setVisibility(View.GONE);
     }
 
-    private boolean OpenSerialPortDriver()
-    {
-        if(m_serialPortDriver == null)
-        {
-            m_serialPortDriver = Configs.Instance().GetLingDongSerialDriver(this);
-            SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-            String path = preferences.getString(Constants.ID_PREFERENCE_SERIAL_PATH, Configs.ID_PREFERENCE_DEFAULT_SERIAL_PATH);
-            int baudrate = Configs.ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE;
-            try
-            {
-                baudrate = Integer.parseInt(preferences.getString(Constants.ID_PREFERENCE_SERIAL_BAUDRATE, "" + Configs.ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE));
-            }
-            catch (Exception e)
-            {
-                e.printStackTrace();
-            }
-
-            if(!m_serialPortDriver.InitSerialPort(path, baudrate))
-            {
-                OpenWarningDialog("串口初始化错误");
-                return false;
-            }
-            if(!m_serialPortDriver.Open())
-            {
-                OpenWarningDialog("串口打开错误");
-                return false;
-            }
-
-            m_serialPortDriver.SetOnDataReceivedListener(m_dataReceivedListener);
-        }
-
-        return m_serialPortDriver != null;
-    }
+    private boolean OpenSerialPortDriver() { return false; } // UNUSED: DeviceFunc里自动控制
 
     private void CloseSerialPortDriver()
     {
-        if(m_serialPortDriver == null)
-            return;
-        m_serialPortDriver.ShutdownSerialPort();
-        m_serialPortDriver = null;
+        m_deviceFunc.Shutdown(); // TODO
     }
 
     private void OpenWarningDialog(String message)
@@ -806,38 +858,11 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private boolean OpenDoor(SerialReqStruct req)
+    private boolean OpenDoor()
     {
-        if(m_serialPortDriver == null)
-            OpenSerialPortDriver();
-
-        if(m_serialPortDriver == null || !m_serialPortDriver.IsOpened())
-            return false;
-
-        int debugMode = (int)(Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG));
-        final String json = req.Dump() + '\r'; // 添加回车符
-        Logf.d(ID_TAG, "发送串口数据(%s), 长度(%d)", json, json.length());
-
-        if(debugMode != 0)
+        boolean ok = m_deviceFunc.OpenDoor(m_operateDeviceTimeout); // 会阻塞线程
+        if(!ok)
         {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
-                    ((TextView)m_serialPortDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-                    ((TextView)m_serialPortDebugView.findViewById(R.id.main_request_debug_text)).setText(json);
-                }
-            });
-        }
-        final int len = m_serialPortDriver.Send(json.getBytes());
-        if(len <= 0)
-        {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    OpenWarningDialog("串口写入错误: " + len);
-                }
-            });
             return false;
         }
         return true;

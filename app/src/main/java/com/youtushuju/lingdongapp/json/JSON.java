@@ -5,9 +5,7 @@ import java.lang.reflect.*;
 
 public final class JSON
 {
-	private JSON()
-	{
-	}
+	private JSON() {}
 	
 	public static JsonResult Parse(String str)
 	{
@@ -86,7 +84,7 @@ public final class JSON
 		if(object == null)
 			return null;
 
-		JsonMap ret = new JsonMap_local();
+		JsonMap ret = new JsonMap();
 		Iterator<String> itor = object.keys();
 		while(itor.hasNext())
 		{
@@ -109,7 +107,7 @@ public final class JSON
 		if(array == null)
 			return null;
 
-		JsonList ret = new JsonList_local();
+		JsonList ret = new JsonList();
 		int len = array.length();
 		for(int i = 0; i < len; i++)
 		{
@@ -171,180 +169,4 @@ public final class JSON
 		return ret;
 	}
 
-	// utils
-	public static final class Utility
-	{
-		private Utility() {}
-
-		public static JsonMap InstanceJsonMap(Map<String, Object> map) // 不总是返回一个非NULL的JsonMap
-		{
-			JsonMap ret = null;
-			Iterator<String> itor;
-
-			if (map == null)
-				return null;
-
-			ret = new JsonMap_local();
-			itor = map.keySet().iterator();
-			while (itor.hasNext()) {
-				String name = itor.next();
-				ret.Put(name, map.get(name));
-			}
-			return ret;
-		}
-
-		public static JsonMap InstanceJsonArray(Map<String, Object> map) // 不总是返回一个非NULL的JsonMap
-		{
-			JsonMap ret = null;
-			Iterator<String> itor;
-
-			if (map == null)
-				return null;
-
-			ret = new JsonMap_local();
-			itor = map.keySet().iterator();
-			while (itor.hasNext()) {
-				String name = itor.next();
-				ret.Put(name, map.get(name));
-			}
-			return ret;
-		}
-	}
-
-
-	// internal
-	private static class DataValue
-	{
-		public Object value;
-		public int type;
-		public DataValue() {}
-		public DataValue(Object value, int type)
-		{
-			this.value = value;
-			this.type = type;
-		}
-	}
-
-	// implement by ArrayList
-	private static class JsonList_local extends ArrayList<DataValue> implements JsonList
-	{
-		public int Length()
-		{
-			return super.size();
-		}
-
-		public<T> T GetT(int index)
-		{
-			return (T)(Get(index));
-		}
-		
-		public Object Get(int index)
-		{
-			return get(index).value;
-		}
-
-		public JsonList Put(Object value)
-		{
-			DataValue d;
-
-			d = new DataValue();
-			int type = JsonDef.JSON_VALUE_TYPE_UNDEFINED;
-			if(value instanceof String || value instanceof Character)
-				type = JsonDef.JSON_VALUE_TYPE_STRING;
-			else if(value instanceof Float || value instanceof Double)
-				type = JsonDef.JSON_VALUE_TYPE_FLOAT;
-			else if(value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long)
-				type = JsonDef.JSON_VALUE_TYPE_INTEGER;
-			else if(value instanceof Array)
-				type = JsonDef.JSON_VALUE_TYPE_ARRAY;
-			else if(value instanceof Boolean)
-				type = JsonDef.JSON_VALUE_TYPE_BOOL;
-			else
-				type = JsonDef.JSON_VALUE_TYPE_OBJECT;
-
-			d.type = type;
-			d.value = value;
-			super.add(d);
-			
-			return this;
-		}
-
-		public int GetType(int index)
-		{
-			return super.get(index).type;
-		}
-
-		@Override
-		public int GetJsonResultType()
-		{
-			return JSON_RESULT_ARRAY;
-		}
-	}
-
-	private static class JsonMap_local extends HashMap<String, DataValue> implements JsonMap
-	{
-		public<T> T GetT(String name)
-		{
-			return (T)Get(name);
-		}
-
-		@Override
-		public String[] GetKeys()
-		{
-			Set<String> keys;
-			Iterator<String> itor;
-			String ret[];
-			int i = 0;
-
-			keys = super.keySet();
-			itor = keys.iterator();
-			ret = new String[keys.size()];
-			while(itor.hasNext())
-				ret[i++] = itor.next();
-
-			return ret;
-		}
-
-		public Object Get(String name)
-		{
-			return get(name).value;
-		}
-
-		public JsonMap Put(String name, Object value)
-		{
-			DataValue d;
-
-			d = new DataValue();
-			int type = JsonDef.JSON_VALUE_TYPE_UNDEFINED;
-			if(value instanceof String || value instanceof Character)
-				type = JsonDef.JSON_VALUE_TYPE_STRING;
-			else if(value instanceof Float || value instanceof Double)
-				type = JsonDef.JSON_VALUE_TYPE_FLOAT;
-			else if(value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long)
-				type = JsonDef.JSON_VALUE_TYPE_INTEGER;
-			else if(value instanceof Array)
-				type = JsonDef.JSON_VALUE_TYPE_ARRAY;
-			else if(value instanceof Boolean)
-				type = JsonDef.JSON_VALUE_TYPE_BOOL;
-			else
-				type = JsonDef.JSON_VALUE_TYPE_OBJECT;
-
-			d.type = type;
-			d.value = value;
-			super.put(name, d);
-			
-			return this;
-		}
-
-		public int GetType(String name)
-		{
-			return super.get(name).type;
-		}
-
-		@Override
-		public int GetJsonResultType()
-		{
-			return JSON_RESULT_OBJECT;
-		}
-	}
 }

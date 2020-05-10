@@ -115,6 +115,16 @@
 			android:defaultValue="10000"
 			>
 		</EditTextPreference>
+		<EditTextPreference
+			android:dialogTitle="设备操作超时(毫秒, 0为不等待, 小于0为一直等待)"
+			android:key="OPERATE_DEVICE_TIMEOUT"
+			android:summary="设备操作超时"
+			android:inputType="number"
+			android:persistent="true"
+			android:title="设置设备操作超时"
+			android:defaultValue="10000"
+			>
+		</EditTextPreference>
 	</PreferenceCategory>
 
 	<PreferenceCategory

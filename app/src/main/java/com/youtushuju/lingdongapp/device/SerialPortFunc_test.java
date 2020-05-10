@@ -128,7 +128,19 @@ public final class SerialPortFunc_test extends SerialPortFunc {
                 if(parent.m_lastData != null && parent.m_onDataReceivedListener != null)
                 {
                     byte data[] = m_lastData.getBytes();
-                    parent.m_onDataReceivedListener.OnDataReceived(data, data.length);
+                    int i = 0;
+                    int step = 2;
+                    while(i < data.length)
+                    {
+                        int max = Math.min(data.length - i, step);
+                        byte bs[] = new byte[max];
+                        for (int m = 0; m < max; m++)
+                            bs[m] = data[i + m];
+                        parent.m_onDataReceivedListener.OnDataReceived(bs, max);
+                        i += max;
+
+                        try{sleep(100);}catch (Exception e){}
+                    }
                     parent.m_lastData = null;
                 }
             }

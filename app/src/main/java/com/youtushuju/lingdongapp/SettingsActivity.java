@@ -11,6 +11,7 @@ import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.gui.App;
 
+// 不再维护
 public class SettingsActivity extends PreferenceActivity
 {
 	private static final String ID_TAG = "SettingsActivity";

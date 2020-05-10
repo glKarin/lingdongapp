@@ -84,8 +84,8 @@ public final class SerialPortFunc_uc extends SerialPortFunc {
         }
         mRunning = true;
         thread = new HandlerThread("UartRecvThread");
-        mRecvHandler = new Handler(thread.getLooper());//使用HandlerThread的looper对象创建Handler，如果使用默认的构造方法，很有可能阻塞UI线程
         thread.start();//创建一个HandlerThread并启动它
+        mRecvHandler = new Handler(thread.getLooper());//使用HandlerThread的looper对象创建Handler，如果使用默认的构造方法，很有可能阻塞UI线程
         m_isOpened = true;
         mNeedSendData = false;
         Logf.d(ID_TAG, "串口读写打开");

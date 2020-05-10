@@ -42,22 +42,19 @@ public class DeviceApi {
     public static DeviceApiResp VerifyFace(String imei, String image)
     {
         JsonMap data;
-        Map<String, Object> map;
         NetworkAccessManager manager;
         NetworkRequest req;
         NetworkReply reply;
         DeviceApiResp resp;
 
-        map = new HashMap<String, Object>();
-        map.put("c", ID_DEVICE_API_COMMAND_VERIFY_FACE);
-        map.put("imei", imei);
-        map.put("m", "IMAGE_BASE64_CODE......");
-        data = JSON.Utility.InstanceJsonMap(map);
+        data = new JsonMap();
+        data.put("c", ID_DEVICE_API_COMMAND_VERIFY_FACE);
+        data.put("imei", imei);
+        data.put("m", "IMAGE_BASE64_CODE......");
         String json = JSON.Stringify(data);
         Logf.d(ID_TAG, "人脸验证请求数据(%s)", json);
-        map.put("m", image);
+        data.put("m", image);
 
-        data = JSON.Utility.InstanceJsonMap(map);
         json = JSON.Stringify(data);
 
         if(Common.StringIsBlank(json))

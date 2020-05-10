@@ -10,7 +10,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
-public class JsonDataStruct implements DataStructInterface{
+public abstract class JsonDataStruct implements DataStructInterface{
     protected Object m_properties = null; // 如果是null或空, 则默认全部公有属性. 类型可以是List<String>, Map<String, String>
     protected boolean m_includeNotExistsProperty = false; // 包涵不存在的公有属性
     protected boolean m_includeStaticProperty = false; // 包涵静态属性
@@ -31,7 +31,7 @@ public class JsonDataStruct implements DataStructInterface{
         if(map == null)
             return null;
 
-        jsonMap = JSON.Utility.InstanceJsonMap(map);
+        jsonMap = JsonMap.FromMap(map);
         return JSON.Stringify(jsonMap);
     }
 

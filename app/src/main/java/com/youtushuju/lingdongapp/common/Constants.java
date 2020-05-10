@@ -13,6 +13,7 @@ public final class Constants
 	public static final String ID_PREFERENCE_CAMERA_RESOLUTION = "CAMERA_RESOLUTION";
 	public static final String ID_PREFERENCE_CLEAN_LOG = "CLEAN_LOG";
 	public static final String ID_PREFERENCE_OPEN_SCREEN_SAVER_MAX_INTERVAL = "OPEN_SCREEN_SAVER_MAX_INTERVAL";
+	public static final String ID_PREFERENCE_OPERATE_DEVICE_TIMEOUT = "OPERATE_DEVICE_TIMEOUT";
 	
 	public static final int ID_REQUEST_RESULT_SUCCESS = 0;
 	public static final int ID_REQUEST_RESULT_FAIL = 1;
