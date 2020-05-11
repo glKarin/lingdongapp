@@ -11,6 +11,12 @@ import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.FS;
 import com.youtushuju.lingdongapp.common.Logf;
+import com.youtushuju.lingdongapp.json.JSON;
+import com.youtushuju.lingdongapp.json.JsonMap;
+import com.youtushuju.lingdongapp.json.JsonResult;
+import com.youtushuju.lingdongapp.network.NetworkAccessManager;
+import com.youtushuju.lingdongapp.network.NetworkReply;
+import com.youtushuju.lingdongapp.network.NetworkRequest;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -23,6 +29,8 @@ import java.util.function.Predicate;
 
 public final class App {
     private static final String ID_TAG = "App";
+    private static final String ID_APP_CHECK_UPDATE_URL = "http://118.190.99.177:9980/api/ling_dong_app/check_update"; //?version=
+    public static final String ID_COPYRIGHT = "©2020 XXXXX, all right reserved";
     private static App _app = null;
     private Stack<Activity> m_activityStack;
     private Thread.UncaughtExceptionHandler m_defaultUncaughtExceptionHandler = null;
@@ -167,5 +175,37 @@ public final class App {
         if(file == null || !file.isDirectory())
             return 0L;
         return FS.du(file);
+    }
+
+    public JsonMap CheckUpdate(String version)
+    {
+        NetworkAccessManager manager;
+        NetworkRequest req;
+        NetworkReply reply;
+
+        String url = ID_APP_CHECK_UPDATE_URL;
+        if(version != null)
+            url += "?version=" + version;
+        Logf.d(ID_TAG, "App检查更新(%s)", url);
+
+        manager = new NetworkAccessManager();
+        manager.SetTimeout(5000);
+
+        req = new NetworkRequest(url);
+        req.AddHeader("Content-type", "application/json");
+        reply = manager.SyncGet(req);
+
+        if(reply == null)
+            return null;
+        String respJson = new String(reply.GetReplyData());
+        Logf.d(ID_TAG, "App检查更新结果(%s)", respJson);
+        if(Common.StringIsBlank(respJson))
+            return null;
+
+        JsonResult result = JSON.Parse(respJson);
+        if(result == null || !(result instanceof JsonMap))
+            return null;
+
+        return (JsonMap)result;
     }
 }

@@ -15,6 +15,14 @@ public final class Common
 		return format.format(new Date(ts));
 	}
 
+	public static String TimestampToDateStr(long ts)
+	{
+		SimpleDateFormat format;
+
+		format = new SimpleDateFormat("yyyy-MM-dd");
+		return format.format(new Date(ts));
+	}
+
 	public static String Now()
 	{
 		return TimestampToStr(System.currentTimeMillis());

@@ -276,11 +276,12 @@ public final class DeviceFunc {
         SetState(ID_STATE_READY);
         m_lastRecvData = "";
         m_lastSendData = "";
+        m_buffer = "";
     }
 
     public void Shutdown()
     {
-        SetState(ID_STATE_DONE);
+        SetState(ID_STATE_INIT); // TODO
         CloseSerialPortDriver();
     }
 

@@ -119,18 +119,13 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("更新", "version", R.drawable.icon_profile, new Runnable() {
-            @Override
-            public void run() {
-                OpenVersionDialog();
-            }
-        }, true);
-        menuList.add(item);
-
         item = new ProfileMenuModel("关于", "about", R.drawable.icon_profile, new Runnable() {
             @Override
             public void run() {
-                OpenAboutDialog();
+                Intent intent;
+
+                intent = new Intent(ProfileActivity.this, AboutActivity.class);
+                ProfileActivity.this.startActivity(intent);
             }
         }, true);
         menuList.add(item);
@@ -182,17 +177,6 @@ public class ProfileActivity extends AppCompatActivity {
         return true;
     }
 
-    private void OpenAboutDialog()
-    {
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("关于程序");
-        builder.setMessage("优途数据灵动人脸程序");
-        builder.setIcon(R.drawable.icon_profile);
-        builder.setPositiveButton("确定", null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
-    }
-
     private void OpenSettingsPage()
     {
         Intent intent;
@@ -202,37 +186,6 @@ public class ProfileActivity extends AppCompatActivity {
         else
             intent = new Intent(this, SettingsActivity.class);
         startActivity(intent);
-    }
-
-    private void OpenVersionDialog()
-    {
-        StringBuffer sb = new StringBuffer();
-        String ver = null;
-        try
-        {
-            PackageInfo info = getPackageManager().getPackageInfo(getPackageName(), 0);
-            ver = info.versionName;
-        }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-        }
-        sb.append("版本: " + ver + "\n");
-        sb.append("编译时间: " + Common.TimestampToStr(BuildConfig.BUILD_TIMESTAMP) + "\n");
-        sb.append("更新: \n");
-        String updates[] = getResources().getStringArray(R.array.update_info);
-        if(updates != null && updates.length > 0)
-        {
-            for (int i = 0; i < updates.length; i++)
-                sb.append((i + 1) + ". " + updates[i] + "\n");
-        }
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("版本更新");
-        builder.setMessage(sb.toString());
-        builder.setIcon(R.drawable.icon_profile);
-        builder.setPositiveButton("确定", null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
     }
 
     @Override
