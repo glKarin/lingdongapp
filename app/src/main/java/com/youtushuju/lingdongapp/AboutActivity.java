@@ -10,6 +10,7 @@ import android.content.ServiceConnection;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.Uri;
+import android.os.Build;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -25,9 +26,11 @@ import android.widget.Toast;
 
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.FileProvider;
 
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Logf;
+import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.gui.ArrayAdapter_base;
 import com.youtushuju.lingdongapp.json.JsonMap;
@@ -41,8 +44,8 @@ public class AboutActivity extends AppCompatActivity {
     private AlertDialog m_loadingDialog = null;
     private HandlerThread m_thread = null;
     private Handler m_handler = null;
-    private IBinder m_binder = null;
     private CheckUpdateReceiver m_checkUpdateReceiver = null;
+    /*private IBinder m_binder = null;
     private ServiceConnection m_serviceConnection = new ServiceConnection() {
         @Override
         public void onServiceDisconnected(ComponentName name) {
@@ -55,34 +58,51 @@ public class AboutActivity extends AppCompatActivity {
             Logf.e(ID_TAG, "onServiceConnected: " + name.toString());
             m_binder = service;
         }
-    };
+    };*/
 
     private class CheckUpdateReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
             final Bundle bundle = intent.getExtras();
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if(m_loadingDialog != null)
-                    {
-                        m_loadingDialog.dismiss();
-                        m_loadingDialog = null;
+            String action = intent.getAction();
+            if((getPackageName() + ".check_update_receiver").equals(action))
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        if(m_loadingDialog != null)
+                        {
+                            m_loadingDialog.dismiss();
+                            m_loadingDialog = null;
+                        }
+                        boolean needUpdate = bundle.getBoolean("result");
+                        if(needUpdate)
+                        {
+                            Bundle b = bundle.getBundle("data");
+                            OpenUpdateDialog(b);
+                        }
+                        else
+                        {
+                            String message = bundle.getString("message");
+                            Toast.makeText(AboutActivity.this, message, Toast.LENGTH_LONG).show();
+                        }
+                        //unregisterReceiver(m_checkUpdateReceiver);
                     }
-                    boolean needUpdate = bundle.getBoolean("result");
-                    if(needUpdate)
-                    {
-                        Bundle b = bundle.getBundle("data");
-                        OpenUpdateDialog(b);
-                    }
-                    else
-                    {
-                        String message = bundle.getString("message");
-                        Toast.makeText(AboutActivity.this, message, Toast.LENGTH_LONG).show();
-                    }
-                    //unregisterReceiver(m_checkUpdateReceiver);
+                });
+            }
+            else if((getPackageName() + ".download_app_receiver").equals(action))
+            {
+                boolean suc = bundle.getBoolean("result");
+                if(suc)
+                {
+                    ActivityUtility.OpenExternally(AboutActivity.this, bundle.getString("data"));
                 }
-            });
+                else
+                {
+                    String message = bundle.getString("message");
+                    Toast.makeText(AboutActivity.this, message, Toast.LENGTH_LONG).show();
+                }
+            }
         }
     }
 
@@ -166,11 +186,11 @@ public class AboutActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        if(m_handler == null)
+        if(m_thread != null)
         {
+            m_handler = null;
             m_thread.quit();
             m_thread = null;
-            m_handler = null;
         }
 
         App.Instance().PopActivity();
@@ -189,6 +209,7 @@ public class AboutActivity extends AppCompatActivity {
             m_checkUpdateReceiver = new CheckUpdateReceiver();
             IntentFilter intentFilter = new IntentFilter();
             intentFilter.addAction(getPackageName() + ".check_update_receiver");
+            intentFilter.addAction(getPackageName() + ".download_app_receiver");
             registerReceiver(m_checkUpdateReceiver, intentFilter);
         }
 
@@ -234,7 +255,7 @@ public class AboutActivity extends AppCompatActivity {
                 sb.append((i + 1) + ". " + updates[i] + "\n");
         }
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("版本更新");
+        builder.setTitle("版本详情");
         builder.setMessage(sb.toString());
         builder.setIcon(R.drawable.icon_profile);
         builder.setPositiveButton("确定", null);
@@ -282,13 +303,21 @@ public class AboutActivity extends AppCompatActivity {
         }
         builder.setMessage(sb.toString());
         builder.setIcon(R.drawable.icon_profile);
-        builder.setPositiveButton("更新", new DialogInterface.OnClickListener() {
+        builder.setNeutralButton("下载", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
                 dialog.dismiss();
                 Uri uri = Uri.parse(b.getString("url"));
                 Intent intent  = new Intent(Intent.ACTION_VIEW, uri);
                 startActivity(intent);
+            }
+        });
+        builder.setPositiveButton("更新", new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                AppCheckUpdateService.DownloadUpdateApp(AboutActivity.this, b.getString("file"), b.getString("url"));
+                Toast.makeText(AboutActivity.this, "后台更新中...", Toast.LENGTH_LONG).show();
             }
         });
         builder.setNegativeButton("取消", null);

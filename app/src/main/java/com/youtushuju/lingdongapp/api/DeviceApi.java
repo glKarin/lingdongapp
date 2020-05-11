@@ -68,7 +68,10 @@ public class DeviceApi {
         req = new NetworkRequest(url);
         req.AddHeader("Content-type", "application/json");
         //Logf.d(ID_TAG, "人脸验证请求数据(%s)", json);
-        reply = manager.SyncPost(req, json.getBytes());
+        reply = manager.SyncPost(req,
+                //json.getBytes()
+                Common.String8BitsByteArray(json) // TODO: 8bits
+        );
 
         if(reply == null)
             return null;

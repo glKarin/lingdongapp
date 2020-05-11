@@ -37,6 +37,11 @@ public abstract class NetworkReply
 		return m_data;	
 	}
 
+	public int GetReplyLength()
+	{
+		return m_data != null ? m_data.length : 0;
+	}
+
 	public boolean GetResponseResult()
 	{
 		return m_result;

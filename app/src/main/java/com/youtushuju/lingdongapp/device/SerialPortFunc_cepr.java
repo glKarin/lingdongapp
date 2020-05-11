@@ -175,6 +175,41 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
                     Logf.d(ID_TAG, "串口读线程关闭");
                     return;
                 }
+
+                try
+                {
+                    int len = input_stream.available();
+                    if(len > 0)
+                    {
+                        byte[] buf = new byte[buf_size];
+                        int rlen = input_stream.read(buf);
+                        if(rlen != len)
+                        {
+                            //continue;
+                            // TODO: error, ignore
+                        }
+                        //Logf.e(ID_TAG, "串口读取: " + new String(buf));
+                        if(parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
+                            parent.m_onDataReceivedListener.OnDataReceived(buf, rlen);
+                    }
+                }
+                catch (IOException e)
+                {
+                    e.printStackTrace();
+                    Logf.e(ID_TAG, "读写错误");
+                    return;
+                }
+            }
+        }
+/*
+        public void run()
+        {
+            while(!isInterrupted()) {
+                if (input_stream == null)
+                {
+                    Logf.d(ID_TAG, "串口读线程关闭");
+                    return;
+                }
                 ByteArrayOutputStream baos = null;
 
                 try
@@ -218,7 +253,7 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
                     }
                 }
             }
-        }
+        }*/
 
         public void Destruction()
         {

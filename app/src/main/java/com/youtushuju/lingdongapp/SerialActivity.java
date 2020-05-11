@@ -153,7 +153,10 @@ public class SerialActivity extends AppCompatActivity {
             }
             m_serialPort.SetOnDataReceivedListener(m_dataReceivedListener);
         }
-        int len = m_serialPort.Send(json.getBytes());
+        int len = m_serialPort.Send(
+                //json.getBytes()
+                Common.String8BitsByteArray(json) // TODO: 8bits
+        );
         if(len <= 0)
         {
             OpenWarningDialog("串口写入错误: " + len);

@@ -19,6 +19,7 @@ import com.youtushuju.lingdongapp.network.NetworkReply;
 import com.youtushuju.lingdongapp.network.NetworkRequest;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.io.PrintWriter;
@@ -156,7 +157,7 @@ public final class App {
     public void Exit(int code)
     {
         Clear();
-        Logf.e("asdasd", m_activityStack.size());
+        Logf.e(ID_TAG, m_activityStack.size());
         System.exit(code);
     }
 
@@ -207,5 +208,54 @@ public final class App {
             return null;
 
         return (JsonMap)result;
+    }
+
+    public File DownloadApp(String filename, String url)
+    {
+        NetworkAccessManager manager;
+        NetworkRequest req;
+        NetworkReply reply;
+
+        Logf.d(ID_TAG, "App下载(%s)", url);
+
+        File file = Configs.Instance().GetFile(Configs.ID_CONFIG_APP_DOWNLOAD + File.separator + filename, true);
+        if(file == null || !file.isFile())
+            return null;
+
+        manager = new NetworkAccessManager();
+
+        req = new NetworkRequest(url);
+        reply = manager.SyncGet(req);
+
+        if(reply == null)
+            return null;
+
+        FileOutputStream fos = null;
+        try
+        {
+            fos = new FileOutputStream(file);
+            fos.write(reply.GetReplyData());
+            fos.flush();
+        }
+        catch (IOException e)
+        {
+            e.printStackTrace();
+            file = null;
+        }
+        finally {
+            try
+            {
+                if(fos != null)
+                {
+                    fos.close();
+                }
+            }
+            catch (IOException e)
+            {
+                e.printStackTrace();
+            }
+        }
+
+        return file;
     }
 }

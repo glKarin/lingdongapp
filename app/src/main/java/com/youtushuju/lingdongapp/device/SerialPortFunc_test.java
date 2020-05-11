@@ -127,7 +127,7 @@ public final class SerialPortFunc_test extends SerialPortFunc {
             while(!isInterrupted()) {
                 if(parent.m_lastData != null && parent.m_onDataReceivedListener != null)
                 {
-                    byte data[] = m_lastData.getBytes();
+                    byte data[] = Common.String8BitsByteArray(parent.m_lastData);
                     int i = 0;
                     int step = 2;
                     while(i < data.length)

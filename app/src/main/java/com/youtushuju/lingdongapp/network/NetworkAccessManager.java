@@ -102,7 +102,8 @@ public class NetworkAccessManager
 			{
 				inputStream = conn.getInputStream();
 				reply.Read(inputStream);
-				Logf.d(ID_TAG, "[Harmattan]: reaponse -> " + new String(reply.GetReplyData()));
+				if(reply.GetReplyLength() < 256 && false)
+					Logf.d(ID_TAG, "[Harmattan]: reaponse -> " + new String(reply.GetReplyData()));
 				inputStream.close();
 			}
 		}
@@ -268,13 +269,23 @@ public class NetworkAccessManager
 					size += len;
 				}
 				bytesStream.flush();
-				bytesStream.close();
 				
 				SetData(bytesStream.toByteArray());
 			}
-			catch(Exception e)
+			catch(IOException e)
 			{
 				e.printStackTrace();
+			}
+			finally {
+				try
+				{
+					if(bytesStream != null)
+						bytesStream.close();
+				}
+				catch(IOException e)
+				{
+					e.printStackTrace();
+				}
 			}
 			
 			return size;

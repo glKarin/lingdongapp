@@ -26,7 +26,8 @@ public final class DeviceFunc {
     public static final int ID_STATE_UNSEND = -1; // 未发送成功
     public static final int ID_STATE_TIMEOUT = -2; // 超时
 
-    private static final char ID_END_CHARACTER = '\r';
+    //private static final char ID_END_CHARACTER = '\r';
+    private static final char ID_END_CHARACTER = '}';
 
     private String m_buffer = ""; // 缓存的数据
     private String m_lastRecvData = "";
@@ -145,7 +146,10 @@ public final class DeviceFunc {
         Logf.d(ID_TAG, "发送串口数据(%s), 长度(%d)", m_lastSendData, m_lastSendData.length());
 
         SetState(ID_STATE_SENDED); // 提前设置为发送完成
-        final int len = m_serialPortDriver.Send(m_lastSendData.getBytes());
+        final int len = m_serialPortDriver.Send(
+                //m_lastSendData.getBytes()
+                Common.String8BitsByteArray(m_lastSendData) // TODO: 8bits
+        );
         if (len <= 0) {
             SetState(ID_STATE_UNSEND);
             if (m_serialPortListener != null)
@@ -208,6 +212,7 @@ public final class DeviceFunc {
                                 sb.append(ch);
                             else
                             {
+                                sb.append(ch);
                                 Logf.d(ID_TAG, "读取到结束符");
                                 data = sb.toString();
                                 break;

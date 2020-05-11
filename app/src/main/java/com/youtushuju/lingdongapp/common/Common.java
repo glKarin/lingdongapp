@@ -1,5 +1,7 @@
 package com.youtushuju.lingdongapp.common;
 
+import java.io.UnsupportedEncodingException;
+import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
@@ -67,5 +69,35 @@ public final class Common
 	public static<T> boolean ArrayIsEmpty(T in[])
 	{
 		return in == null || in.length == 0;
+	}
+
+	/*StandardCharsets.ISO_8859_1
+	StandardCharsets.UTF_8*/
+	public static String ByteArray8BitsString(byte arr[])
+	{
+		try
+		{
+			return arr != null ? new String(arr, "ISO8859-1") : null;
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			e.printStackTrace();
+			//return null;
+			return new String(arr);
+		}
+	}
+
+	public static byte[] String8BitsByteArray(String str)
+	{
+		try
+		{
+			return str != null ? str.getBytes("ISO8859-1") : null;
+		}
+		catch (UnsupportedEncodingException e)
+		{
+			e.printStackTrace();
+			//return null;
+			return str.getBytes();
+		}
 	}
 }

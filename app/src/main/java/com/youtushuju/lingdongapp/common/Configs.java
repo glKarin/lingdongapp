@@ -46,6 +46,7 @@ public final class Configs
 	public static final String ID_CONFIG_LOG_DIRECTORY = "log";
 	public static final String ID_CONFIG_WORK_DIRECTORY = "ling_dong_app";
 	public static final String ID_CONFIG_CORE_DUMP_FILE = "app_crash.dump.txt";
+	public static final String ID_CONFIG_APP_DOWNLOAD = "app_download";
 
 	private static Configs _configs;
 	private Map<String, Object> m_configs;

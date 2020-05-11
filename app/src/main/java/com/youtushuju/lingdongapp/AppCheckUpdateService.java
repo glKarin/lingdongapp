@@ -12,6 +12,8 @@ import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.json.JsonMap;
 
+import java.io.File;
+
 /**
  * An {@link IntentService} subclass for handling asynchronous task requests in
  * a service on a separate handler thread.
@@ -23,8 +25,11 @@ public class AppCheckUpdateService extends IntentService {
     private static final String ID_TAG = "AppCheckUpdateService";
 
     private static final String ID_ACTION_CHECK_UPDATE = "com.youtushuju.lingdongapp.action.app_check_update";
+    private static final String ID_ACTION_DOWNLOAD_APP = "com.youtushuju.lingdongapp.action.download_app";
 
     private static final String ID_ACTION_CHECK_UPDATE_PARAM_VERSION = "com.youtushuju.lingdongapp.extra.version";
+    private static final String ID_ACTION_DOWNLOAD_APP_PARAM_FILENAME = "com.youtushuju.lingdongapp.extra.filename";
+    private static final String ID_ACTION_DOWNLOAD_APP_PARAM_URL = "com.youtushuju.lingdongapp.extra.url";
 
     public AppCheckUpdateService() {
         super(ID_TAG);
@@ -37,6 +42,14 @@ public class AppCheckUpdateService extends IntentService {
         context.startService(intent);
     }
 
+    public static void DownloadUpdateApp(Context context, String filename, String url) {
+        Intent intent = new Intent(context, AppCheckUpdateService.class);
+        intent.setAction(ID_ACTION_DOWNLOAD_APP);
+        intent.putExtra(ID_ACTION_DOWNLOAD_APP_PARAM_FILENAME, filename);
+        intent.putExtra(ID_ACTION_DOWNLOAD_APP_PARAM_URL, url);
+        context.startService(intent);
+    }
+
     @Override
     protected void onHandleIntent(Intent intent) {
         if (intent != null) {
@@ -44,7 +57,15 @@ public class AppCheckUpdateService extends IntentService {
             if (ID_ACTION_CHECK_UPDATE.equals(action)) {
                 String version = intent.getStringExtra(ID_ACTION_CHECK_UPDATE_PARAM_VERSION);
                 HandleAppCheckUpdate(version);
-            } else {
+            }
+            else if(ID_ACTION_DOWNLOAD_APP.equals(action))
+            {
+                String filename = intent.getStringExtra(ID_ACTION_DOWNLOAD_APP_PARAM_FILENAME);
+                String url = intent.getStringExtra(ID_ACTION_DOWNLOAD_APP_PARAM_URL);
+                HandleDownloadUpdateApp(filename, url);
+            }
+            else
+            {
             }
         }
     }
@@ -106,11 +127,33 @@ public class AppCheckUpdateService extends IntentService {
         sendBroadcast(intent);
     }
 
+    private void HandleDownloadUpdateApp(String filename, String url) {
+        Logf.e(ID_TAG, "%s -> %s", filename, url);
+        File file = App.Instance().DownloadApp(filename, url);
+        Intent intent = new Intent(getPackageName() + ".download_app_receiver");
+        Bundle bundle = new Bundle();
+
+        if(file == null)
+        {
+            bundle.putBoolean("result", false);
+            bundle.putString("message", "下载失败");
+        }
+        else
+        {
+            bundle.putBoolean("result", true);
+            bundle.putString("message", "下载成功");;
+            bundle.putString("data", file.getAbsolutePath());
+        }
+
+        intent.putExtras(bundle);
+        sendBroadcast(intent);
+    }
 
     @Override
     public IBinder onBind(Intent intent) {
         Logf.d(ID_TAG, "onBind");
-        return m_binder;
+        //return m_binder;
+        return super.onBind(intent);
     }
 
     @Override

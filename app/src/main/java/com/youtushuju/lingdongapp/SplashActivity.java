@@ -6,6 +6,7 @@ import android.widget.*;
 import android.content.*;
 import android.view.*;
 
+import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.device.LingDongApi;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
@@ -176,6 +177,53 @@ public class SplashActivity extends AppCompatActivity
 		/*LingDongApi api = Configs.Instance().GetLingDongApi(this);
 		api.DeviceSetLCDBlackLight(true);*/
 
+		if(true) return null;
+		Logf.e(ID_TAG, System.getProperty("file.encoding"));
+		String json = "{aaa:true,bbb:\"123\",ccc:456,ddd:\"红中\"}";
+		Logf.e(ID_TAG, "|%s| %d", json, json.length());
+		byte utf8[] = json.getBytes();
+		p(utf8);
+		try
+		{
+			utf8 = json.getBytes("UTF-8");
+			p(utf8);
+
+			utf8 = json.getBytes("ISO8859-1");
+			p(utf8);
+
+			utf8 = json.getBytes("unicode");
+			p(utf8);
+
+
+			byte arr[] = {123, 97, 97, 97, 58, 116, 114, 117, 101, 44, 98, 98, 98, 58, 34, 49, 50, 51, 34, 44, 99, 99, 99, 58, 52, 53, 54, 125, 0x13};
+			String str = new String(arr);
+			Logf.e(ID_TAG, "|%s| %d", str, str.length());
+			str = new String(arr, "UTF-8");
+			Logf.e(ID_TAG, "|%s| %d", str, str.length());
+			str = new String(arr, "ISO8859-1");
+			Logf.e(ID_TAG, "|%s| %d", str, str.length());
+			str = new String(arr, "unicode");
+			Logf.e(ID_TAG, "|%s| %d", str, str.length());
+		}
+		catch (Exception e)
+		{
+			e.printStackTrace();
+		}
+
 		return ret;
+	}
+
+	private void p(byte arr[])
+	{
+		StringBuffer sb = new StringBuffer();
+		int i = 0;
+		for (byte b : arr)
+		{
+			sb.append(b).append(' ');
+			i++;
+		}
+		sb.append('\n');
+		Logf.e(ID_TAG, i);
+		Logf.e(ID_TAG, sb.toString());
 	}
 }

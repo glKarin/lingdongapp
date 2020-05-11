@@ -161,14 +161,22 @@ public class ProfileActivity extends AppCompatActivity {
     }
 
     public boolean onOptionsItemSelected(MenuItem item) {
+        File file;
         switch (item.getItemId())
         {
             case R.id.profile_menu_view_log:
-                File file = (File)(Configs.Instance().GetConfig(Configs.ID_CONFIG_LOG_FILE));
+                file = (File)(Configs.Instance().GetConfig(Configs.ID_CONFIG_LOG_FILE));
                 if(file != null && file.isFile())
                     ActivityUtility.OpenExternally(this, file.getAbsolutePath());
                 else
                     Toast.makeText(this, "当前日志文件未被创建", Toast.LENGTH_LONG).show();
+                break;
+            case R.id.profile_menu_view_crash_log:
+                file = Configs.Instance().GetFile(Configs.ID_CONFIG_CORE_DUMP_FILE);
+                if(file != null && file.isFile())
+                    ActivityUtility.OpenExternally(this, file.getAbsolutePath());
+                else
+                    Toast.makeText(this, "最后崩溃日志文件未被创建", Toast.LENGTH_LONG).show();
                 break;
             default:
                 return super.onOptionsItemSelected(item);

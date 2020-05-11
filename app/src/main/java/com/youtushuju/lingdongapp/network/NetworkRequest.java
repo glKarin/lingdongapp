@@ -1,4 +1,6 @@
 package com.youtushuju.lingdongapp.network;
+import com.youtushuju.lingdongapp.common.Common;
+
 import java.util.*;
 import java.net.*;
 
@@ -130,10 +132,11 @@ public class NetworkRequest
 	{
 		return m_data;
 	}
-	
+
 	public NetworkRequest SetData(String data)
 	{
-		m_data = data == null || data.isEmpty() ? null : data.getBytes();
+		m_data = data == null || data.isEmpty() ? null : data.getBytes(); // TODO: normal UTF-8
+		//m_data = Common.String8BitsByteArray(data); // TODO: 8bits
 		return this;
 	}
 	
