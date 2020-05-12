@@ -21,6 +21,9 @@
         <service
             android:name=".AppCheckUpdateService"
             android:exported="false"></service>
+        <service
+            android:name=".UploadLogService"
+            android:exported="false"></service>
 
         <activity
             android:name=".FileBrowserActivity"
@@ -45,6 +48,10 @@
         <activity
             android:name=".AboutActivity"
             android:label="关于"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".LogActivity"
+            android:label="日志"
             android:theme="@style/AppTheme" />
         <activity
             android:name=".MainActivity"

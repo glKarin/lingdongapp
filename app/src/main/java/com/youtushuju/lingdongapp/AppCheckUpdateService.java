@@ -168,14 +168,12 @@ public class AppCheckUpdateService extends IntentService {
         return super.onStartCommand(intent, flags, startId);
     }
 
-    //Service被关闭之前回调
     @Override
     public void onDestroy() {
         Logf.d(ID_TAG, "onDestroy");
         super.onDestroy();
     }
 
-    //定义onBinder方法所返回的对象
     private AppCheckUpdateBinder m_binder = new AppCheckUpdateBinder();
     public class AppCheckUpdateBinder extends Binder
     {

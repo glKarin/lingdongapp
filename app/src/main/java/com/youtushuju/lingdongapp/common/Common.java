@@ -100,4 +100,22 @@ public final class Common
 			return str.getBytes();
 		}
 	}
+
+	public static String ThrowableToString(Throwable e)
+	{
+		if(e == null)
+			return ""; // 不返回NULL
+
+		StringBuffer sb = new StringBuffer();
+		StackTraceElement arr[] = e.getStackTrace();
+
+		String tag = e instanceof Exception ? "异常" : "运行错误";
+		sb.append("[" + tag + "]").append('\n');
+		sb.append("\t" + e.toString() + ": " + e.getMessage()).append('\n');
+		for(StackTraceElement ste : arr)
+		{
+			sb.append("\t\tat " + ste.toString()).append('\n');
+		}
+		return sb.toString();
+	}
 }

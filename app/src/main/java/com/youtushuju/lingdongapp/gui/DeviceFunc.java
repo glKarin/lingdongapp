@@ -265,7 +265,7 @@ public final class DeviceFunc {
         return m_state;
     }
 
-    private void SetState(int s)
+    synchronized private void SetState(int s)
     {
         if(m_state != s)
         {

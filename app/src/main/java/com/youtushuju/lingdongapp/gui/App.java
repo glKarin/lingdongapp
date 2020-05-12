@@ -31,6 +31,8 @@ import java.util.function.Predicate;
 public final class App {
     private static final String ID_TAG = "App";
     private static final String ID_APP_CHECK_UPDATE_URL = "http://118.190.99.177:9980/api/ling_dong_app/check_update"; //?version=
+    public static final String ID_APP_UPLOAD_CRASH_LOG_URL = "http://118.190.99.177:9980/api/ling_dong_app/upload_crash_log";
+    public static final String ID_APP_UPLOAD_RUNTIME_LOG_URL = "http://118.190.99.177:9980/api/ling_dong_app/upload_runtime_log";
     public static final String ID_COPYRIGHT = "©2020 XXXXX, all right reserved";
     private static App _app = null;
     private Stack<Activity> m_activityStack;

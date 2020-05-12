@@ -1,0 +1,25 @@
+<menu xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:context="com.youtushuju.lingdongapp.LogActivity">
+
+    <item android:id="@+id/log_menu_view_runtime_log"
+        android:title="查看当前日志文件"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/log_menu_view_crash_log"
+        android:title="查看最后的崩溃日志文件"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/log_menu_upload_runtime_log"
+        android:title="上传当前日志文件"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/log_menu_upload_crash_log"
+        android:title="上传崩溃日志文件"
+        app:showAsAction="never"/>
+
+    <item android:id="@+id/log_menu_clean_log"
+        android:title="清空日志文件"
+        app:showAsAction="never"/>
+</menu>

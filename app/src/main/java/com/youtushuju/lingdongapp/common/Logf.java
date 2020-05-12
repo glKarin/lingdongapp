@@ -16,8 +16,15 @@ public final class Logf
 	private static final String DEFAULT_WARNING_TAG = "_Warning";
 	private static final String DEFAULT_DEBUG_TAG = "_Debug";
 	private static final String DEFAULT_VERBOSE_TAG = "_Verbose";
+	private static final String DEFAULT_RUNTIME_EXCEPTION_TAG = "_Runtime_exception";
+	private static final String DEFAULT_RUNTIME_ERROR_TAG = "_Runtime_error";
 	
 	private Logf(){}
+
+	public static void DumpException(Throwable e)
+	{
+		f(e instanceof Exception ? DEFAULT_RUNTIME_EXCEPTION_TAG : DEFAULT_RUNTIME_ERROR_TAG, Common.ThrowableToString(e));
+	}
 
 	public static void f(String tag, String format, Object ...args)
 	{

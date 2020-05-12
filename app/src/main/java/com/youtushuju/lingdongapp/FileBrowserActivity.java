@@ -1,7 +1,5 @@
 package com.youtushuju.lingdongapp;
 
-import java.io.File;
-
 import android.Manifest;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -22,7 +20,6 @@ import com.youtushuju.lingdongapp.gui.ArrayAdapter_base;
 import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.FileProvider;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.viewpager.widget.PagerAdapter;
 import androidx.viewpager.widget.ViewPager;
@@ -34,7 +31,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.MimeTypeMap;
 import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
@@ -85,7 +81,7 @@ public class FileBrowserActivity extends AppCompatActivity {
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.file_brower_page_menu, menu);
+        getMenuInflater().inflate(R.menu.file_browser_page_menu, menu);
         return true;
     }
 
@@ -354,7 +350,7 @@ public class FileBrowserActivity extends AppCompatActivity {
             item = m_menuList.get(position);
             if(item.fileView == null)
             {
-                View view = li.inflate(R.layout.file_brower, null, false);
+                View view = li.inflate(R.layout.file_browser, null, false);
                 item.fileView = new FileView(view);
             }
             item.fileView.SetPath(item.name);

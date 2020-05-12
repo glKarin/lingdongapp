@@ -10,13 +10,21 @@ import java.util.List;
 import java.util.Set;
 
 public class FileBrowser {
+    public static final int ID_ORDER_BY_NAME = 1;
+    public static final int ID_ORDER_BY_TIME = 2;
+
+    public static final int ID_SEQUENCE_ASC = 1;
+    public static final int ID_SEQUENCE_DESC = 2;
+
     private String m_currentPath;
     private Set<String> m_history;
-    private List<FileModel> m_fileList;
-    private int m_filter;
-    private int m_order;
+    private List<FileModel> m_fileList = null;
+    private int m_sequence = ID_SEQUENCE_ASC;
+    private int m_filter = 0;
+    private int m_order = ID_ORDER_BY_NAME;
     private List<String> m_extensions;
     private boolean m_showHidden = true;
+    private boolean m_ignoreDotDot = false;
     private FileBrowserCurrentChangedListener m_onCurrentChangedListener;
 
     public FileBrowser()
@@ -28,11 +36,9 @@ public class FileBrowser {
     {
         m_history = new HashSet<String>();
         m_fileList = new ArrayList<FileModel>();
-        m_filter = 0;
-        m_order = 0;
         m_extensions = new ArrayList<String>();
         m_showHidden = true;
-        if(path != null && !path.isEmpty())
+        if(!Common.StringIsEmpty(path))
             SetCurrentPath(path);
     }
 
@@ -41,6 +47,9 @@ public class FileBrowser {
         File dir;
         File files[];
         FileModel item;
+
+        if(Common.StringIsEmpty(path))
+            return false;
 
         dir = new File(path);
         if(!dir.isDirectory())
@@ -81,6 +90,7 @@ public class FileBrowser {
             item.name = name;
             item.path = f.getAbsolutePath();
             item.size = f.length();
+            item.time = f.lastModified();
             item.type = f.isDirectory() ? FileModel.ID_FILE_TYPE_DIRECTORY : FileModel.ID_FILE_TYPE_FILE;
             m_fileList.add(item);
         }
@@ -89,12 +99,16 @@ public class FileBrowser {
         //m_fileList.sort(m_fileComparator);
 
         // 添加上级目录
-        item = new FileModel();
-        item.name = "../";
-        item.path = dir.getParent();
-        item.size = dir.length();
-        item.type = dir.isDirectory() ? FileModel.ID_FILE_TYPE_DIRECTORY : FileModel.ID_FILE_TYPE_FILE;
-        m_fileList.add(0, item);
+        if(!m_ignoreDotDot)
+        {
+            item = new FileModel();
+            item.name = "../";
+            item.path = dir.getParent();
+            item.size = dir.length();
+            item.time = dir.lastModified();
+            item.type = dir.isDirectory() ? FileModel.ID_FILE_TYPE_DIRECTORY : FileModel.ID_FILE_TYPE_FILE;
+            m_fileList.add(0, item);
+        }
 
         int mask = FileBrowserCurrentChangedListener.ID_FILE_BROWSER_CURRENT_CHANGE_LIST;
         if(m_currentPath != path)
@@ -119,6 +133,11 @@ public class FileBrowser {
             }
         }
         return this;
+    }
+
+    public void Rescan()
+    {
+        ListFiles(m_currentPath);
     }
 
     public String CurrentPath() {
@@ -149,6 +168,33 @@ public class FileBrowser {
         return this;
     }
 
+    public FileBrowser SetIgnoreDotDot(boolean b) {
+        if(m_ignoreDotDot != b)
+        {
+            this.m_ignoreDotDot = b;
+            ListFiles(m_currentPath);
+        }
+        return this;
+    }
+
+    public FileBrowser SetOrder(int i) {
+        if(m_order != i)
+        {
+            this.m_order = i;
+            ListFiles(m_currentPath);
+        }
+        return this;
+    }
+
+    public FileBrowser SetSequence(int i) {
+        if(m_sequence != i)
+        {
+            this.m_sequence = i;
+            ListFiles(m_currentPath);
+        }
+        return this;
+    }
+
     public FileBrowser SetOnCurrentChangedListener(FileBrowserCurrentChangedListener listener) {
         if(m_onCurrentChangedListener != listener)
             m_onCurrentChangedListener = listener;
@@ -166,6 +212,7 @@ public class FileBrowser {
         public long size;
         public int type;
         public String permission;
+        public long time;
     }
 
     public interface FileBrowserCurrentChangedListener
@@ -190,7 +237,17 @@ public class FileBrowser {
                 if(b.type == FileModel.ID_FILE_TYPE_DIRECTORY)
                     return 1;
             }
-            return a.name.compareToIgnoreCase(b.name);
+
+            int res = 0;
+            if(m_order == ID_ORDER_BY_TIME)
+                res = Long.signum(a.time - b.time);
+            else if(m_order == ID_ORDER_BY_NAME)
+                res = a.name.compareToIgnoreCase(b.name);
+
+            if(m_sequence == ID_SEQUENCE_DESC)
+                res = -res;
+
+            return res;
         }
     };
 }

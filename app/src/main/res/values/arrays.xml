@@ -55,10 +55,7 @@
 
 
 	<string-array name="update_info">
-		<item>文件浏览中文件排序, 打开文件.</item>
-		<item>信息页面添加查看当前日志菜单.</item>
-		<item>系统信息更多条目.</item>
-		<item>屏保支持.</item>
-		<item>扫脸开门测试.</item>
+		<item>新增日志页面. 日志操作移至该页面.</item>
+		<item>日志上传.</item>
 	</string-array>
 </resources>

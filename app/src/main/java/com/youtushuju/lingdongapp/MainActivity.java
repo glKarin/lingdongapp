@@ -309,6 +309,16 @@ public class MainActivity extends AppCompatActivity {
                 }
             });
         }
+        @JavascriptInterface
+        public void OpenMenu()
+        {
+            m_handler.post(new Runnable(){
+                @Override
+                public void run() {
+                    MainActivity.this.OpenMenu();
+                }
+            });
+        }
     };
     private DeviceFunc.OnSerialPortListener m_deviceFuncListener = new DeviceFunc.OnSerialPortListener() {
         @Override
@@ -426,10 +436,7 @@ public class MainActivity extends AppCompatActivity {
         button.setOnClickListener(new View.OnClickListener(){
             @Override
             public void onClick(View v) {
-                Intent intent;
-
-                intent = new Intent(MainActivity.this, ProfileActivity.class);
-                MainActivity.this.startActivity(intent);
+                OpenMenu();
             }
         });
 
@@ -849,13 +856,20 @@ public class MainActivity extends AppCompatActivity {
     private void OpenWarningDialog(String message)
     {
         Logf.e(ID_TAG, message);
-        AlertDialog.Builder builder = new AlertDialog.Builder(this);
-        builder.setTitle("错误");
-        builder.setMessage(message);
-        builder.setIcon(R.drawable.icon_profile);
-        builder.setPositiveButton("确定", null);
-        AlertDialog dialog = builder.create();
-        dialog.show();
+        try
+        {
+            AlertDialog.Builder builder = new AlertDialog.Builder(this);
+            builder.setTitle("错误");
+            builder.setMessage(message);
+            builder.setIcon(R.drawable.icon_profile);
+            builder.setPositiveButton("确定", null);
+            AlertDialog dialog = builder.create();
+            dialog.show();
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
     }
 
     private boolean OpenDoor()
@@ -866,5 +880,13 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
         return true;
+    }
+
+    private void OpenMenu()
+    {
+        Intent intent;
+
+        intent = new Intent(MainActivity.this, ProfileActivity.class);
+        MainActivity.this.startActivity(intent);
     }
 }
