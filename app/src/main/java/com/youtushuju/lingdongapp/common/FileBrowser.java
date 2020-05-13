@@ -137,6 +137,9 @@ public class FileBrowser {
 
     public void Rescan()
     {
+        m_fileList.clear();
+        if(m_onCurrentChangedListener != null)
+            m_onCurrentChangedListener.OnCurrentChanged(this, FileBrowserCurrentChangedListener.ID_FILE_BROWSER_CURRENT_CHANGE_LIST);
         ListFiles(m_currentPath);
     }
 

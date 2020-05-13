@@ -36,8 +36,8 @@ public class SerialPort {
 	 * Do not remove or rename the field mFd: it is used by native method close();
 	 */
 	private FileDescriptor mFd;
-	private FileInputStream mFileInputStream;
-	private FileOutputStream mFileOutputStream;
+	private FileInputStream mFileInputStream = null;
+	private FileOutputStream mFileOutputStream = null;
 
 	public SerialPort(File device, int baudrate, int flags) throws SecurityException, IOException {
 
@@ -69,7 +69,7 @@ public class SerialPort {
 			throw new IOException();
 		}
 		Logf.e(TAG, "open(%s, %d, %x): 本地打开文件成功, 文件描述符(%s)", device.getPath(), baudrate, flags, mFd.toString());
-		mFileInputStream = new FileInputStream(mFd);
+		//mFileInputStream = new FileInputStream(mFd);
 		mFileOutputStream = new FileOutputStream(mFd);
 	}
 
@@ -88,4 +88,7 @@ public class SerialPort {
 	static {
 		System.loadLibrary("serial_port");
 	}
+
+	// karin
+	public native int Recv(byte data[], int length, int timeout_second);
 }

@@ -1,12 +1,24 @@
 package com.youtushuju.lingdongapp;
 
+import android.Manifest;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.pm.PackageManager;
+import android.content.res.Resources;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.drawable.Icon;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.provider.Settings;
 import android.view.ContextMenu;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -19,8 +31,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.NotificationCompat;
 
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
@@ -36,11 +50,14 @@ import java.util.List;
 
 public class LogActivity extends AppCompatActivity {
     private static final String ID_TAG = "LogActivity";
+    private static final String ID_NOTIFICATION_CHANNEL_ID = "UPLOAD_LOG";
     private ListView m_listView;
     private LogListAdapter m_adapter;
     private FileBrowser m_fileBrowser = null;
     private UploadReceiver m_uploadReceiver = null;
+    private IntentFilter m_intentFilter = null;
     private final String m_logItemMenuItems[] = {"查看", "上传"};
+    private NotificationChannel m_notificationChannel = null;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -61,9 +78,6 @@ public class LogActivity extends AppCompatActivity {
 
     private void SetupUI()
     {
-        LogListAdapter adapter;
-
-        m_adapter.SetData(m_fileBrowser.FileList());
         m_listView.setAdapter(m_adapter);
         m_listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
@@ -74,6 +88,13 @@ public class LogActivity extends AppCompatActivity {
             OpenLogMenu(item.path);
             }
         });
+    }
+
+    private void LoadLogList()
+    {
+        m_adapter.clear();
+        m_fileBrowser.Rescan();
+        m_adapter.SetData(m_fileBrowser.FileList());
     }
 
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -128,8 +149,7 @@ public class LogActivity extends AppCompatActivity {
                 boolean res = App.Instance().CleanLog();
                 if(res)
                 {
-                    m_fileBrowser.Rescan();
-                    m_adapter.clear();
+                    LoadLogList();
                     Toast.makeText(LogActivity.this, "日志文件已清空", Toast.LENGTH_LONG).show();
                 }
                 else
@@ -167,6 +187,8 @@ public class LogActivity extends AppCompatActivity {
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        if(m_uploadReceiver != null)
+            registerReceiver(m_uploadReceiver, m_intentFilter);
         App.Instance().PopActivity();
     }
 
@@ -215,6 +237,66 @@ public class LogActivity extends AppCompatActivity {
         dialog.show();
     }
 
+    @Override
+    protected void onStart() {
+        super.onStart();
+
+        if(!ActivityUtility.IsGrantPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE))
+        {
+            if(!ActivityUtility.RequestPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE))
+                OpenPermissionGrantFailDialog();
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if(ActivityUtility.IsGrantPermission(this, Manifest.permission.READ_EXTERNAL_STORAGE))
+            LoadLogList();
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if(requestCode == ActivityUtility.ID_REQUEST_PERMISSION_RESULT)
+        {
+            int index = 0; // only storage
+            if(grantResults[index] != PackageManager.PERMISSION_GRANTED)
+            {
+                OpenPermissionGrantFailDialog();
+            }
+        }
+    }
+
+    private void OpenPermissionGrantFailDialog()
+    {
+        final DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+                switch (which) {
+                    case DialogInterface.BUTTON_POSITIVE:
+                        ActivityUtility.OpenAppSetting(LogActivity.this);
+                        break;
+                    case DialogInterface.BUTTON_NEGATIVE:
+                    default:
+                        finish();
+                        break;
+                }
+            }
+        };
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        builder.setTitle("程序无权限访问外部存储!");
+        builder.setMessage("请前往系统设置手动授权程序读取外部存储");
+        builder.setIcon(R.drawable.icon_profile);
+        builder.setCancelable(false);
+        builder.setPositiveButton("确定", listener);
+        builder.setNegativeButton("返回", listener);
+        AlertDialog dialog = builder.create();
+        dialog.show();
+    }
+
+
     private class UploadReceiver extends BroadcastReceiver {
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -226,7 +308,8 @@ public class LogActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                     String message = bundle.getString("message");
-                    Toast.makeText(LogActivity.this, "上传崩溃日志" + message, Toast.LENGTH_LONG).show();
+                    String url = bundle.getBoolean("result") ? bundle.getBundle("data").getString("url") : null;
+                    ShowNotification("上传崩溃日志" + message, url);
                     }
                 });
             }
@@ -236,7 +319,8 @@ public class LogActivity extends AppCompatActivity {
                     @Override
                     public void run() {
                         String message = bundle.getString("message");
-                        Toast.makeText(LogActivity.this, "上传运行日志" + message, Toast.LENGTH_LONG).show();
+                        String url = bundle.getBoolean("result") ? bundle.getBundle("data").getString("url") : null;
+                        ShowNotification("上传运行日志" + message, url);
                     }
                 });
             }
@@ -248,10 +332,53 @@ public class LogActivity extends AppCompatActivity {
         if(m_uploadReceiver != null)
             return;
         m_uploadReceiver = new UploadReceiver();
-        IntentFilter intentFilter = new IntentFilter();
-        intentFilter.addAction(getPackageName() + "." + UploadLogService.ID_UPLOAD_CRASH_LOG_RECEIVER);
-        intentFilter.addAction(getPackageName() + "." + UploadLogService.ID_UPLOAD_RUNTIME_LOG_RECEIVER);
-        registerReceiver(m_uploadReceiver, intentFilter);
+        m_intentFilter = new IntentFilter();
+        m_intentFilter.addAction(getPackageName() + "." + UploadLogService.ID_UPLOAD_CRASH_LOG_RECEIVER);
+        m_intentFilter.addAction(getPackageName() + "." + UploadLogService.ID_UPLOAD_RUNTIME_LOG_RECEIVER);
+        registerReceiver(m_uploadReceiver, m_intentFilter);
+    }
+
+    private void ShowNotification(String message, String url)
+    {
+        NotificationManager manager = (NotificationManager)(getSystemService(Context.NOTIFICATION_SERVICE));
+
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+        {
+            if(m_notificationChannel == null)
+            {
+                m_notificationChannel = new NotificationChannel(ID_NOTIFICATION_CHANNEL_ID, "日志上传", NotificationManager.IMPORTANCE_DEFAULT);
+                manager.createNotificationChannel(m_notificationChannel);
+            }
+        }
+
+        Intent intent = null;
+        if(url != null)
+        {
+            Uri uri = Uri.parse(url);
+            intent = new Intent(Intent.ACTION_VIEW, uri);
+        }
+        else
+        {
+            intent = new Intent(this, LogActivity.class);
+        }
+        PendingIntent pi = PendingIntent.getActivity(this, 0, intent, 0);
+        NotificationCompat.Builder builder = new NotificationCompat.Builder(this, ID_NOTIFICATION_CHANNEL_ID);
+        builder.setTicker("");
+        builder.setContentTitle(message);
+        builder.setContentText(url != null ? "文件地址: " + url : "");
+        builder.setAutoCancel(true);
+        builder.setContentInfo("");
+        builder.setSubText("日志上传");
+        builder.setWhen(System.currentTimeMillis());
+        builder.setDefaults(Notification.DEFAULT_VIBRATE | Notification.DEFAULT_LIGHTS);
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
+        {
+            Resources resources = getResources();
+            builder.setLargeIcon(BitmapFactory.decodeResource(resources, R.mipmap.ic_launcher));
+            builder.setSmallIcon(R.mipmap.ic_launcher);
+        }
+        builder.setContentIntent(pi);
+        manager.notify(1, builder.build());
     }
 
     // internal

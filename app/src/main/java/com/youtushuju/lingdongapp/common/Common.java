@@ -1,8 +1,11 @@
 package com.youtushuju.lingdongapp.common;
 
+import android.os.Build;
+
 import java.io.UnsupportedEncodingException;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
+import java.util.Collection;
 import java.util.Date;
 
 public final class Common
@@ -118,4 +121,30 @@ public final class Common
 		}
 		return sb.toString();
 	}
+
+    public static String ByteArrayDebugString(byte arr[], char split)
+    {
+        return ByteArrayDebugString(arr, 0, arr.length, split);
+    }
+
+	public static String ByteArrayDebugString(byte arr[], int start, int length, char split)
+	{
+		StringBuffer sb = new StringBuffer();
+		for (int i = 0; i < length; i++)
+		{
+		    byte b = arr[start + i];
+			sb.append(ByteToHexString(b)).append(split);
+		}
+		return sb.toString();
+	}
+
+	public static String ByteToHexString(byte b)
+    {
+        int ui;
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O)
+            ui = Byte.toUnsignedInt(b);
+        else
+            ui = Integer.parseInt("" + b);
+        return Integer.toHexString(ui & 0xFF);
+    }
 }

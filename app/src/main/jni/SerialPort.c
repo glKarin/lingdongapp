@@ -22,6 +22,9 @@
 #include <string.h>
 #include <jni.h>
 
+#include <stdlib.h>
+#include <errno.h>
+
 #include "SerialPort.h"
 
 #include "android/log.h"
@@ -108,6 +111,7 @@ JNIEXPORT jobject JNICALL Java_android_1serialport_1api_SerialPort_open
 	}
 
 	/* Configure device */
+	//if(0) // TODO: for test
 	{
 		struct termios cfg;
 		LOGD("Configuring serial port");
@@ -165,3 +169,96 @@ JNIEXPORT void JNICALL Java_android_1serialport_1api_SerialPort_close
 	close(descriptor);
 }
 
+static int get_fd(JNIEnv* env, jobject thiz)
+{
+	jclass SerialPortClass = (*env)->GetObjectClass(env, thiz);
+	jclass FileDescriptorClass = (*env)->FindClass(env, "java/io/FileDescriptor");
+
+	jfieldID mFdID = (*env)->GetFieldID(env, SerialPortClass, "mFd", "Ljava/io/FileDescriptor;");
+	jfieldID descriptorID = (*env)->GetFieldID(env, FileDescriptorClass, "descriptor", "I");
+
+	jobject mFd = (*env)->GetObjectField(env, thiz, mFdID);
+	jint descriptor = (*env)->GetIntField(env, mFd, descriptorID);
+
+	LOGD("%s(%d)", __func__, descriptor);
+	return descriptor;
+}
+
+static int read_uart_data(int fd, char *data, int len, int timeout_second)
+{
+	struct timeval timeout;
+	int ret = 0;
+
+	timeout.tv_sec = timeout_second <= 0 ? 2 : timeout_second;
+	timeout.tv_usec = 0;
+	memset(data, 0, len);
+	do {
+		fd_set readfds;
+		FD_ZERO(&readfds);
+		FD_SET(fd, &readfds);
+		ret = select(FD_SETSIZE, &readfds, NULL, NULL, &timeout);
+		if (ret < 0)
+			continue;
+		if (FD_ISSET(fd, &readfds)) {
+			ret = read(fd, data, len);
+		}
+	} while (ret < 0 && errno == EINTR);
+	return ret;
+}
+
+int native_recv(JNIEnv* env, jobject thiz, jbyteArray byteBuf, jint length, jint timeout_second) {
+
+	int fd;
+	int i,ret = -1;
+	jboolean isCopy = JNI_FALSE;
+	unsigned char *xrdata = NULL;
+
+	//int* arr = (int*)(*env)->GetIntArrayElements(env,intBuf,&isCopy);
+
+	fd = get_fd(env, thiz);
+	if(fd == -1)
+		return -1;
+
+	xrdata = malloc(length * sizeof(unsigned char));
+	ret = read_uart_data(fd, xrdata, length, timeout_second);
+    LOGD("%s: read(%d), limit(%d)", __func__, ret, length);
+
+	if(ret > 0)
+	{
+		/*for(i = 0; i < ret; i++)
+		{
+			LOGD("recv-> %d:  %x ", i, xrdata[i]);
+		}*/
+		(*env)->SetByteArrayRegion(env, byteBuf, 0, length, xrdata);
+		//(*env)->ReleaseIntArrayElements(env,intBuf,(jbyte*)arr, JNI_ABORT);
+		LOGD("xrdata addr = 0x%p \n", xrdata);
+	}
+	free(xrdata);
+
+	return ret;
+
+}
+
+static const JNINativeMethod methods[] = {
+		{"Recv", "([BII)I", (void *)native_recv},
+};
+
+// for android
+jint JNI_OnLoad(JavaVM *jvm, void *reserved)
+{
+	JNIEnv *env;
+	jclass clazz;
+
+	if ((*jvm)->GetEnv(jvm, (void **)&env, JNI_VERSION_1_6)) {
+		return JNI_ERR; /* JNI version not supported */
+	}
+	clazz = (*env)->FindClass(env, "android_serialport_api/SerialPort");
+	if (clazz == NULL) {
+		return JNI_ERR;
+	}
+
+	if ((*env)->RegisterNatives(env, clazz, methods, sizeof(methods) / sizeof(methods[0])) < 0)
+		return JNI_ERR;
+
+	return JNI_VERSION_1_4;
+}

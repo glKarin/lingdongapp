@@ -14,9 +14,13 @@ import android_serialport_api.SerialPortFinder;
 
 public final class SerialPortFunc_cepr extends SerialPortFunc {
     private static final String ID_TAG = "SerialPortFunc_cepr";
+    private static final int ID_READ_BY_JAVA_IO = 0;
+    private static final int ID_READ_BY_C = 1;
+
     public SerialPortFinder m_serialPortFinder = null;
     private SerialPort m_serialPort = null;
     private SerialThread m_thread = null;
+    private int m_readWay = ID_READ_BY_C;
 
     public SerialPortFunc_cepr()
     {
@@ -119,7 +123,7 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
             Logf.e(ID_TAG, "请先调用打开函数");
             return -1;
         }
-        if (m_thread.input_stream == null)
+        if (m_thread.output_stream == null)
         {
             Logf.e(ID_TAG, "串口写线程关闭");
             return -3;
@@ -170,35 +174,71 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
         public void run()
         {
             while(!isInterrupted()) {
-                if (input_stream == null)
-                {
-                    Logf.d(ID_TAG, "串口读线程关闭");
-                    return;
-                }
+                if(m_readWay == ID_READ_BY_JAVA_IO)
+                    Read_java_io();
+                else
+                    Read_c();
+            }
+        }
 
-                try
+        private void Read_java_io()
+        {
+            if (input_stream == null)
+            {
+                Logf.d(ID_TAG, "串口读线程关闭");
+                return;
+            }
+
+            try
+            {
+                int len = input_stream.available();
+                if(len > 0)
                 {
-                    int len = input_stream.available();
-                    if(len > 0)
+                    byte[] buf = new byte[buf_size];
+                    int rlen = input_stream.read(buf);
+                    if(rlen != len)
                     {
-                        byte[] buf = new byte[buf_size];
-                        int rlen = input_stream.read(buf);
-                        if(rlen != len)
-                        {
-                            //continue;
-                            // TODO: error, ignore
-                        }
-                        Logf.e(ID_TAG, "串口读取buf(%s), 实际读取rlen(%d), 长度len(%d)" + new String(buf), rlen, len);
-                        if(parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
-                            parent.m_onDataReceivedListener.OnDataReceived(buf, rlen);
+                        //continue;
+                        // TODO: error, ignore
                     }
+                    Logf.e(ID_TAG, "java.io串口读取buf(%s), 实际读取rlen(%d), 长度len(%d)", new String(buf), rlen, len);
+                    if(parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
+                        parent.m_onDataReceivedListener.OnDataReceived(buf, rlen);
                 }
-                catch (IOException e)
+            }
+            catch (IOException e)
+            {
+                Logf.e(ID_TAG, "读写错误");
+                e.printStackTrace();
+                return;
+            }
+        }
+
+        private void Read_c()
+        {
+            if (input_stream != null)
+            {
+                Logf.d(ID_TAG, "串口读取正在使用java.io");
+                return;
+            }
+
+            final int Length = 1024;
+            byte buf[] = new byte[Length];
+            int rlen = parent.m_serialPort.Recv(buf, Length, 2);
+            if(rlen > 0)
+            {
+                byte data[] = null;
+                if(rlen == Length)
+                    data = buf;
+                else
                 {
-                    e.printStackTrace();
-                    Logf.e(ID_TAG, "读写错误");
-                    return;
+                    data = new byte[rlen];
+                    System.arraycopy(buf, 0, data, 0, rlen);
                 }
+                Logf.e(ID_TAG, "C(read)串口读取buf(%s), 实际读取rlen(%d)", new String(data, 0, rlen), rlen);
+                Logf.e(ID_TAG, "C(read)16进制(%s), 长度rlen(%d)", Common.ByteArrayDebugString(data, ' '), rlen);
+                if(parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
+                    parent.m_onDataReceivedListener.OnDataReceived(data, rlen);
             }
         }
 /*

@@ -1,7 +1,13 @@
 package com.youtushuju.lingdongapp;
+import androidx.annotation.NonNull;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
+
+import android.Manifest;
 import android.os.*;
 import android.content.pm.*;
+import android.util.Log;
 import android.widget.*;
 import android.content.*;
 import android.view.*;
@@ -10,6 +16,7 @@ import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.device.LingDongApi;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
+import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
 
 import java.io.IOException;
@@ -26,6 +33,8 @@ public class SplashActivity extends AppCompatActivity
 	private boolean m_navLocked = false;
 	private Timer m_timer = null;
 	private int m_timerDelay = SPLASH_DELAY;
+	private boolean m_started = false;
+	private AlertDialog m_permissionDialog = null;
 	
 	private Handler m_handler = new Handler(){
 		@Override
@@ -78,8 +87,9 @@ public class SplashActivity extends AppCompatActivity
 		SetupUI();
 
 		App.Instance().PushActivity(this);
-
 		Test();
+
+		CheckAppNecessaryPermission(true);
 	}
 
 	private void SetupUI()
@@ -109,20 +119,6 @@ public class SplashActivity extends AppCompatActivity
 		findViewById(R.id.splash_emulate_api).setOnClickListener(m_buttonClickListener);
 		findViewById(R.id.splash_real_api).setOnClickListener(m_buttonClickListener);
 
-		if(m_timerDelay > 0)
-		{
-			m_timer = new Timer();
-			m_timer.scheduleAtFixedRate(new TimerTask(){
-				public void run()
-				{
-					m_handler.sendEmptyMessage(UPDATE_TIMER);
-				}
-			}, TIMER_INTERVAL, TIMER_INTERVAL);
-		}
-		else
-		{
-			Skip();
-		}
 	}
 
 	private View.OnClickListener m_buttonClickListener = new View.OnClickListener()
@@ -165,6 +161,132 @@ public class SplashActivity extends AppCompatActivity
 		finish();
 	}
 
+	private void StartSplash()
+	{
+		if(m_started)
+			return;
+
+		m_started = true;
+		if(m_permissionDialog != null)
+		{
+			m_permissionDialog.dismiss();
+			m_permissionDialog = null;
+		}
+		if(m_timerDelay > 0)
+		{
+			m_timer = new Timer();
+			m_timer.scheduleAtFixedRate(new TimerTask(){
+				public void run()
+				{
+					m_handler.sendEmptyMessage(UPDATE_TIMER);
+				}
+			}, TIMER_INTERVAL, TIMER_INTERVAL);
+		}
+		else
+		{
+			Skip();
+		}
+	}
+
+	private void CheckAppNecessaryPermission(boolean grant)
+	{
+		Map<String, String> permissions = (Map<String, String>)Configs.Instance().GetConfig(Configs.ID_CONFIG_APP_NECESSARY_PERMISSIONS);
+		List<String> list = null;
+
+		for (String p : permissions.keySet())
+		{
+			if(!ActivityUtility.IsGrantPermission(this, p))
+			{
+				if(list == null)
+					list = new ArrayList<String>();
+				list.add(p);
+			}
+		}
+
+		if(list != null && !list.isEmpty())
+		{
+			String rps[] = new String[list.size()];
+			for (int i = 0; i < list.size(); i++)
+				rps[i] = list.get(i);
+			if(grant)
+				ActivityCompat.requestPermissions(this, rps, ActivityUtility.ID_REQUEST_PERMISSION_RESULT);
+			else
+				OpenPermissionGrantFailDialog(list);
+		}
+		else
+		{
+			StartSplash();
+		}
+	}
+
+	@Override
+	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		if(requestCode == ActivityUtility.ID_REQUEST_PERMISSION_RESULT)
+		{
+			List<String> ps = null;
+			for (int i = 0; i < permissions.length; i++)
+			{
+				if(grantResults[i] != PackageManager.PERMISSION_GRANTED)
+				{
+					if(ps == null)
+						ps = new ArrayList<String>();
+					ps.add(permissions[i]);
+				}
+			}
+			if(ps != null)
+				OpenPermissionGrantFailDialog(ps);
+			else
+				StartSplash();
+		}
+	}
+
+	private void OpenPermissionGrantFailDialog(List<String> list) {
+		if(list == null || list.isEmpty())
+			return;
+
+		if(m_permissionDialog != null)
+		{
+			m_permissionDialog.dismiss();
+			m_permissionDialog = null;
+		}
+
+		DialogInterface.OnClickListener listener = new DialogInterface.OnClickListener() {
+			@Override
+			public void onClick(DialogInterface dialog, int which) {
+				switch (which) {
+					case DialogInterface.BUTTON_POSITIVE:
+						ActivityUtility.OpenAppSetting(SplashActivity.this);
+						break;
+					case DialogInterface.BUTTON_NEGATIVE:
+					default:
+						App.Instance().Exit(1);
+						break;
+				}
+			}
+		};
+		Map<String, String> permissions = (Map<String, String>)Configs.Instance().GetConfig(Configs.ID_CONFIG_APP_NECESSARY_PERMISSIONS);
+		StringBuffer sb = new StringBuffer();
+		AlertDialog.Builder builder = new AlertDialog.Builder(this);
+		builder.setTitle("程序运行必须的权限");
+		sb.append("请授权程序请求的权限: \n");
+		for (String p : list)
+			sb.append("  " + permissions.get(p) + "\n");
+		builder.setMessage(sb.toString());
+		builder.setIcon(R.drawable.icon_profile);
+		builder.setCancelable(false);
+		builder.setPositiveButton("授权", listener);
+		builder.setNegativeButton("拒绝", listener);
+		m_permissionDialog = builder.create();
+		m_permissionDialog.show();
+	}
+
+	@Override
+	protected void onResume() {
+		super.onResume();
+		CheckAppNecessaryPermission(false);
+	}
+
 	@Override
 	protected void onDestroy() {
 		super.onDestroy();
@@ -178,31 +300,8 @@ public class SplashActivity extends AppCompatActivity
 		/*LingDongApi api = Configs.Instance().GetLingDongApi(this);
 		api.DeviceSetLCDBlackLight(true);*/
 
-		try
-		{
-			throw new IOException();
-		}
-		catch (Exception e)
-		{
-			e.printStackTrace();
-			Logf.DumpException(e);
-		}
 		if(true) return null;
 
 		return ret;
-	}
-
-	private void p(byte arr[])
-	{
-		StringBuffer sb = new StringBuffer();
-		int i = 0;
-		for (byte b : arr)
-		{
-			sb.append(b).append(' ');
-			i++;
-		}
-		sb.append('\n');
-		Logf.e(ID_TAG, i);
-		Logf.e(ID_TAG, sb.toString());
 	}
 }

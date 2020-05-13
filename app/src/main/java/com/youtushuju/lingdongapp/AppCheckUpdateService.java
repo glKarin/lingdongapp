@@ -23,6 +23,8 @@ import java.io.File;
  */
 public class AppCheckUpdateService extends IntentService {
     private static final String ID_TAG = "AppCheckUpdateService";
+    public static final String ID_CHECK_UPDATE_RECEIVER = "check_update_receiver";
+    public static final String ID_DOWNLOAD_APP_RECEIVER = "download_app_receiver";
 
     private static final String ID_ACTION_CHECK_UPDATE = "com.youtushuju.lingdongapp.action.app_check_update";
     private static final String ID_ACTION_DOWNLOAD_APP = "com.youtushuju.lingdongapp.action.download_app";
@@ -73,7 +75,7 @@ public class AppCheckUpdateService extends IntentService {
     private void HandleAppCheckUpdate(String version) {
         Logf.e(ID_TAG, version);
         JsonMap result = App.Instance().CheckUpdate(version);
-        Intent intent = new Intent(getPackageName() + ".check_update_receiver");
+        Intent intent = new Intent(getPackageName() + "." + ID_CHECK_UPDATE_RECEIVER);
         Bundle bundle = new Bundle();
 
         try
@@ -130,7 +132,7 @@ public class AppCheckUpdateService extends IntentService {
     private void HandleDownloadUpdateApp(String filename, String url) {
         Logf.e(ID_TAG, "%s -> %s", filename, url);
         File file = App.Instance().DownloadApp(filename, url);
-        Intent intent = new Intent(getPackageName() + ".download_app_receiver");
+        Intent intent = new Intent(getPackageName() + "." + ID_DOWNLOAD_APP_RECEIVER);
         Bundle bundle = new Bundle();
 
         if(file == null)

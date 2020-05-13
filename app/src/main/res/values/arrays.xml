@@ -55,7 +55,8 @@
 
 
 	<string-array name="update_info">
-		<item>新增日志页面. 日志操作移至该页面.</item>
-		<item>日志上传.</item>
+		<item>程序启动时检查授权.</item>
+		<item>日志上传后显示通知.</item>
+		<item>串口测试界面输出改为累加方式.</item>
 	</string-array>
 </resources>

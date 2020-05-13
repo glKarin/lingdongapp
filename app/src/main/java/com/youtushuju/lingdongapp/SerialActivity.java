@@ -37,6 +37,7 @@ public class SerialActivity extends AppCompatActivity {
     private TextView m_respText;
     private TextView m_reqText;
     private SerialPortFunc m_serialPort = null;
+    private StringBuffer m_stringBuffer = new StringBuffer();
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -117,6 +118,15 @@ public class SerialActivity extends AppCompatActivity {
                 }
             }
         });
+        ((Button)findViewById(R.id.serial_clear)).setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                synchronized (m_stringBuffer) {
+                    m_stringBuffer.setLength(0);
+                }
+                m_respText.setText("");
+            }
+        });
     }
 
     private void Send(SerialReqStruct d)
@@ -167,14 +177,18 @@ public class SerialActivity extends AppCompatActivity {
     private SerialPortFunc_cepr.OnDataReceivedListener m_dataReceivedListener = new SerialPortFunc_cepr.OnDataReceivedListener() {
         @Override
         public void OnDataReceived(byte[] data, int length) {
-        final String json = new String(data);
-        Logf.d(ID_TAG, "%s %d", json, length);
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                m_respText.setText(json);
+            String json = new String(data, 0, length);
+
+            synchronized (m_stringBuffer) {
+                m_stringBuffer.append(json);
             }
-        });
+            Logf.d(ID_TAG, "本次接收(%s), 长度(%d)", json, length);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    m_respText.setText(m_stringBuffer.toString());
+                }
+            });
         }
     };
 

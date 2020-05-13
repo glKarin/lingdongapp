@@ -1,5 +1,6 @@
 package com.youtushuju.lingdongapp.common;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.hardware.camera2.CameraCharacteristics;
@@ -40,6 +41,7 @@ public final class Configs
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";
 	public static final String ID_CONFIG_DEBUG = "debug";
+	public static final String ID_CONFIG_APP_NECESSARY_PERMISSIONS = "app_necessary_permissions";
 
 	private static final String ID_CONFIG_LOG_FILE_PREFIX = "ling_dong_app.";
 	private static final String ID_CONFIG_LOG_FILE_SUFFIX = ".log.txt";
@@ -54,9 +56,17 @@ public final class Configs
 	private Configs()
 	{
 		m_configs = new HashMap<String, Object>();
+
 		m_configs.put(ID_CONFIG_LINGDONG_API, Constants.ID_CONFIG_API_REAL); // 默认真机
 		m_configs.put(ID_CONFIG_LOG_FILE, GetFile(ID_CONFIG_LOG_DIRECTORY + File.separator + ID_CONFIG_LOG_FILE_PREFIX + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + ID_CONFIG_LOG_FILE_SUFFIX, true));
 		m_configs.put(ID_CONFIG_DEBUG, 1);
+
+		Map<String, String> permissions = new HashMap<String, String>();
+		permissions.put(Manifest.permission.CAMERA, "使用摄像头");
+		permissions.put(Manifest.permission.READ_PHONE_STATE, "获取设备信息");
+		permissions.put(Manifest.permission.READ_EXTERNAL_STORAGE, "访问设备外部存储");
+		permissions.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, "写入设备外部存储");
+		m_configs.put(ID_CONFIG_APP_NECESSARY_PERMISSIONS, permissions);
 	}
 
 	public static Configs Instance()

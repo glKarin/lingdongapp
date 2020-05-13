@@ -717,10 +717,7 @@ public class MainActivity extends AppCompatActivity {
                 dialog.dismiss();
                 switch (which) {
                     case DialogInterface.BUTTON_POSITIVE:
-                        Intent intent = new Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS);
-                        Uri uri = Uri.fromParts("package", MainActivity.this.getPackageName(), null);
-                        intent.setData(uri);
-                        startActivity(intent);
+                        ActivityUtility.OpenAppSetting(MainActivity.this);
                         break;
                     case DialogInterface.BUTTON_NEGATIVE:
                     default:
@@ -733,6 +730,7 @@ public class MainActivity extends AppCompatActivity {
         builder.setTitle("程序无权限访问摄像头设备!");
         builder.setMessage("请前往系统设置手动授权程序访问摄像头");
         builder.setIcon(R.drawable.icon_profile);
+        builder.setCancelable(false);
         builder.setPositiveButton("确定", listener);
         builder.setNegativeButton("退出", listener);
         AlertDialog dialog = builder.create();

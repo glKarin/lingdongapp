@@ -45,7 +45,7 @@ public final class DeviceFunc {
     private SerialPortFunc.OnDataReceivedListener m_dataReceivedListener = new SerialPortFunc.OnDataReceivedListener() {
         @Override
         public void OnDataReceived(byte[] data, int length) {
-            String str = new String(data);
+            String str = new String(data, 0, length);
             Logf.d(ID_TAG, "从串口接收数据(%s), 长度(%d)", str, length);
             if(m_state == ID_STATE_SENDED)
                 SetState(ID_STATE_RECVING);

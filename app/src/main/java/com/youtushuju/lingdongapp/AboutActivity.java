@@ -42,9 +42,8 @@ public class AboutActivity extends AppCompatActivity {
     private static final String ID_TAG = "AboutActivity";
     private ListView m_contentMenu;
     private AlertDialog m_loadingDialog = null;
-    private HandlerThread m_thread = null;
-    private Handler m_handler = null;
     private CheckUpdateReceiver m_checkUpdateReceiver = null;
+    private IntentFilter m_intentFilter = null;
     /*private IBinder m_binder = null;
     private ServiceConnection m_serviceConnection = new ServiceConnection() {
         @Override
@@ -186,31 +185,22 @@ public class AboutActivity extends AppCompatActivity {
     protected void onDestroy() {
         super.onDestroy();
 
-        if(m_thread != null)
-        {
-            m_handler = null;
-            m_thread.quit();
-            m_thread = null;
-        }
+        if(m_checkUpdateReceiver != null)
+            registerReceiver(m_checkUpdateReceiver, m_intentFilter);
 
         App.Instance().PopActivity();
     }
 
     private void AppCheckUpdate()
     {
-        if(m_handler == null) {
-            m_thread = new HandlerThread("_App_check_update_thread");
-            m_thread.start();
-            m_handler = new Handler(m_thread.getLooper());
-        }
 
         if(m_checkUpdateReceiver == null)
         {
             m_checkUpdateReceiver = new CheckUpdateReceiver();
-            IntentFilter intentFilter = new IntentFilter();
-            intentFilter.addAction(getPackageName() + ".check_update_receiver");
-            intentFilter.addAction(getPackageName() + ".download_app_receiver");
-            registerReceiver(m_checkUpdateReceiver, intentFilter);
+            m_intentFilter = new IntentFilter();
+            m_intentFilter.addAction(getPackageName() + "." + AppCheckUpdateService.ID_CHECK_UPDATE_RECEIVER);
+            m_intentFilter.addAction(getPackageName() + "." + AppCheckUpdateService.ID_DOWNLOAD_APP_RECEIVER);
+            registerReceiver(m_checkUpdateReceiver, m_intentFilter);
         }
 
         try {
