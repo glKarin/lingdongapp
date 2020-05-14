@@ -12,7 +12,9 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
 import android.graphics.drawable.ColorDrawable;
 import android.hardware.camera2.CaptureRequest;
@@ -24,6 +26,9 @@ import android.os.Handler;
 import android.os.HandlerThread;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
+import android.util.Log;
+import android.util.Size;
+import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
@@ -43,12 +48,15 @@ import com.youtushuju.lingdongapp.device.LingDongApi;
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
+import com.youtushuju.lingdongapp.device.PutOpenDoorRespStruct;
+import com.youtushuju.lingdongapp.device.SerialReqStruct;
 import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.gui.CameraFunc;
 import com.youtushuju.lingdongapp.gui.DeviceFunc;
 import com.youtushuju.lingdongapp.gui.DynamicTextureView;
 import com.youtushuju.lingdongapp.gui.FaceRectView;
+import com.youtushuju.lingdongapp.gui.ImmersiveDialog;
 import com.youtushuju.lingdongapp.gui.ScreenSaverView;
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
@@ -75,6 +83,7 @@ public class MainActivity extends AppCompatActivity {
     private static final int AUTO_HIDE_DELAY_MILLIS = 3000;
 
     private static final int ID_HIDE_PERSON_PANEL_DELAY = 5000;
+    private static final int ID_OPERATION_FINISHED_INTERVAL = 3500;
 
     /**
      * Some older devices needs a small delay between UI widget updates
@@ -98,6 +107,11 @@ public class MainActivity extends AppCompatActivity {
     private ScreenSaverView m_webView = null;
     private View m_screenSaverView = null;
     private int m_operateDeviceTimeout = Configs.ID_PREFERENCE_DEFAULT_OPERATE_DEVICE_TIMEOUT; // 操作设备超时
+    private boolean m_cropBitmap = true;
+    private int m_cameraUsagePlan = Configs.ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN;
+    private Size m_textureViewInitSize = null;
+    private int m_imageQuality = Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY;
+    private AlertDialog m_resultDialog = null;
 
     // 设备交互
     private LingDongApi m_lingdongApi = null;
@@ -116,6 +130,24 @@ public class MainActivity extends AppCompatActivity {
     private HandlerThread m_deviceHandlerThread = null;
     private Handler m_deviceHandler = null; // new thread
 
+    private final Runnable m_finishOperation = new Runnable() {
+        @Override
+        public void run() {
+            if(m_resultDialog != null)
+            {
+                m_resultDialog.dismiss();
+                m_resultDialog = null;
+            }
+
+            StopPreview();
+
+            m_lastVerifyTime = 0;
+            OpenScreenSaver();
+            CloseSerialPortDriver();
+
+            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+        }
+    };
     private final Runnable mHidePart2Runnable = new Runnable() {
         @SuppressLint("InlinedApi")
         @Override
@@ -179,10 +211,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void OnCameraOpenResult(boolean success) {
             if(success)
-            {
-                ((TextView)findViewById(R.id.main_camera_info_text)).setText(m_currentCamera.toString());
                 Logf.i(ID_TAG, "打开相机成功");
-            }
             else
                 ShowToast("打开相机失败", Toast.LENGTH_LONG);
         }
@@ -207,7 +236,10 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void OnPreviewCapture(TotalCaptureResult result, Face faces[], long time, boolean always, int face_mode) {
-            if(m_deviceFunc.IsRunning())
+            if(
+                    //m_deviceFunc.IsRunning()
+                !m_deviceFunc.IsReady()
+            )
                 return; // 正在操作设备
 
             // TODO: 测试
@@ -238,16 +270,7 @@ public class MainActivity extends AppCompatActivity {
                 {
                     if(time - m_lastVerifyTime >= m_verifyFaceMaxInterval)
                     {
-                        runOnUiThread(new Runnable() {
-                            @Override
-                            public void run() {
-                            m_camera.StopPreview();
-                            m_lastVerifyTime = 0;
-                            OpenScreenSaver();
-
-                            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
-                            }
-                        });
+                        runOnUiThread(m_finishOperation);
                     }
                 }
             }
@@ -280,6 +303,11 @@ public class MainActivity extends AppCompatActivity {
         public void OnDebug(String message) {
             Logf.d(ID_TAG, message);
         }
+
+        @Override
+        public void OnCameraChanged(CameraFunc.CameraInfoModel info) {
+            ((TextView)findViewById(R.id.main_camera_info_text)).setText(info.toString());
+        }
     };
 
     private Handler m_handler = new Handler(); // main thread
@@ -301,7 +329,7 @@ public class MainActivity extends AppCompatActivity {
                     return;
                 }
 
-                m_camera.StartPreview();
+                StartPreview();
                 m_lastVerifyTime = System.currentTimeMillis();
                 CloseScreenSaver();
 
@@ -347,7 +375,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         @Override
-        public void OnRecv(final String recvData, String sendData) {
+        public void OnRecv(final String recvData, String sendData, SerialReqStruct req) {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
@@ -359,12 +387,13 @@ public class MainActivity extends AppCompatActivity {
                 }
                 }
             });
+            UploadWeight(recvData, req);
             mHideHandler.postDelayed(m_hideFacePanel, ID_HIDE_PERSON_PANEL_DELAY);
             //m_deviceFunc.Reset();
         }
 
         @Override
-        public void OnSend(final String data, boolean success) {
+        public void OnSend(final String data, SerialReqStruct req, boolean success) {
             int debugMode = (int)(Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG));
             if(debugMode != 0)
             {
@@ -397,7 +426,7 @@ public class MainActivity extends AppCompatActivity {
                     OpenWarningDialog("读取数据超时: " + timeout);
                 }
             });
-            //m_deviceFunc.Reset();
+            m_deviceFunc.Reset();
             mHideHandler.postDelayed(m_hideFacePanel, ID_HIDE_PERSON_PANEL_DELAY);
         }
     };
@@ -410,14 +439,25 @@ public class MainActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
 
         ImageButton button;
+        SharedPreferences preferences;
 
         setContentView(R.layout.main);
 
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         m_lingdongApi = Configs.Instance().GetLingDongApi(this);
 
         mVisible = true;
         mControlsView = findViewById(R.id.main_layer);
         mContentView = findViewById(R.id.main_content);
+
+        try
+        {
+            m_cameraUsagePlan = Integer.parseInt(preferences.getString(Constants.ID_PREFERENCE_CAMERA_USAGE_PLAN, "" + Configs.ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
 
         // Set up the user interaction to manually show or hide the system UI.
         mContentView.setOnClickListener(new View.OnClickListener() {
@@ -485,8 +525,9 @@ public class MainActivity extends AppCompatActivity {
             public void onSurfaceTextureAvailable(SurfaceTexture surface, int width, int height)
             {
                 Logf.d(ID_TAG, "纹理视图(%d, %d)", width, height);
+                m_textureViewInitSize = new Size(width, height);
                 m_camera.ResizeTextureView(width, height);
-                OpenCamera();
+                //OpenCamera();
             }
 
             public void onSurfaceTextureSizeChanged(SurfaceTexture surface, int width, int height)
@@ -639,20 +680,22 @@ public class MainActivity extends AppCompatActivity {
         {
             e.printStackTrace();
         }
+        m_imageQuality = preferences.getInt(Constants.ID_PREFERENCE_FACE_IMAGE_QUALITY, Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY);
+        m_cropBitmap = preferences.getBoolean(Constants.ID_PREFERENCE_PREVIEW_CAPTURE_CROP, false);
         OpenScreenSaver();
 
         m_camera.Reset();
 
         findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
-
+/*
         if(ActivityUtility.IsGrantPermission(this, Manifest.permission.CAMERA))
         {
             // TODO: Init
             OpenCamera();
         }
+*/
 
        // CloseScreenSaver();
-        ((TextView)findViewById(R.id.main_camera_info_text)).setText(m_currentCamera.toString());
     }
 
     @Override
@@ -737,12 +780,18 @@ public class MainActivity extends AppCompatActivity {
         dialog.show();
     }
 
-    private String VerifyFace(final Bitmap bitmap)
+    private String VerifyFace(Bitmap bitmap)
     {
         final int debugMode = (int)(Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG));
-        int quality = PreferenceManager.getDefaultSharedPreferences(MainActivity.this).getInt(Constants.ID_PREFERENCE_FACE_IMAGE_QUALITY, Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY);
         ByteArrayOutputStream out = new ByteArrayOutputStream();
-        bitmap.compress(Bitmap.CompressFormat.JPEG, quality, out);
+        if(m_cropBitmap && (m_textureViewInitSize != null && (m_textureViewInitSize.getWidth() > 0 && m_textureViewInitSize.getHeight() > 0)))
+        {
+            Rect rect = CaleCropSize(m_textureViewInitSize, new Size(bitmap.getWidth(), bitmap.getHeight()));
+            Logf.e(ID_TAG, "裁剪大小: x(%d), y(%d), w(%d), h(%d)", rect.left, rect.top, rect.width(), rect.height());
+            if(rect.left != 0 || rect.top != 0 || rect.width() != bitmap.getWidth() || rect.height() != bitmap.getHeight())
+                bitmap = Bitmap.createBitmap(bitmap, rect.left, rect.top, rect.width(), rect.height(), null, false);
+        }
+        bitmap.compress(Bitmap.CompressFormat.JPEG, m_imageQuality, out);
         String image = android.util.Base64.encodeToString(out.toByteArray(), android.util.Base64.NO_WRAP);
 
         if(debugMode != 0)
@@ -780,9 +829,8 @@ public class MainActivity extends AppCompatActivity {
                 if(resp.data == null || resp.data instanceof String) // MISMATCHED
                 {
                     ShowFacePanel(bitmap/*null*/, "未识别身份", Common.Now());
-                    if(true) // TODO: 仅开发测试
+                    if(ActivityUtility.BuildOnDebug(this)) // TODO: 仅开发测试
                     {
-                        m_deviceFunc.SetDoorId(DeviceApi.ID_KITCHEN_WASTE_DOOR_ID);
                         OpenDoor();
                     }
                 }
@@ -848,7 +896,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void CloseSerialPortDriver()
     {
-        m_deviceFunc.Shutdown(); // TODO
+        m_deviceFunc.Shutdown(); // TODO: others?
     }
 
     private void OpenWarningDialog(String message)
@@ -886,5 +934,151 @@ public class MainActivity extends AppCompatActivity {
 
         intent = new Intent(MainActivity.this, ProfileActivity.class);
         MainActivity.this.startActivity(intent);
+    }
+
+    public static Rect CaleCropSize(Size destSize, Size bitmapSize)
+    {
+        /*if(destSize.getWidth() >= bitmapSize.getWidth() && destSize.getHeight() >= bitmapSize.getHeight())
+            return new Rect(0, 0, bitmapSize.getWidth(), bitmapSize.getHeight());*/
+
+        float tag_w = (float)destSize.getWidth();
+        float tag_h = (float)destSize.getHeight();
+        float src_w = (float)bitmapSize.getWidth();
+        float src_h = (float)bitmapSize.getHeight();
+
+        float a = src_w / src_h;
+        float b = tag_w / tag_h;
+        float f = a > b ? (tag_h / src_h) : (tag_w / src_w);
+
+        src_w *= f;
+        src_h *= f;
+        float w = Math.min(tag_w, src_w);
+        float h = Math.min(tag_h, src_h);
+        float x = Math.max(0, src_w / 2 - tag_w / 2);
+        float y = Math.max(0, src_h / 2 - tag_h / 2);
+
+        x /= f;
+        y /= f;
+        w /= f;
+        h /= f;
+
+        return new Rect(Math.round(x), Math.round(y), Math.round(x + w), Math.round(y + h));
+    }
+
+    private void StartPreview()
+    {
+        // TODO: 开始预览 or 启动相机
+        if(m_cameraUsagePlan == Constants.ID_CONFIG_CAMERA_USAGE_PLAN_CLOSE_WHEN_UNUSED_AND_REOPEN_WHEN_NEED)
+        {
+            OpenCamera();
+            m_camera.WaitPreview(-1);
+        }
+        else
+        {
+            if(!m_camera.CameraSessionAvailable())
+            {
+                OpenCamera();
+                m_camera.WaitPreview(-1);
+            }
+            else
+                m_camera.StartPreview();
+        }
+    }
+
+    private void StopPreview()
+    {
+        // TODO: 结束预览 or 停止相机
+        if(m_cameraUsagePlan == Constants.ID_CONFIG_CAMERA_USAGE_PLAN_CLOSE_WHEN_UNUSED_AND_REOPEN_WHEN_NEED)
+            CloseCamera();
+        else
+            m_camera.StopPreview();
+    }
+
+    private boolean UploadWeight(String data, SerialReqStruct req)
+    {
+        final int debugMode = (int)(Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG));
+        final PutOpenDoorRespStruct resp = new PutOpenDoorRespStruct();
+        boolean suc = resp.Restore(data);
+        if(!suc)
+        {
+            Logf.e(ID_TAG, "返回数据无效");
+            return false;
+        }
+
+        if(!resp.IsValid())
+        {
+            Logf.e(ID_TAG, "返回数据缺失必要数据" + resp.toString());
+            return false;
+        }
+
+        if(!resp.token.equals(req.token))
+        {
+            Logf.e(ID_TAG, "返回数据token无效");
+            return false;
+        }
+
+        if(debugMode != 0)
+        {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
+                ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
+                JsonMap map = new JsonMap();
+                map.put("c", DeviceApi.ID_DEVICE_API_COMMAND_UPLOAD_FACE);
+                map.put("imei", Sys.GetIMEI(MainActivity.this));
+                map.put("m", resp.weight);
+                String json = JSON.Stringify(map);
+                ((TextView)m_apiDebugView.findViewById(R.id.main_request_debug_text)).setText(json);
+                }
+            });
+        }
+
+        final DeviceApiResp apiResp = DeviceApi.UploadFace(Sys.GetIMEI(MainActivity.this), resp.weight);
+        if(apiResp != null)
+        {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    if(debugMode != 0)
+                    {
+                        findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
+                        ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText(apiResp.json);
+                    }
+                }
+            });
+            OpenOpenDoorResultDialog(apiResp.IsSuccess());
+        }
+        else
+        {
+            ShowToast("上报重量服务器异常!", Toast.LENGTH_LONG);
+            OpenOpenDoorResultDialog(apiResp.IsSuccess());
+        }
+
+        return true;
+    }
+
+    private void OpenOpenDoorResultDialog(boolean suc)
+    {
+        if(m_resultDialog != null)
+        {
+            m_resultDialog.dismiss();
+            m_resultDialog = null;
+        }
+
+        m_resultDialog = new ImmersiveDialog(this);
+        String message = suc ? "操作成功!" : "操作失败!";
+        View view = LayoutInflater.from(m_resultDialog.getContext()).inflate(R.layout.main_result_panel, null);
+        ((ImageView)view.findViewById(R.id.main_result_icon)).setImageResource(R.mipmap.ic_launcher);
+        ((TextView)view.findViewById(R.id.main_result_message)).setText(message);
+        view.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                runOnUiThread(m_finishOperation);
+            }
+        });
+        m_resultDialog.setView(view);
+        m_resultDialog.show();
+        m_handler.postDelayed(m_finishOperation, ID_OPERATION_FINISHED_INTERVAL);
     }
 }

@@ -53,10 +53,18 @@
 		<item>最小支持</item>
 	</string-array>
 
+	<string-array name="camera_usage_plan_key">
+		<item>0</item>
+		<item>1</item>
+	</string-array>
+	<string-array name="camera_usage_plan_name">
+		<item>不使用时关闭相机, 下次使用时重新打开.</item>
+		<item>仅打开一次相机. 不使用时仅停止预览, 下次使用时仅开始预览.</item>
+	</string-array>
+
 
 	<string-array name="update_info">
-		<item>程序启动时检查授权.</item>
-		<item>日志上传后显示通知.</item>
-		<item>串口测试界面输出改为累加方式.</item>
+		<item>测试完成开门流程.</item>
+		<item>新增预览拍照裁剪设置(待测试).</item>
 	</string-array>
 </resources>

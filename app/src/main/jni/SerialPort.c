@@ -169,7 +169,7 @@ JNIEXPORT void JNICALL Java_android_1serialport_1api_SerialPort_close
 	close(descriptor);
 }
 
-static int get_fd(JNIEnv* env, jobject thiz)
+int get_fd(JNIEnv* env, jobject thiz)
 {
 	jclass SerialPortClass = (*env)->GetObjectClass(env, thiz);
 	jclass FileDescriptorClass = (*env)->FindClass(env, "java/io/FileDescriptor");
@@ -239,8 +239,35 @@ int native_recv(JNIEnv* env, jobject thiz, jbyteArray byteBuf, jint length, jint
 
 }
 
+#define uart_tcdrain(fd) ioctl(fd, TCSBRK, 1)
+int java_native_send(JNIEnv* env, jobject thiz, jbyteArray byteBuf, jint length)
+{
+	int i,ret = -1;
+	jboolean isCopy;
+	int fd = -1;
+
+	fd = get_fd(env, thiz);
+	if(fd == -1)
+		return -1;
+
+	jbyte* arr = (int*)(*env)->GetByteArrayElements(env, byteBuf, &isCopy);
+	//tcflush(fd,   TCIOFLUSH);
+	tcflush(fd, TCOFLUSH);
+	ret = write(fd, arr, length * sizeof(jbyte));
+	//tcdrain函数等待所有输出都被发送。若成功为0，出错为-1
+	//usleep(5000);
+	if(uart_tcdrain(fd) == -1)
+		ret = -1;
+	(*env)->ReleaseByteArrayElements(env, byteBuf, arr, JNI_ABORT);
+
+	return ret;
+
+}
+
 static const JNINativeMethod methods[] = {
 		{"Recv", "([BII)I", (void *)native_recv},
+		{"Send", "([BI)I", (void *)java_native_send},
+        {"GetFD", "()I", (void *)get_fd},
 };
 
 // for android

@@ -14,6 +14,8 @@ public final class Constants
 	public static final String ID_PREFERENCE_CLEAN_LOG = "CLEAN_LOG";
 	public static final String ID_PREFERENCE_OPEN_SCREEN_SAVER_MAX_INTERVAL = "OPEN_SCREEN_SAVER_MAX_INTERVAL";
 	public static final String ID_PREFERENCE_OPERATE_DEVICE_TIMEOUT = "OPERATE_DEVICE_TIMEOUT";
+	public static final String ID_PREFERENCE_CAMERA_USAGE_PLAN = "CAMERA_USAGE_PLAN";
+	public static final String ID_PREFERENCE_PREVIEW_CAPTURE_CROP = "PREVIEW_CAPTURE_CROP";
 	
 	public static final int ID_REQUEST_RESULT_SUCCESS = 0;
 	public static final int ID_REQUEST_RESULT_FAIL = 1;
@@ -33,9 +35,15 @@ public final class Constants
 	public static final String ID_CONFIG_FACE_CAPTURE_SCHEME_WHEN_FACE = "face_only";
 
 	public static final String ID_CONFIG_CAMERA_RESOLUTION_HIGHER = "higher";
-	public static final String ID_CONFIG_CAMERA_RESOLUTION_LOWER = "lower";;
+	public static final String ID_CONFIG_CAMERA_RESOLUTION_LOWER = "lower";
 	public static final String ID_CONFIG_CAMERA_RESOLUTION_HIGHEST = "highest";
 	public static final String ID_CONFIG_CAMERA_RESOLUTION_LOWEST = "lowest";
+
+	public static final int ID_CONFIG_CAMERA_USAGE_PLAN_OPEN_ONCE_AND_ONLY_STOP_PREVIEW_WHEN_UNUSED = 1;
+	public static final int ID_CONFIG_CAMERA_USAGE_PLAN_CLOSE_WHEN_UNUSED_AND_REOPEN_WHEN_NEED = 0;
+
+	public static final int ID_APP_BUILD_DEBUG = 0;
+	public static final int ID_APP_BUILD_RELEASE = 1;
 	
 	private Constants(){}
 }

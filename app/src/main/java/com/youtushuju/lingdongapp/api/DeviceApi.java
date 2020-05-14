@@ -26,6 +26,7 @@ public class DeviceApi {
     public static final int ID_ERROR_CODE_ERROR = -1;
 
     public static final String ID_DEVICE_API_COMMAND_VERIFY_FACE = "113";
+    public static final String ID_DEVICE_API_COMMAND_UPLOAD_FACE = "27";
 
     public static final String ID_KITCHEN_WASTE_DOOR_ID = SerialDataDef.ID_DOOR_ID_1; // 厨余垃圾
     public static final String ID_OTHER_WASTE_DOOR_ID = SerialDataDef.ID_DOOR_ID_2; // 其他垃圾
@@ -54,6 +55,46 @@ public class DeviceApi {
         String json = JSON.Stringify(data);
         Logf.d(ID_TAG, "人脸验证请求数据(%s)", json);
         data.put("m", image);
+
+        json = JSON.Stringify(data);
+
+        if(Common.StringIsBlank(json))
+            return null;
+
+        manager = new NetworkAccessManager();
+        manager.SetTimeout(5000);
+        String url = "http://" + ID_URL_HOST + ID_URL_PATH;
+        Map<String, String> headers = new HashMap<String, String>();
+
+        req = new NetworkRequest(url);
+        req.AddHeader("Content-type", "application/json");
+        //Logf.d(ID_TAG, "人脸验证请求数据(%s)", json);
+        reply = manager.SyncPost(req,
+                //json.getBytes()
+                Common.String8BitsByteArray(json) // TODO: 8bits
+        );
+
+        if(reply == null)
+            return null;
+        String respJson = new String(reply.GetReplyData());
+        resp = DeviceApiResp.FromJson(respJson);
+        return resp;
+    }
+
+    public static DeviceApiResp UploadFace(String imei, String weight)
+    {
+        JsonMap data;
+        NetworkAccessManager manager;
+        NetworkRequest req;
+        NetworkReply reply;
+        DeviceApiResp resp;
+
+        data = new JsonMap();
+        data.put("c", ID_DEVICE_API_COMMAND_UPLOAD_FACE);
+        data.put("imei", imei);
+        data.put("m", weight);
+        String json = JSON.Stringify(data);
+        Logf.d(ID_TAG, "上报重量请求数据(%s)", json);
 
         json = JSON.Stringify(data);
 

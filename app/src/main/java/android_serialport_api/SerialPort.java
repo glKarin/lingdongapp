@@ -26,11 +26,16 @@ import java.io.OutputStream;
 
 import android.util.Log;
 
+import androidx.annotation.NonNull;
+
 import com.youtushuju.lingdongapp.common.Logf;
 
 public class SerialPort {
 
 	private static final String TAG = "SerialPort";
+
+	public static final int ID_IO_WAY_JAVA_IO = 0;
+	public static final int ID_IO_WAY_C = 1;
 
 	/*
 	 * Do not remove or rename the field mFd: it is used by native method close();
@@ -38,6 +43,8 @@ public class SerialPort {
 	private FileDescriptor mFd;
 	private FileInputStream mFileInputStream = null;
 	private FileOutputStream mFileOutputStream = null;
+
+	private int m_ioWay = ID_IO_WAY_C;
 
 	public SerialPort(File device, int baudrate, int flags) throws SecurityException, IOException {
 
@@ -69,7 +76,11 @@ public class SerialPort {
 			throw new IOException();
 		}
 		Logf.e(TAG, "open(%s, %d, %x): 本地打开文件成功, 文件描述符(%s)", device.getPath(), baudrate, flags, mFd.toString());
-		//mFileInputStream = new FileInputStream(mFd);
+		if(m_ioWay == ID_IO_WAY_JAVA_IO)
+			mFileInputStream = new FileInputStream(mFd);
+		else
+			mFileInputStream = null; // call Recv()
+
 		mFileOutputStream = new FileOutputStream(mFd);
 	}
 
@@ -82,6 +93,89 @@ public class SerialPort {
 		return mFileOutputStream;
 	}
 
+	public void Shutdown()
+	{
+		close();
+		mFd = new FileDescriptor();
+		// mFd = null;
+	}
+
+	public boolean DeviceOpened()
+	{
+		return mFd != null && mFd.valid();
+	}
+
+	public byte[] Recv_java_io()
+	{
+		if(mFileInputStream == null)
+			return null;
+
+		try
+		{
+			int length = mFileInputStream.available();
+			if(length == 0)
+				return null;
+			byte ret[] = new byte[length];
+			int rlen = mFileInputStream.read(ret, 0, length);
+			if(rlen != length)
+			{
+				// ignore?
+				return null;
+			}
+			return ret;
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	public int Recv_java_io(@NonNull byte ret[])
+	{
+		if(mFileInputStream == null)
+			return -1;
+
+		try
+		{
+			int length = mFileInputStream.available();
+			if(length == 0)
+				return 0;
+			int rlen = mFileInputStream.read(ret, 0, ret.length);
+			if(rlen != ret.length)
+			{
+				// ignore?
+				return -2;
+			}
+			return rlen;
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			return -3;
+		}
+	}
+
+	public int Send_java_io(@NonNull byte data[])
+	{
+		if(mFileOutputStream == null)
+			return -1;
+
+		if(data.length == 0)
+			return 0;
+		try
+		{
+			mFileOutputStream.write(data, 0, data.length);
+			mFileOutputStream.flush();
+			return data.length;
+		}
+		catch (IOException e)
+		{
+			e.printStackTrace();
+			return -2;
+		}
+	}
+
 	// JNI
 	private native static FileDescriptor open(String path, int baudrate, int flags);
 	public native void close();
@@ -91,4 +185,6 @@ public class SerialPort {
 
 	// karin
 	public native int Recv(byte data[], int length, int timeout_second);
+	public native int Send(byte data[], int length);
+	protected native int GetFD();
 }

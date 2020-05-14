@@ -59,6 +59,15 @@
 			android:entryValues="@array/face_capture_scheme_key"
 			android:defaultValue="face_only"
 			/>
+
+		<SwitchPreference
+			android:dialogTitle="裁剪照片"
+			android:key="PREVIEW_CAPTURE_CROP"
+			android:summary="是否裁剪照片"
+			android:persistent="true"
+			android:title="设置是否裁剪照片"
+			android:defaultValue="false"
+			/>
 	</PreferenceCategory>
 
 	<PreferenceCategory
@@ -125,6 +134,16 @@
 			android:defaultValue="10000"
 			>
 		</EditTextPreference>
+		<ListPreference
+			android:dialogTitle="相机使用计划"
+			android:key="CAMERA_USAGE_PLAN"
+			android:summary="相机使用计划"
+			android:persistent="true"
+			android:title="设置相机使用计划(重启后生效)"
+			android:entries="@array/camera_usage_plan_name"
+			android:entryValues="@array/camera_usage_plan_key"
+			android:defaultValue="1"
+			/>
 	</PreferenceCategory>
 
 	<PreferenceCategory

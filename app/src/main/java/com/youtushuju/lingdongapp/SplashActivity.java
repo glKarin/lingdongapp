@@ -5,9 +5,11 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
 
 import android.Manifest;
+import android.graphics.Rect;
 import android.os.*;
 import android.content.pm.*;
 import android.util.Log;
+import android.util.Size;
 import android.widget.*;
 import android.content.*;
 import android.view.*;
@@ -84,6 +86,8 @@ public class SplashActivity extends AppCompatActivity
 		
 		setContentView(R.layout.splash_page);
 
+		Configs.Instance().SetConfig(Configs.ID_CONFIG_LINGDONG_API, ActivityUtility.BuildOnDebug(SplashActivity.this) ? Constants.ID_CONFIG_API_EMULATE : Constants.ID_CONFIG_API_REAL);
+
 		SetupUI();
 
 		App.Instance().PushActivity(this);
@@ -133,6 +137,7 @@ public class SplashActivity extends AppCompatActivity
 				case R.id.splash_real_api:
 					Configs.Instance().SetConfig(Configs.ID_CONFIG_LINGDONG_API, Constants.ID_CONFIG_API_REAL);
 				default:
+					Configs.Instance().SetConfig(Configs.ID_CONFIG_LINGDONG_API, ActivityUtility.BuildOnDebug(SplashActivity.this) ? Constants.ID_CONFIG_API_EMULATE : Constants.ID_CONFIG_API_REAL);
 					break;
 			}
 			Skip();
@@ -301,6 +306,19 @@ public class SplashActivity extends AppCompatActivity
 		api.DeviceSetLCDBlackLight(true);*/
 
 		if(true) return null;
+
+		{
+			Size src = new Size(1280, 720);
+			Size dst = new Size(1080, 1856);
+			Rect rect = MainActivity.CaleCropSize(dst, src);
+			Logf.e(ID_TAG, rect);
+		}
+		{
+			Size src = new Size(1280, 720);
+			Size dst = new Size(1080, 1794);
+			Rect rect = MainActivity.CaleCropSize(dst, src);
+			Logf.e(ID_TAG, rect);
+		}
 
 		return ret;
 	}

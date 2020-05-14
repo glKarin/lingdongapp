@@ -70,6 +70,7 @@ import java.util.Map;
 
 public class CameraFunc {
     private static final String ID_TAG = "CameraFunc";
+    private static final int ID_WAIT_PREVIEW_INTERVAL = 200;
 
     private DynamicTextureView m_textureView = null;
     private Activity m_activity = null;
@@ -107,6 +108,7 @@ public class CameraFunc {
         public void OnError(String message);
         public void OnFail(String message);
         public void OnDebug(String message);
+        public void OnCameraChanged(CameraInfoModel info);
     }
 
     public final class CameraInfoModel
@@ -245,6 +247,34 @@ public class CameraFunc {
         }
     }
 
+    // 等待预览
+    public void WaitPreview(int timeout)
+    {
+        if(timeout != 0)
+        {
+            int start = 0;
+            while(m_cameraCaptureSession == null)
+            {
+                try
+                {
+                    Thread.sleep(ID_WAIT_PREVIEW_INTERVAL);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+                start += ID_WAIT_PREVIEW_INTERVAL;
+                if(timeout > 0)
+                {
+                    if(start >= timeout)
+                        break;
+                }
+            }
+        }
+
+        StartPreview();
+    }
+
     // 开始预览
     public void StartPreview()
     {
@@ -263,6 +293,9 @@ public class CameraFunc {
             m_cameraCaptureSession.setRepeatingRequest(m_captureRequest, new CameraCaptureSession.CaptureCallback(){
                 public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result)
                 {
+                    if(!m_cameraAccessed)
+                        return;
+
                 long now = System.currentTimeMillis();
                 if(m_lastCaptureTime == 0)
                 {
@@ -314,6 +347,7 @@ public class CameraFunc {
             return;
         if(!m_cameraAccessed)
             return;
+        m_cameraAccessed = false;
         m_lastCaptureTime = 0;
         try
         {
@@ -325,7 +359,6 @@ public class CameraFunc {
         {
             e.printStackTrace();
         }
-        m_cameraAccessed = false;
     }
 
     // 打开摄像头
@@ -469,6 +502,8 @@ public class CameraFunc {
         //Size size = needSwap ? max : new Size(max.getHeight(), max.getWidth());
         m_currentCamera.width = size.getWidth();
         m_currentCamera.height = size.getHeight();
+        if(m_cameraListener != null)
+            m_cameraListener.OnCameraChanged(m_currentCamera);
 
         return size;
     }
@@ -478,6 +513,8 @@ public class CameraFunc {
     {
         m_lastCaptureTime = 0;
         m_currentCamera.Reset();
+        if(m_cameraListener != null)
+            m_cameraListener.OnCameraChanged(m_currentCamera);
     }
 
     // 准备打开相机, 初始化相关打开变量(直接从偏好中同步)
@@ -498,6 +535,12 @@ public class CameraFunc {
     public boolean CameraAvailable()
     {
         return m_cameraDevice != null;
+    }
+
+    // 相机会话是否有效
+    public boolean CameraSessionAvailable()
+    {
+        return CameraAvailable() && m_cameraCaptureSession != null;
     }
 
     // 初始化并打开相机
@@ -559,6 +602,8 @@ public class CameraFunc {
             m_currentCamera.orientation = cc.get(CameraCharacteristics.SENSOR_ORIENTATION);
             m_currentCamera.rect = cc.get(CameraCharacteristics.SENSOR_INFO_ACTIVE_ARRAY_SIZE);
 
+            if(m_cameraListener != null)
+                m_cameraListener.OnCameraChanged(m_currentCamera);
             StartCamera();
         }
         catch(Exception e)

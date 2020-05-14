@@ -179,5 +179,25 @@ public class SettingsFragment extends PreferenceFragmentCompat
 				return true;
 			}
 		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_CAMERA_USAGE_PLAN);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN);
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
+				return true;
+			}
+		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_PREVIEW_CAPTURE_CROP);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP);
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
+				return true;
+			}
+		});
 	}
 }

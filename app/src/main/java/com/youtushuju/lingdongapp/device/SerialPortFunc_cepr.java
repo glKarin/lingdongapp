@@ -16,11 +16,14 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
     private static final String ID_TAG = "SerialPortFunc_cepr";
     private static final int ID_READ_BY_JAVA_IO = 0;
     private static final int ID_READ_BY_C = 1;
+    private static final int ID_STATE_READ = 0;
+    private static final int ID_STATE_WRITE = 1;
 
     public SerialPortFinder m_serialPortFinder = null;
     private SerialPort m_serialPort = null;
     private SerialThread m_thread = null;
     private int m_readWay = ID_READ_BY_C;
+    private int m_state = ID_STATE_READ;
 
     public SerialPortFunc_cepr()
     {
@@ -81,6 +84,7 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
         m_thread = new SerialThread(this /* 以父子关系访问, 内部不直接访问外部 */);
         m_thread.start();
         m_isOpened = true;
+        m_state = ID_STATE_READ;
         Logf.d(ID_TAG, "串口读写打开");
         return true;
     }
@@ -89,6 +93,7 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
     {
         if(!m_isOpened)
             return true;
+        m_state = ID_STATE_READ;
         if(m_thread != null)
         {
             m_thread.interrupt();
@@ -131,9 +136,11 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
 
         try
         {
+            m_state = ID_STATE_WRITE; // 进入写状态
             m_thread.output_stream.write(data);
             m_thread.output_stream.flush();
             Logf.d(ID_TAG, "串口写入: " + new String(data));
+            m_state = ID_STATE_READ; // 进入读状态
             return data.length;
         }
         catch (IOException e)
@@ -149,7 +156,7 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
         SerialPortFunc_cepr parent = null;
         InputStream input_stream = null;
         OutputStream output_stream = null;
-        int buf_size = 64;
+        int buf_size = 1024; // 64
 
         public SerialThread(SerialPortFunc_cepr parent)
         {
@@ -174,6 +181,8 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
         public void run()
         {
             while(!isInterrupted()) {
+                if(m_state == ID_STATE_WRITE)
+                    continue;
                 if(m_readWay == ID_READ_BY_JAVA_IO)
                     Read_java_io();
                 else

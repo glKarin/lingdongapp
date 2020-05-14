@@ -49,7 +49,7 @@ public class SerialReqStruct extends JsonDataStruct {
     @Override
     public String toString()
     {
-        return String.format("[%s]: Type(%d), Door(%s), Time(%s), Token(%s)",
+        return String.format("[%s]: Type(%s), Door(%s), Time(%s), Token(%s)",
                 getClass().getName(), type, door_id, time, token);
     }
 

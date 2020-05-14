@@ -8,9 +8,9 @@ public final class PutOpenDoorRespStruct extends SerialRespStruct {
         super();
     }
 
-    public PutOpenDoorRespStruct(String res, String weight, String token)
+    public PutOpenDoorRespStruct(String deviceId, String weight, String token)
     {
-        super(SerialDataDef.ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR, res, token);
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR, deviceId, token);
         this.weight = weight;
     }
 
@@ -18,5 +18,16 @@ public final class PutOpenDoorRespStruct extends SerialRespStruct {
     public boolean IsSuccess()
     {
         return super.IsSuccess() && Integer.parseInt(res) == 1;
+    }
+
+    @Override
+    public String toString()
+    {
+        return super.toString() + String.format(", weight(%s)", weight);
+    }
+
+    @Override
+    public boolean IsValid() {
+        return super.IsValid() && weight != null;
     }
 }

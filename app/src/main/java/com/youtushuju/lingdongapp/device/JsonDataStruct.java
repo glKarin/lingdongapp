@@ -2,6 +2,7 @@ package com.youtushuju.lingdongapp.device;
 
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
+import com.youtushuju.lingdongapp.json.JsonResult;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
@@ -36,8 +37,42 @@ public abstract class JsonDataStruct implements DataStructInterface{
     }
 
     @Override
-    public boolean Restore() {
-        return false; // TODO
+    public boolean Restore(String json)
+    {
+        JsonResult result = JSON.Parse(json);
+        if(result == null)
+            return false;
+        if(!(result instanceof JsonMap))
+            return false;
+
+        JsonMap data = (JsonMap)result;
+        Field fields[];
+
+        fields = getClass().getFields();
+        //fields = getClass().getDeclaredFields(); // 获取全部
+        for (Field f : fields)
+        {
+            int m = f.getModifiers();
+            Object value = null;
+            if(!Modifier.isPublic(m))
+                continue;
+            if(!m_includeStaticProperty && Modifier.isStatic(m))
+                continue;
+            String name = f.getName();
+            if(!data.containsKey(name))
+                continue;
+            try
+            {
+                f.set(this, data.Get(name));
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                continue;
+                //return false;
+            }
+        }
+        return true;
     }
 
     private Map<String, Object> GetPropMap()
@@ -102,4 +137,5 @@ public abstract class JsonDataStruct implements DataStructInterface{
 
         return ret;
     }
+
 }

@@ -6,18 +6,18 @@ public class SerialRespStruct extends JsonDataStruct {
     public String type;
     public String res;
     public String token;
+    public String device_id;
 
     public SerialRespStruct()
     {
         super();
     }
 
-    public SerialRespStruct(String type, String res, String token)
+    public SerialRespStruct(String type, String device_id, String token)
     {
         super();
         this.type = type;
-        this.res = res;
-        this.token = token;
+        this.device_id = device_id;
     }
 
     public boolean IsSuccess()
@@ -28,7 +28,7 @@ public class SerialRespStruct extends JsonDataStruct {
     public boolean IsValid()
     {
         return !Common.StringIsBlank(type)
-                && !Common.StringIsBlank(res)
+                && !Common.StringIsBlank(device_id)
                 && !Common.StringIsBlank(token)
                 ;
     }
@@ -36,8 +36,8 @@ public class SerialRespStruct extends JsonDataStruct {
     @Override
     public String toString()
     {
-        return String.format("[%s]: Type(%d), Res(%s), Token(%s)",
-                getClass().getName(), type, res, token);
+        return String.format("[%s]: Type(%s), DeviceID(%s), Token(%s)",
+                getClass().getName(), type, device_id, token);
     }
 
 }
