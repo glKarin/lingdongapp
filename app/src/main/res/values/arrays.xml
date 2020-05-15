@@ -64,7 +64,6 @@
 
 
 	<string-array name="update_info">
-		<item>测试完成开门流程.</item>
-		<item>新增预览拍照裁剪设置(待测试).</item>
+		<item>相机预览界面修改.</item>
 	</string-array>
 </resources>

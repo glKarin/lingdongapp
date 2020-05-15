@@ -1,32 +1,75 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-android:layout_width="320dp"
-android:layout_height="wrap_content"
-android:orientation="vertical"
+android:layout_width="match_parent"
+android:layout_height="match_parent"
+android:orientation="horizontal"
 android:layout_alignParentTop="true"
 android:layout_alignParentLeft="true"
-android:layout_marginTop="10dp"
-android:layout_marginLeft="10dp"
 android:background="@drawable/main_person_background"
     >
 
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center"
-        android:textStyle="bold"
+    <ScrollView
+        android:layout_width="320dp"
+        android:layout_height="match_parent"
+        android:padding="10dp"
+        >
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center"
+                android:textStyle="bold"
+                android:padding="5dp"
+                android:textSize="24dp"
+                android:textColor="@color/main_person_text_color"
+                android:text="测试数据"
+                />
+
+            <include
+                android:id="@+id/main_api_debug_panel"
+                layout="@layout/main_response_debug_panel"/>
+
+            <include
+                android:id="@+id/main_serial_port_debug_panel"
+                layout="@layout/main_response_debug_panel"/>
+
+            <include
+                android:id="@+id/main_after_api_debug_panel"
+                layout="@layout/main_response_debug_panel" />
+        </LinearLayout>
+    </ScrollView>
+
+    <ScrollView
+        android:layout_width="0dp"
+        android:layout_height="match_parent"
+        android:layout_weight="1"
         android:padding="5dp"
-        android:textSize="24dp"
-        android:textColor="@color/main_person_text_color"
-        android:text="测试数据"
-        />
+        android:layout_marginTop="64dp"
+        >
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical">
+            <Button
+                android:id="@+id/main_menu_open_screensaver"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginRight="5dp"
+                android:text="测试屏保" />
 
-    <include
-        android:id="@+id/main_api_debug_panel"
-        layout="@layout/main_response_debug_panel"/>
+            <TextView
+                android:id="@+id/main_camera_info_text"
+                android:layout_marginTop="10dp"
+                android:layout_width="match_parent"
+                android:textSize="16dp"
+                android:textColor="#FFFFFFFF"
+                android:layout_height="wrap_content"/>
+        </LinearLayout>
 
-    <include
-        android:id="@+id/main_serial_port_debug_panel"
-        layout="@layout/main_response_debug_panel"/>
+    </ScrollView>
 
 </LinearLayout>

@@ -4,6 +4,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="#0099cc"
+    android:keepScreenOn="true"
     tools:context=".MainActivity">
 
     <!-- The primary full-screen view. This can be replaced with whatever view
@@ -23,16 +24,32 @@
         <com.youtushuju.lingdongapp.gui.FaceRectView
             android:id="@+id/main_face_rect_layer"
             android:layout_centerInParent="true"
+            android:visibility="invisible"
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
-        <include
-            android:id="@+id/main_response_debug_view"
-            layout="@layout/main_response_debug"/>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:orientation="vertical"
+            android:layout_centerInParent="true"
+            >
+            <com.youtushuju.lingdongapp.gui.CameraMaskView
+                android:id="@+id/main_camera_mask_layer"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="1"/>
 
-        <include
-            android:id="@+id/main_person_view"
-            layout="@layout/main_person"/>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="150dp"
+                android:gravity="center"
+                android:background="#CC000000">
+                <include
+                    android:id="@+id/main_person_view"
+                    layout="@layout/main_person"/>
+            </LinearLayout>
+        </LinearLayout>
     </RelativeLayout>
 
     <!-- This FrameLayout insets its children based on system windows using
@@ -64,23 +81,11 @@
                 android:layout_marginRight="20dp"
                 android:src="@drawable/icon_profile" />
 
-            <Button
-                android:id="@+id/main_menu_open_screensaver"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:layout_marginRight="20dp"
-                android:text="测试屏保" />
-
-            <TextView
-                android:id="@+id/main_camera_info_text"
-                android:layout_marginTop="20dp"
-                android:layout_width="240dp"
-                android:textSize="16dp"
-                android:textColor="#FFFFFFFF"
-                android:layout_height="wrap_content"/>
-
         </LinearLayout>
+
+        <include
+            android:id="@+id/main_response_debug_view"
+            layout="@layout/main_response_debug"/>
     </FrameLayout>
 
 </FrameLayout>

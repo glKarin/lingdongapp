@@ -12,9 +12,11 @@ import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.common.Sys;
 import com.youtushuju.lingdongapp.device.PutOpenDoorReqStruct;
+import com.youtushuju.lingdongapp.device.PutOpenDoorRespStruct;
 import com.youtushuju.lingdongapp.device.SerialPortFunc;
 import com.youtushuju.lingdongapp.device.SerialReqStruct;
 import com.youtushuju.lingdongapp.device.SerialRespStruct;
+import com.youtushuju.lingdongapp.device.SerialSessionStruct;
 
 public final class DeviceFunc {
     private static final String ID_TAG = "DeviceFunc";
@@ -38,10 +40,13 @@ public final class DeviceFunc {
     private Activity m_activity = null;
     private Handler m_handler = null;
     private OnSerialPortListener m_serialPortListener = null;
+    private String m_device = null;
     //private boolean m_running = false;
 
     private SerialPortFunc m_serialPortDriver = null;
     private SerialReqStruct m_serialReq = null;
+    private SerialRespStruct m_serialResp = null;
+    private SerialSessionStruct m_serialSession = null;
 
     private SerialPortFunc.OnDataReceivedListener m_dataReceivedListener = new SerialPortFunc.OnDataReceivedListener() {
         @Override
@@ -64,15 +69,16 @@ public final class DeviceFunc {
         public void OnClosed();
         public void OnMessage(String msg);
         public void OnError(String error);
+        public void OnFatal(String error);
         public void OnTimeout(String sendData, int timeout);
-        public void OnRecv(String recvData, String sendData, SerialReqStruct req);
+        public void OnRecv(String recvData, String sendData, SerialRespStruct resp, SerialReqStruct req);
         public void OnSend(String data, SerialReqStruct req, boolean success);
         public void OnStateChanged(int state);
     }
 
     public DeviceFunc(Activity activity, Handler handler) {
         m_activity = activity;
-        m_serialReq = new PutOpenDoorReqStruct();
+
         if(handler == null)
             m_handler = new Handler(Looper.getMainLooper());
         else
@@ -87,9 +93,25 @@ public final class DeviceFunc {
         return m_lastRecvData;
     }
 
+    public String LastSendData() {
+        return m_lastSendData;
+    }
+
+    public SerialReqStruct LastRequest() {
+        return m_serialReq;
+    }
+
+    public SerialRespStruct LastResponse() {
+        return m_serialResp;
+    }
+
+    public SerialSessionStruct LastSession() {
+        return m_serialSession;
+    }
+
     public void SetDoorId(String doorId) {
-        m_serialReq.door_id = doorId;
-        Logf.e(ID_TAG, m_serialReq.toString());
+        m_device = doorId;
+        Logf.e(ID_TAG, "设备ID: " + m_device);
     }
 
     private boolean OpenSerialPortDriver() {
@@ -183,22 +205,26 @@ public final class DeviceFunc {
         if(m_state != ID_STATE_READY)
         {
             if (m_serialPortListener != null)
-                m_serialPortListener.OnError("上次发送流程未结束");
+                m_serialPortListener.OnFatal("上次发送流程未结束");
             return false;
         }
 
-        if(!m_serialReq.IsValid())
+        if(Common.StringIsBlank(m_device))
         {
             if (m_serialPortListener != null)
-                m_serialPortListener.OnError("缺失门ID");
+                m_serialPortListener.OnFatal("缺失门ID");
             return false;
         }
+        m_serialReq = new PutOpenDoorReqStruct(m_device);
+        m_serialResp = null;
+        m_serialSession = new SerialSessionStruct();
+        m_serialSession.Request(m_serialReq);
 
         boolean ok = Send(m_serialReq);
         if(!ok)
         {
             if (m_serialPortListener != null)
-                m_serialPortListener.OnError("发送失败");
+                m_serialPortListener.OnFatal("发送失败");
             return false;
         }
 
@@ -211,27 +237,30 @@ public final class DeviceFunc {
             boolean r = true;
             while(r)
             {
-                synchronized (m_buffer) {
-                    if(!Common.StringIsEmpty(m_buffer))
-                    {
-                        int i = 0;
-                        for (; i < m_buffer.length(); i++)
+                if(m_state == ID_STATE_RECVING)
+                {
+                    synchronized (m_buffer) {
+                        if(!Common.StringIsEmpty(m_buffer))
                         {
-                            char ch = m_buffer.charAt(i);
-                            if(ch != ID_END_CHARACTER)
-                                sb.append(ch);
-                            else
+                            int i = 0;
+                            for (; i < m_buffer.length(); i++)
                             {
-                                sb.append(ch);
-                                Logf.d(ID_TAG, "读取到结束符");
-                                data = sb.toString();
-                                break;
+                                char ch = m_buffer.charAt(i);
+                                if(ch != ID_END_CHARACTER)
+                                    sb.append(ch);
+                                else
+                                {
+                                    sb.append(ch);
+                                    Logf.d(ID_TAG, "读取到结束符");
+                                    data = sb.toString();
+                                    break;
+                                }
                             }
+                            if(i >= m_buffer.length() - 1)
+                                m_buffer = "";
+                            else
+                                m_buffer = m_buffer.substring(i); // 移除已经读取的字符
                         }
-                        if(i >= m_buffer.length() - 1)
-                            m_buffer = "";
-                        else
-                            m_buffer = m_buffer.substring(i); // 移除已经读取的字符
                     }
                 }
 
@@ -239,8 +268,15 @@ public final class DeviceFunc {
                 {
                     int index = data.indexOf('{');
                     m_lastRecvData = data.substring(index);
-                    if (m_serialPortListener != null)
-                        m_serialPortListener.OnRecv(m_lastRecvData, m_lastSendData, m_serialReq);
+                    m_serialResp = new PutOpenDoorRespStruct();
+                    boolean suc = m_serialResp.Restore(data);
+                    if(!suc)
+                    {
+                        // TODO: 继续???
+                    }
+                    m_serialSession.Response(m_serialResp);
+                    if (m_serialPortListener != null && m_state == ID_STATE_RECVING)
+                        m_serialPortListener.OnRecv(m_lastRecvData, m_lastSendData, m_serialResp, m_serialReq);
                     SetState(ID_STATE_DONE);
                     Logf.d(ID_TAG, "读取结束: " + m_lastRecvData);
                     return true;
@@ -253,7 +289,7 @@ public final class DeviceFunc {
                     {
                         Logf.w(ID_TAG, "读取超时");
                         SetState(ID_STATE_TIMEOUT);
-                        if (m_serialPortListener != null)
+                        if (m_serialPortListener != null && (m_state == ID_STATE_SENDED || m_state == ID_STATE_RECVING))
                             m_serialPortListener.OnTimeout(m_lastSendData, timeout);
                         return false;
                     }

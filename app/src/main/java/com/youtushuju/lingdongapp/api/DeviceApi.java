@@ -18,6 +18,7 @@ public class DeviceApi {
     private static final String ID_URL_HOST = "47.95.238.76:2018";
     //private static final String ID_URL_HOST = "www.iqust.top";
     private static final String ID_URL_PATH = "/api/device";
+    private static final int ID_REQUEST_TIMEOUT = 10000;
 
     public static final int ID_ERROR_CODE_SUCCESS = 0;
     public static final int ID_ERROR_CODE_PARAMETER_ERROR = 1;
@@ -62,7 +63,7 @@ public class DeviceApi {
             return null;
 
         manager = new NetworkAccessManager();
-        manager.SetTimeout(5000);
+        manager.SetTimeout(ID_REQUEST_TIMEOUT);
         String url = "http://" + ID_URL_HOST + ID_URL_PATH;
         Map<String, String> headers = new HashMap<String, String>();
 
@@ -81,7 +82,7 @@ public class DeviceApi {
         return resp;
     }
 
-    public static DeviceApiResp UploadFace(String imei, String weight)
+    public static DeviceApiResp UploadWeight(String imei, String weight)
     {
         JsonMap data;
         NetworkAccessManager manager;
@@ -102,13 +103,13 @@ public class DeviceApi {
             return null;
 
         manager = new NetworkAccessManager();
-        manager.SetTimeout(5000);
+        manager.SetTimeout(ID_REQUEST_TIMEOUT);
         String url = "http://" + ID_URL_HOST + ID_URL_PATH;
         Map<String, String> headers = new HashMap<String, String>();
 
         req = new NetworkRequest(url);
         req.AddHeader("Content-type", "application/json");
-        //Logf.d(ID_TAG, "人脸验证请求数据(%s)", json);
+        //Logf.d(ID_TAG, "上报重量请求数据(%s)", json);
         reply = manager.SyncPost(req,
                 //json.getBytes()
                 Common.String8BitsByteArray(json) // TODO: 8bits

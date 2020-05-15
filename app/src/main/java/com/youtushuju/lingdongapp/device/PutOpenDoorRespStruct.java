@@ -28,6 +28,8 @@ public final class PutOpenDoorRespStruct extends SerialRespStruct {
 
     @Override
     public boolean IsValid() {
-        return super.IsValid() && weight != null;
+        return super.IsValid()
+                //&& weight != null
+                ;
     }
 }
