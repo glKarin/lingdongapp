@@ -1,6 +1,9 @@
 package com.youtushuju.lingdongapp;
 
 import android.Manifest;
+import android.animation.Animator;
+import android.animation.AnimatorInflater;
+import android.animation.AnimatorSet;
 import android.annotation.SuppressLint;
 
 import androidx.annotation.NonNull;
@@ -12,7 +15,6 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.graphics.SurfaceTexture;
@@ -22,15 +24,11 @@ import android.graphics.drawable.Drawable;
 import android.hardware.camera2.CaptureRequest;
 import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.Face;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
 import android.preference.PreferenceManager;
-import android.provider.Settings;
-import android.util.Log;
 import android.util.Size;
-import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
@@ -63,13 +61,11 @@ import com.youtushuju.lingdongapp.gui.CameraMaskView;
 import com.youtushuju.lingdongapp.gui.DeviceFunc;
 import com.youtushuju.lingdongapp.gui.DynamicTextureView;
 import com.youtushuju.lingdongapp.gui.FaceRectView;
-import com.youtushuju.lingdongapp.gui.ImmersiveDialog;
 import com.youtushuju.lingdongapp.gui.ScreenSaverView;
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
 
 import java.io.ByteArrayOutputStream;
-import java.util.HashMap;
 
 /**
  * An example full-screen activity that shows and hides the system UI (i.e.
@@ -91,6 +87,8 @@ public class MainActivity extends AppCompatActivity {
 
     private static final int ID_HIDE_PERSON_PANEL_DELAY = 5000;
     private static final int ID_OPERATION_FINISHED_INTERVAL = 3500;
+    private static final int ID_PERSON_VIEW_ANIM_DELAY = 500;
+    private static final int ID_SCREEN_SAVER_ANIM_DELAY = 500;
 
     /**
      * Some older devices needs a small delay between UI widget updates
@@ -119,9 +117,11 @@ public class MainActivity extends AppCompatActivity {
     private int m_cameraUsagePlan = Configs.ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN;
     private Size m_textureViewInitSize = null;
     private int m_imageQuality = Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY;
-    private AlertDialog m_resultDialog = null;
+    private View m_resultDialog = null;
     private Handler m_handler = new Handler(); // main thread
     private int m_debugMode = 0;
+    private AnimatorSet m_resultDialogOpenAnimation = null;
+    private AnimatorSet m_resultDialogCloseAnimation = null;
 
     // 设备交互
     private LingDongApi m_lingdongApi = null;
@@ -145,16 +145,12 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable m_finishOperation = new Runnable() {
         @Override
         public void run() {
-            if(m_resultDialog != null)
-            {
-                m_resultDialog.dismiss();
-                m_resultDialog = null;
-            }
+            CloseResultDialog(true);
 
             StopPreview();
 
             m_lastVerifyTime = 0;
-            OpenScreenSaver();
+            OpenScreenSaver(true);
             CloseSerialPortDriver();
             m_hideFacePanel.run();
 
@@ -166,11 +162,7 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable m_waitNextOperation = new Runnable() {
         @Override
         public void run() {
-            if(m_resultDialog != null)
-            {
-                m_resultDialog.dismiss();
-                m_resultDialog = null;
-            }
+            CloseResultDialog(true);
 
             m_lastVerifyTime = 0;
             m_deviceFunc.Reset();
@@ -217,10 +209,15 @@ public class MainActivity extends AppCompatActivity {
     private Runnable m_hideFacePanel = new Runnable() {
         @Override
         public void run() {
-            m_personView.setVisibility(View.INVISIBLE);
-            SetPreviewImage(null);
-            m_personName.setText("");
-            m_personTime.setText("");
+            m_personView.animate().setDuration(ID_PERSON_VIEW_ANIM_DELAY).alpha(0.0f).withEndAction(new Runnable() {
+                @Override
+                public void run() {
+                    SetPreviewImage(null);
+                    m_personView.setVisibility(View.INVISIBLE);
+                    m_personName.setText("");
+                    m_personTime.setText("");
+                }
+            }).start();
             mHideHandler.removeCallbacks(m_hideFacePanel);
         }
     };
@@ -242,6 +239,20 @@ public class MainActivity extends AppCompatActivity {
                 delayedHide(AUTO_HIDE_DELAY_MILLIS);
             }
             return false;
+        }
+    };
+    private Runnable m_openScreenSaver = new Runnable() {
+        @Override
+        public void run() {
+            m_webView.Load();
+            m_screenSaverView.setVisibility(View.VISIBLE);
+        }
+    };
+    private Runnable m_closeScreenSaver = new Runnable() {
+        @Override
+        public void run() {
+            //m_screenSaverView.setVisibility(View.INVISIBLE);
+            m_screenSaverView.setVisibility(View.GONE);
         }
     };
 
@@ -370,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
 
                 StartPreview();
                 m_lastVerifyTime = System.currentTimeMillis();
-                CloseScreenSaver();
+                CloseScreenSaver(true);
 
                 findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
                 }
@@ -402,7 +413,8 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void OnMessage(String msg) {
-            ShowToast(msg, Toast.LENGTH_SHORT);
+            //ShowToast(msg, Toast.LENGTH_SHORT);
+            Logf.i(ID_TAG, msg);
         }
 
         // 非主流程的错误
@@ -532,6 +544,7 @@ public class MainActivity extends AppCompatActivity {
         m_screenSaverView = findViewById(R.id.main_screensaver_view);
         m_webView = (ScreenSaverView)findViewById(R.id.main_screensaver_content);
         m_webView.SetNativeObject(m_windowObject);
+        m_resultDialog = findViewById(R.id.main_result_dialog);
 
         // 测试
         m_apiDebugView = findViewById(R.id.main_api_debug_panel);
@@ -560,8 +573,6 @@ public class MainActivity extends AppCompatActivity {
 
     private void SetupUI()
     {
-        m_personView.setVisibility(View.INVISIBLE);
-
         m_cameraMask = (CameraMaskView)findViewById(R.id.main_camera_mask_layer);
         m_textureView = (DynamicTextureView) findViewById(R.id.main_camera_texture);
         m_textureView.SetFileScheme(DynamicTextureView.ID_FILL_SCHEME_WIDTH_PREFER);
@@ -594,15 +605,74 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View v) {
                 if(m_screenSaverView.getVisibility() == View.VISIBLE)
-                    CloseScreenSaver();
+                    CloseScreenSaver(true);
                 else
-                    OpenScreenSaver();
+                    OpenScreenSaver(true);
             }
         });
 
         ((TextView)m_apiDebugView.findViewById(R.id.main_title_debug_text)).setText("人脸识别API");
         ((TextView)m_serialPortDebugView.findViewById(R.id.main_title_debug_text)).setText("本地串口IO");
         ((TextView)m_afterApiDebugView.findViewById(R.id.main_title_debug_text)).setText("上报重量API");
+
+        m_resultDialogOpenAnimation = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.result_dialog_open_anim);
+        m_resultDialogOpenAnimation.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_resultDialog.setVisibility(View.VISIBLE);
+                    }
+                });
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                animation.end();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                animation.end();
+            }
+        });
+        m_resultDialogCloseAnimation = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.result_dialog_close_anim);
+        m_resultDialogCloseAnimation.addListener(new Animator.AnimatorListener() {
+            @Override
+            public void onAnimationStart(Animator animation) {
+            }
+
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_resultDialog.setVisibility(View.INVISIBLE);
+                    }
+                });
+            }
+
+            @Override
+            public void onAnimationCancel(Animator animation) {
+                animation.end();
+            }
+
+            @Override
+            public void onAnimationRepeat(Animator animation) {
+                animation.end();
+            }
+        });
+        m_resultDialogOpenAnimation.setTarget(m_resultDialog);
+        m_resultDialogCloseAnimation.setTarget(m_resultDialog);
+
+        m_personView.setAlpha(0.0f);
+        m_personView.setVisibility(View.INVISIBLE);
     }
 
     private void OpenCamera()
@@ -624,7 +694,7 @@ public class MainActivity extends AppCompatActivity {
             runOnUiThread(new Runnable() {
                 @Override
                 public void run() {
-                    CloseScreenSaver();
+                    CloseScreenSaver(true);
                 }
             });
         }
@@ -666,7 +736,7 @@ public class MainActivity extends AppCompatActivity {
                 if(session == null) // 开门错误
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_FAIL);
-                    OpenResultDialog(false, "设备异常", 1, 1);
+                    OpenResultDialog(false, "设备异常", true);
                     return;
                 }
 
@@ -674,9 +744,9 @@ public class MainActivity extends AppCompatActivity {
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_FAIL);
                     if(m_deviceFunc.State() == DeviceFunc.ID_STATE_TIMEOUT)
-                        OpenResultDialog(false, "操作超时", 2, 1);
+                        OpenResultDialog(false, "操作超时", true);
                     else
-                        OpenResultDialog(false, "开门失败", 2, 1);
+                        OpenResultDialog(false, "开门失败", true);
                     return;
                 }
                 m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_SUCCESS);
@@ -686,12 +756,12 @@ public class MainActivity extends AppCompatActivity {
                 if(suc)
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_UPLOAD_SUCCESS);
-                    OpenResultDialog(true, "上报重量成功", 2, 1);
+                    OpenResultDialog(true, "上报重量成功", true);
                 }
                 else
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_UPLOAD_FAIL);
-                    OpenResultDialog(false, "开门失败", 2, 1);
+                    OpenResultDialog(false, "开门失败", true);
                 }
                 // 流程结束
             }
@@ -778,7 +848,8 @@ public class MainActivity extends AppCompatActivity {
         }
         m_imageQuality = preferences.getInt(Constants.ID_PREFERENCE_FACE_IMAGE_QUALITY, Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY);
         m_cropBitmap = preferences.getBoolean(Constants.ID_PREFERENCE_PREVIEW_CAPTURE_CROP, false);
-        OpenScreenSaver();
+        OpenScreenSaver(true);
+        CloseResultDialog(false);
 
         m_camera.Reset();
 
@@ -804,7 +875,8 @@ public class MainActivity extends AppCompatActivity {
         delayedHide(100);
 
         CloseCamera();
-        CloseScreenSaver();
+        OpenScreenSaver(false);
+        CloseResultDialog(false);
 
         CloseSerialPortDriver();
 
@@ -940,7 +1012,7 @@ public class MainActivity extends AppCompatActivity {
             {
                 if(resp.data == null || resp.data instanceof String) // MISMATCHED
                 {
-                    if(ActivityUtility.BuildOnDebug(this)) // TODO: 仅开发测试
+                    if(ActivityUtility.BuildOnDebug(this) /*&& false*/) // TODO: 仅开发测试
                     {
                         user.SetUsername("开发者");
                     }
@@ -977,11 +1049,7 @@ public class MainActivity extends AppCompatActivity {
 
     private void WaitNextTime(String message)
     {
-        if(m_resultDialog != null)
-        {
-            m_resultDialog.dismiss();
-            m_resultDialog = null;
-        }
+        CloseResultDialog(true);
 
         ShowToast(message, Toast.LENGTH_SHORT);
         m_handler.postDelayed(m_waitNextOperation, ID_HIDE_PERSON_PANEL_DELAY);
@@ -1016,25 +1084,42 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-            m_personView.setVisibility(View.VISIBLE);
             SetPreviewImage(face);
-            // new String[]{"Ada", "徐天龙", "Leon", "Jill", "张三", "李四", "王五", "赵二"}[Common.Rand(0, 7)]
             m_personName.setText(name);
             m_personTime.setText(time);
+            m_personView.animate().setDuration(ID_PERSON_VIEW_ANIM_DELAY).alpha(1.0f).withStartAction(new Runnable() {
+                @Override
+                public void run() {
+                    m_personView.setVisibility(View.VISIBLE);
+                }
+            }).start();
             }
         });
     }
 
-    private void OpenScreenSaver()
+    private void OpenScreenSaver(boolean anim)
     {
         hide();
-        m_screenSaverView.setVisibility(View.VISIBLE);
-        m_webView.Load();
+        if(anim)
+        {
+            m_screenSaverView.animate().setDuration(ID_SCREEN_SAVER_ANIM_DELAY).alpha(1.0f).withStartAction(m_openScreenSaver).start();
+        }
+        else
+        {
+            m_openScreenSaver.run();
+        }
     }
 
-    private void CloseScreenSaver()
+    private void CloseScreenSaver(boolean anim)
     {
-        m_screenSaverView.setVisibility(View.GONE);
+        if(anim)
+        {
+            m_screenSaverView.animate().setDuration(ID_SCREEN_SAVER_ANIM_DELAY).alpha(0.0f).withEndAction(m_closeScreenSaver).start();
+        }
+        else
+        {
+            m_closeScreenSaver.run();
+        }
     }
 
     private boolean OpenSerialPortDriver() { return false; } // UNUSED: DeviceFunc里自动控制
@@ -1203,26 +1288,37 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    private void OpenResultDialog(boolean suc, String message, int level, int next)
+    private void OpenResultDialog(final boolean suc, final String message, boolean anim)
     {
-        if(m_resultDialog != null)
-        {
-            m_resultDialog.dismiss();
-            m_resultDialog = null;
-        }
+        CloseResultDialog(false);
 
-        m_resultDialog = new ImmersiveDialog(this);
-        View view = LayoutInflater.from(m_resultDialog.getContext()).inflate(R.layout.main_result_panel, null);
-        ((ImageView)view.findViewById(R.id.main_result_icon)).setImageResource(R.mipmap.ic_launcher);
-        ((TextView)view.findViewById(R.id.main_result_message)).setText(message);
-        view.setOnClickListener(new View.OnClickListener() {
+        runOnUiThread(new Runnable() {
             @Override
-            public void onClick(View v) {
-                runOnUiThread(m_finishOperation);
+            public void run() {
+                ((ImageView)m_resultDialog.findViewById(R.id.main_result_icon)).setImageResource(R.mipmap.ic_launcher);
+                TextView textView = (TextView)m_resultDialog.findViewById(R.id.main_result_message);
+                textView.setText(message);
+                textView.setTextColor(suc ? Color.GREEN  : Color.RED);
             }
         });
-        m_resultDialog.setView(view);
-        m_resultDialog.show();
+        if(anim)
+            m_resultDialogOpenAnimation.start();
+        else
+            m_resultDialogOpenAnimation.end();
         m_handler.postDelayed(m_finishOperation, ID_OPERATION_FINISHED_INTERVAL);
+    }
+
+    private void CloseResultDialog(boolean anim)
+    {
+        if(m_resultDialog.getVisibility() != View.VISIBLE)
+            return;
+        if(anim)
+        {
+            m_resultDialogCloseAnimation.start();
+        }
+        else
+        {
+            m_resultDialogCloseAnimation.end();
+        }
     }
 }

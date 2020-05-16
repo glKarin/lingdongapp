@@ -2,4 +2,7 @@
     <string name="app_name">灵动App</string>
     <string name="title_activity_file_browser">FileBrowserActivity</string>
 
+    <integer name="open_result_anim_delay">500</integer>
+    <integer name="close_result_anim_delay">500</integer>
+
 </resources>

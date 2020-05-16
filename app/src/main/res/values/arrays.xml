@@ -64,6 +64,7 @@
 
 
 	<string-array name="update_info">
-		<item>相机预览界面修改.</item>
+		<item>更新处理结果对话框.</item>
+		<item>部分视图状态变换添加动画.</item>
 	</string-array>
 </resources>
