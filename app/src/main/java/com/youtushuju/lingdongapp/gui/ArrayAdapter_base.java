@@ -4,6 +4,8 @@ import android.content.*;
 import java.util.*;
 import android.view.*;
 
+import com.youtushuju.lingdongapp.common.Logf;
+
 public abstract class ArrayAdapter_base<T> extends ArrayAdapter<T>
 {
     private int m_resource = 0;

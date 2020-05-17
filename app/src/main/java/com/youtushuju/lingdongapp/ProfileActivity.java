@@ -49,23 +49,12 @@ public class ProfileActivity extends AppCompatActivity {
 
         menuList = new ArrayList<ProfileMenuModel>();
 
-        item = new ProfileMenuModel("SDK Demo", "demo", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("历史记录", "record", R.drawable.icon_profile, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
 
-                intent = new Intent(ProfileActivity.this, DemoActivity.class);
-                ProfileActivity.this.startActivity(intent);
-            }
-        }, true);
-        menuList.add(item);
-
-        item = new ProfileMenuModel("串口操作", "serial", R.drawable.icon_profile, new Runnable() {
-            @Override
-            public void run() {
-                Intent intent;
-
-                intent = new Intent(ProfileActivity.this, SerialActivity.class);
+                intent = new Intent(ProfileActivity.this, RecordActivity.class);
                 ProfileActivity.this.startActivity(intent);
             }
         }, true);
@@ -82,6 +71,17 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
+        item = new ProfileMenuModel("文件系统", "file_system", R.drawable.icon_profile, new Runnable() {
+            @Override
+            public void run() {
+                Intent intent;
+
+                intent = new Intent(ProfileActivity.this, FileBrowserActivity.class);
+                ProfileActivity.this.startActivity(intent);
+            }
+        }, true);
+        menuList.add(item);
+
         item = new ProfileMenuModel("系统控制", "system_control", R.drawable.icon_profile, new Runnable() {
             @Override
             public void run() {
@@ -93,12 +93,23 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("文件系统", "file_system", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("串口操作", "serial", R.drawable.icon_profile, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
 
-                intent = new Intent(ProfileActivity.this, FileBrowserActivity.class);
+                intent = new Intent(ProfileActivity.this, SerialActivity.class);
+                ProfileActivity.this.startActivity(intent);
+            }
+        }, true);
+        menuList.add(item);
+
+        item = new ProfileMenuModel("运行日志", "log", R.drawable.icon_profile, new Runnable() {
+            @Override
+            public void run() {
+                Intent intent;
+
+                intent = new Intent(ProfileActivity.this, LogActivity.class);
                 ProfileActivity.this.startActivity(intent);
             }
         }, true);
@@ -156,9 +167,9 @@ public class ProfileActivity extends AppCompatActivity {
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId())
         {
-            case R.id.profile_menu_view_log:
-                Intent intent = new Intent(this, LogActivity.class);
-                startActivity(intent);
+            case R.id.profile_menu_sdk_demo:
+                Intent intent = new Intent(ProfileActivity.this, DemoActivity.class);
+                ProfileActivity.this.startActivity(intent);
                 break;
             default:
                 return super.onOptionsItemSelected(item);

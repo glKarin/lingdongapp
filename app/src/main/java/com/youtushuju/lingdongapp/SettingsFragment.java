@@ -15,6 +15,7 @@ import androidx.preference.PreferenceManager;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.common.FS;
+import com.youtushuju.lingdongapp.database.RecordServices;
 import com.youtushuju.lingdongapp.device.DeviceUtility;
 import com.youtushuju.lingdongapp.gui.App;
 
@@ -196,6 +197,41 @@ public class SettingsFragment extends PreferenceFragmentCompat
 			@Override
 			public boolean onPreferenceChange(Preference preference, Object newValue) {
 				preference.setSummary(newValue.toString());
+				return true;
+			}
+		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_RECORD_HISTORY);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY);
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
+				return true;
+			}
+		});
+
+		final RecordServices recordServices = new RecordServices(getContext());
+		preference = findPreference(Constants.ID_PREFERENCE_CLEAN_RECORD);
+		preference.setSummary(recordServices.Count(null, null) + "条");
+		preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
+			@Override
+			public boolean onPreferenceClick(final Preference preference) {
+				AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+				builder.setTitle("警告");
+				builder.setMessage("确定要清空所有历史记录?");
+				builder.setIcon(R.drawable.icon_profile);
+				builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+					@Override
+					public void onClick(DialogInterface dialog, int which) {
+						recordServices.DeleteAll();
+						preference.setSummary(recordServices.Count(null, null) + "条");
+						Toast.makeText(getContext(), "历史记录已清空", Toast.LENGTH_SHORT).show();
+					}
+				});
+				builder.setNegativeButton("取消", null);
+				AlertDialog dialog = builder.create();
+				dialog.show();
 				return true;
 			}
 		});

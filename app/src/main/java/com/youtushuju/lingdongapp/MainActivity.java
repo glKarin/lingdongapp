@@ -45,12 +45,15 @@ import com.youtushuju.lingdongapp.api.DeviceApiResp;
 import com.youtushuju.lingdongapp.api.UserModel;
 import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.common.Sys;
+import com.youtushuju.lingdongapp.database.RecordModel;
+import com.youtushuju.lingdongapp.database.RecordServices;
 import com.youtushuju.lingdongapp.device.LingDongApi;
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.device.PutOpenDoorReqStruct;
 import com.youtushuju.lingdongapp.device.PutOpenDoorRespStruct;
+import com.youtushuju.lingdongapp.device.SerialDataDef;
 import com.youtushuju.lingdongapp.device.SerialReqStruct;
 import com.youtushuju.lingdongapp.device.SerialRespStruct;
 import com.youtushuju.lingdongapp.device.SerialSessionStruct;
@@ -90,6 +93,8 @@ public class MainActivity extends AppCompatActivity {
     private static final int ID_PERSON_VIEW_ANIM_DELAY = 500;
     private static final int ID_SCREEN_SAVER_ANIM_DELAY = 500;
 
+    private static final boolean ID_SAVE_RECORD = true;
+
     /**
      * Some older devices needs a small delay between UI widget updates
      * and a change of the status and navigation bar.
@@ -122,6 +127,8 @@ public class MainActivity extends AppCompatActivity {
     private int m_debugMode = 0;
     private AnimatorSet m_resultDialogOpenAnimation = null;
     private AnimatorSet m_resultDialogCloseAnimation = null;
+    private RecordServices m_recordDB = null;
+    private boolean m_recordHistory = Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY;
 
     // 设备交互
     private LingDongApi m_lingdongApi = null;
@@ -712,9 +719,10 @@ public class MainActivity extends AppCompatActivity {
             public void run() {
                 // 开始流程
                 UserModel user = DoVerifyFace(bitmap);
+                long now = System.currentTimeMillis();
                 if(user == null) // 人脸识别异常
                 {
-                    ShowFacePanel(null, "识别错误", Common.Now());
+                    ShowFacePanel(null, "识别错误", Common.TimestampToStr(now));
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_FACE_VERIFY_FAIL);
                     WaitNextTime("识别错误");
                     return;
@@ -722,12 +730,12 @@ public class MainActivity extends AppCompatActivity {
 
                 if(!user.IsValid()) // 无效人员
                 {
-                    ShowFacePanel(user.Photo(), "未识别身份", Common.Now());
+                    ShowFacePanel(user.Photo(), "未识别身份", Common.TimestampToStr(now));
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_FACE_VERIFY_FAIL);
                     WaitNextTime("未识别身份");
                     return;
                 }
-                ShowFacePanel(user.Photo(), user.Username(), Common.Now());
+                ShowFacePanel(user.Photo(), user.Username(), Common.TimestampToStr(now));
                 m_cameraMask.SetState(CameraMaskView.ID_STATE_FACE_VERIFY_SUCCESS);
 
                 m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESSING);
@@ -752,10 +760,37 @@ public class MainActivity extends AppCompatActivity {
                 m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_SUCCESS);
 
                 // 继续上报重量
-                boolean suc = DoUploadWeight(session);
-                if(suc)
+                String uuid = DoUploadWeight(session);
+                if(uuid != null)
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_UPLOAD_SUCCESS);
+
+                    // 存储至本地数据库
+                    if(m_recordHistory)
+                    {
+                        if(m_recordDB == null)
+                            m_recordDB = new RecordServices(MainActivity.this);
+                        try
+                        {
+                            RecordModel item = new RecordModel();
+                            item.SetName(user.Username());
+                            item.SetTime(now);
+                            item.SetDevice(session.req.door_id);
+                            item.SetWeight(((PutOpenDoorRespStruct)session.resp).weight);
+                            item.SetOperation(SerialDataDef.ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR);
+                            item.SetResult(RecordModel.ID_RESULT_SUCCESS);
+                            item.SetUuid(uuid);
+                            item.SetCreateTime(System.currentTimeMillis());
+                            if(m_recordDB.Add(item))
+                                Logf.i(ID_TAG, "结果写入数据库成功: " + item.Id());
+                            else
+                                Logf.e(ID_TAG, "结果写入数据库失败");
+                        }
+                        catch(Exception e)
+                        {
+                            e.printStackTrace();
+                        }
+                    }
                     OpenResultDialog(true, "上报重量成功", true);
                 }
                 else
@@ -763,6 +798,7 @@ public class MainActivity extends AppCompatActivity {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_UPLOAD_FAIL);
                     OpenResultDialog(false, "开门失败", true);
                 }
+
                 // 流程结束
             }
         });
@@ -847,7 +883,8 @@ public class MainActivity extends AppCompatActivity {
             e.printStackTrace();
         }
         m_imageQuality = preferences.getInt(Constants.ID_PREFERENCE_FACE_IMAGE_QUALITY, Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY);
-        m_cropBitmap = preferences.getBoolean(Constants.ID_PREFERENCE_PREVIEW_CAPTURE_CROP, false);
+        m_cropBitmap = preferences.getBoolean(Constants.ID_PREFERENCE_PREVIEW_CAPTURE_CROP, Configs.ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP);
+        m_recordHistory = preferences.getBoolean(Constants.ID_PREFERENCE_RECORD_HISTORY, Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY);
         OpenScreenSaver(true);
         CloseResultDialog(false);
 
@@ -1227,19 +1264,19 @@ public class MainActivity extends AppCompatActivity {
             m_camera.StopPreview();
     }
 
-    private boolean DoUploadWeight(SerialSessionStruct session)
+    private String DoUploadWeight(SerialSessionStruct session)
     {
         if(!session.IsValidSession())
         {
             Logf.e(ID_TAG, "无效对话");
-            return false;
+            return null;
         }
 
         /// TODO: 是否需要检测请求与相应的token???
         if(!session.IsPair())
         {
             Logf.e(ID_TAG, "返回数据token无效");
-            return false;
+            return null;
         }
 
         final PutOpenDoorReqStruct req = (PutOpenDoorReqStruct)session.req;
@@ -1248,7 +1285,7 @@ public class MainActivity extends AppCompatActivity {
         if(!resp.IsValid())
         {
             Logf.e(ID_TAG, "返回数据缺失必要数据" + resp.toString());
-            return false;
+            return null;
         }
 
         if(m_debugMode != 0)
@@ -1279,12 +1316,22 @@ public class MainActivity extends AppCompatActivity {
                     }
                 }
             });
-            return apiResp.IsSuccess();
+            try
+            {
+                String uuid = (String)((JsonMap)apiResp.data).Get("uuid");
+                return uuid;
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+                return apiResp.IsSuccess() ? "" : null;
+            }
+            //return apiResp.IsSuccess();
         }
         else
         {
             Logf.e(ID_TAG, "上报重量服务器异常!", Toast.LENGTH_LONG);
-            return false;
+            return null;
         }
     }
 

@@ -16,6 +16,8 @@ public final class Constants
 	public static final String ID_PREFERENCE_OPERATE_DEVICE_TIMEOUT = "OPERATE_DEVICE_TIMEOUT";
 	public static final String ID_PREFERENCE_CAMERA_USAGE_PLAN = "CAMERA_USAGE_PLAN";
 	public static final String ID_PREFERENCE_PREVIEW_CAPTURE_CROP = "PREVIEW_CAPTURE_CROP";
+	public static final String ID_PREFERENCE_CLEAN_RECORD = "CLEAN_RECORD";
+	public static final String ID_PREFERENCE_RECORD_HISTORY = "RECORD_HISTORY";
 	
 	public static final int ID_REQUEST_RESULT_SUCCESS = 0;
 	public static final int ID_REQUEST_RESULT_FAIL = 1;

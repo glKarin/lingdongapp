@@ -147,4 +147,12 @@ public final class Common
             ui = Integer.parseInt("" + b);
         return Integer.toHexString(ui & 0xFF);
     }
+
+	public static String UCFirst(String str)
+	{
+		if(StringIsBlank(str))
+			return str;
+
+		return Character.toUpperCase(str.charAt(0)) + str.substring(1);
+	}
 }
