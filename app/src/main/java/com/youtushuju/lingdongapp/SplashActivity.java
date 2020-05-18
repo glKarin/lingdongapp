@@ -3,6 +3,7 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.app.ActivityCompat;
+import androidx.preference.PreferenceManager;
 
 import android.Manifest;
 import android.graphics.Rect;
@@ -86,7 +87,17 @@ public class SplashActivity extends AppCompatActivity
 		
 		setContentView(R.layout.splash_page);
 
-		Configs.Instance().SetConfig(Configs.ID_CONFIG_LINGDONG_API, ActivityUtility.BuildOnDebug(SplashActivity.this) ? Constants.ID_CONFIG_API_EMULATE : Constants.ID_CONFIG_API_REAL);
+		Configs configs = Configs.Instance();
+		boolean buildOnDebug = ActivityUtility.BuildOnDebug(this);
+		int debugMode = buildOnDebug ? 0xFF : 0;
+		configs.SetConfig(Configs.ID_CONFIG_LINGDONG_API, buildOnDebug ? Constants.ID_CONFIG_API_EMULATE : Constants.ID_CONFIG_API_REAL);
+		configs.SetConfig(Configs.ID_CONFIG_DEBUG, debugMode);
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		SharedPreferences.Editor editor = preferences.edit();
+		{
+			editor.putString(Constants.ID_PREFERENCE_DEBUG_MODE, "" + debugMode);
+		}
+		editor.commit();
 
 		SetupUI();
 

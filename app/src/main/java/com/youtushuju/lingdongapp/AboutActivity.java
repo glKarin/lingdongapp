@@ -133,7 +133,7 @@ public class AboutActivity extends AppCompatActivity {
             version = info.versionName;
             ((TextView)findViewById(R.id.about_page_app_name)).setText(manager.getApplicationLabel(info.applicationInfo));
             ((ImageView)findViewById(R.id.about_page_app_icon)).setImageDrawable(manager.getApplicationIcon(info.applicationInfo));
-            ((TextView)findViewById(R.id.about_page_app_ver)).setText(version + "(" + (ActivityUtility.BuildOnDebug(this) ? "开发版" : "测试版") + ")");
+            ((TextView)findViewById(R.id.about_page_app_ver)).setText(version + (ActivityUtility.BuildOnDebug(this) ? "(开发版)" : ""));
             ((TextView)findViewById(R.id.about_page_app_copyright)).setText(App.ID_COPYRIGHT);
         }
         catch (Exception e)

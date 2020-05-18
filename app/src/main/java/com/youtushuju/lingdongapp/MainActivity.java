@@ -65,6 +65,7 @@ import com.youtushuju.lingdongapp.gui.DeviceFunc;
 import com.youtushuju.lingdongapp.gui.DynamicTextureView;
 import com.youtushuju.lingdongapp.gui.FaceRectView;
 import com.youtushuju.lingdongapp.gui.ScreenSaverView;
+import com.youtushuju.lingdongapp.gui.SoundAlert;
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
 
@@ -129,6 +130,8 @@ public class MainActivity extends AppCompatActivity {
     private AnimatorSet m_resultDialogCloseAnimation = null;
     private RecordServices m_recordDB = null;
     private boolean m_recordHistory = Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY;
+    private boolean m_playAlert = Configs.ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT;
+    private SoundAlert m_soundAlert = null;
 
     // 设备交互
     private LingDongApi m_lingdongApi = null;
@@ -152,6 +155,7 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable m_finishOperation = new Runnable() {
         @Override
         public void run() {
+            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
             CloseResultDialog(true);
 
             StopPreview();
@@ -161,7 +165,6 @@ public class MainActivity extends AppCompatActivity {
             CloseSerialPortDriver();
             m_hideFacePanel.run();
 
-            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
             m_cameraMask.SetState(CameraMaskView.ID_STATE_READY);
         }
     };
@@ -169,13 +172,13 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable m_waitNextOperation = new Runnable() {
         @Override
         public void run() {
+            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
             CloseResultDialog(true);
 
             m_lastVerifyTime = 0;
             m_deviceFunc.Reset();
             m_hideFacePanel.run();
 
-            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
             ((TextView)m_afterApiDebugView.findViewById(R.id.main_request_debug_text)).setText("");
             ((TextView)m_afterApiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
             ((TextView)m_apiDebugView.findViewById(R.id.main_request_debug_text)).setText("");
@@ -301,7 +304,8 @@ public class MainActivity extends AppCompatActivity {
             if(!Common.ArrayIsEmpty(faces))
             {
                  Logf.e(ID_TAG, "检测到人脸: " + faces.length);
-                 ShowToast("检测到人脸: " + faces.length, Toast.LENGTH_SHORT);
+                 if(m_debugMode != 0)
+                    ShowToast("检测到人脸: " + faces.length, Toast.LENGTH_SHORT);
             }
 
             // 仅有人脸时
@@ -375,6 +379,8 @@ public class MainActivity extends AppCompatActivity {
             m_handler.post(new Runnable(){
                 @Override
                 public void run() {
+                    findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+
                 Logf.i(ID_TAG, "设置垃圾类别: " + name);
                 if("waste".equals(name))
                     m_deviceFunc.SetDoorId(DeviceApi.ID_KITCHEN_WASTE_DOOR_ID);
@@ -389,8 +395,7 @@ public class MainActivity extends AppCompatActivity {
                 StartPreview();
                 m_lastVerifyTime = System.currentTimeMillis();
                 CloseScreenSaver(true);
-
-                findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+                PlayAlert(SoundAlert.ID_SOUND_ALERT_WELCOME);
                 }
             });
         }
@@ -706,12 +711,15 @@ public class MainActivity extends AppCompatActivity {
             });
         }
 
-        runOnUiThread(new Runnable() {
-            @Override
-            public void run() {
-                findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
-            }
-        });
+        if(m_debugMode != 0)
+        {
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
+                }
+            });
+        }
 
         // 新线程执行
         m_deviceHandler.post(new Runnable() {
@@ -744,6 +752,7 @@ public class MainActivity extends AppCompatActivity {
                 if(session == null) // 开门错误
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_FAIL);
+                    PlayAlert(SoundAlert.ID_SOUND_ALERT_OPERATION_ERROR);
                     OpenResultDialog(false, "设备异常", true);
                     return;
                 }
@@ -751,6 +760,7 @@ public class MainActivity extends AppCompatActivity {
                 if(!session.IsValid()) // 开门失败
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_FAIL);
+                    PlayAlert(SoundAlert.ID_SOUND_ALERT_OPERATION_ERROR);
                     if(m_deviceFunc.State() == DeviceFunc.ID_STATE_TIMEOUT)
                         OpenResultDialog(false, "操作超时", true);
                     else
@@ -791,11 +801,13 @@ public class MainActivity extends AppCompatActivity {
                             e.printStackTrace();
                         }
                     }
+                    PlayAlert(SoundAlert.ID_SOUND_ALERT_OPERATION_SUCCESS);
                     OpenResultDialog(true, "上报重量成功", true);
                 }
                 else
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_UPLOAD_FAIL);
+                    PlayAlert(SoundAlert.ID_SOUND_ALERT_OPERATION_ERROR);
                     OpenResultDialog(false, "开门失败", true);
                 }
 
@@ -885,6 +897,7 @@ public class MainActivity extends AppCompatActivity {
         m_imageQuality = preferences.getInt(Constants.ID_PREFERENCE_FACE_IMAGE_QUALITY, Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY);
         m_cropBitmap = preferences.getBoolean(Constants.ID_PREFERENCE_PREVIEW_CAPTURE_CROP, Configs.ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP);
         m_recordHistory = preferences.getBoolean(Constants.ID_PREFERENCE_RECORD_HISTORY, Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY);
+        m_playAlert = preferences.getBoolean(Constants.ID_PREFERENCE_PLAY_VOICE_ALERT, Configs.ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT);
         OpenScreenSaver(true);
         CloseResultDialog(false);
 
@@ -917,6 +930,13 @@ public class MainActivity extends AppCompatActivity {
 
         CloseSerialPortDriver();
 
+        //StopAlert();
+        if(m_soundAlert != null)
+        {
+            m_soundAlert.Shutdown();
+            m_soundAlert = null;
+        }
+
         ((TextView)findViewById(R.id.main_camera_info_text)).setText("");
     }
 
@@ -943,6 +963,11 @@ public class MainActivity extends AppCompatActivity {
         m_deviceHandler = null;
         m_deviceHandlerThread.quit();
         m_deviceHandlerThread = null;
+        if(m_soundAlert != null)
+        {
+            m_soundAlert.Shutdown();
+            m_soundAlert = null;
+        }
         App.Instance().PopActivity();
     }
 
@@ -1367,5 +1392,21 @@ public class MainActivity extends AppCompatActivity {
         {
             m_resultDialogCloseAnimation.end();
         }
+    }
+
+    private void PlayAlert(String name)
+    {
+        if(!m_playAlert)
+            return;
+        if(m_soundAlert == null)
+            m_soundAlert = new SoundAlert(this);
+        m_soundAlert.Play(name);
+    }
+
+    private void StopAlert()
+    {
+        if(m_soundAlert == null)
+            return;
+        m_soundAlert.Reset();
     }
 }

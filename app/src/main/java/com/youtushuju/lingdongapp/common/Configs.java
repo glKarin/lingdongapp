@@ -40,6 +40,7 @@ public final class Configs
 	public static final int ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN = Constants.ID_CONFIG_CAMERA_USAGE_PLAN_OPEN_ONCE_AND_ONLY_STOP_PREVIEW_WHEN_UNUSED;
 	public static final boolean ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP = false;
 	public static final boolean ID_PREFERENCE_DEFAULT_RECORD_HISTORY = true;
+	public static final boolean ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT = true;
 
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";
@@ -62,7 +63,7 @@ public final class Configs
 
 		m_configs.put(ID_CONFIG_LINGDONG_API, Constants.ID_CONFIG_API_REAL); // 默认真机
 		m_configs.put(ID_CONFIG_LOG_FILE, GetFile(ID_CONFIG_LOG_DIRECTORY + File.separator + ID_CONFIG_LOG_FILE_PREFIX + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + ID_CONFIG_LOG_FILE_SUFFIX, true));
-		m_configs.put(ID_CONFIG_DEBUG, 1);
+		m_configs.put(ID_CONFIG_DEBUG, 0);
 
 		Map<String, String> permissions = new HashMap<String, String>();
 		permissions.put(Manifest.permission.CAMERA, "使用摄像头");

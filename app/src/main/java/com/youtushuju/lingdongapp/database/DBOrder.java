@@ -1,10 +1,13 @@
 package com.youtushuju.lingdongapp.database;
 
+import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.common.Pair;
+import com.youtushuju.lingdongapp.common.STL;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
 import java.util.ArrayList;
+import java.util.List;
 
 public abstract class DBOrder {
     public static final String ID_ORDER_BY_ASC = "ASC";
@@ -17,7 +20,7 @@ public abstract class DBOrder {
     public String Get()
     {
         Field fields[] = getClass().getFields();
-        StringBuffer sb = new StringBuffer();
+        List<String> list = new ArrayList<String>();
         //fields = getClass().getDeclaredFields(); // 获取全部
         for (int i = 0; i < fields.length; i++)
         {
@@ -45,14 +48,12 @@ public abstract class DBOrder {
                 seq = ID_ORDER_BY_ASC;
             else
             {
-                if(!seq.equals(ID_ORDER_BY_ASC) || !seq.equals(ID_ORDER_BY_DESC))
+                if(!seq.equals(ID_ORDER_BY_ASC) && !seq.equals(ID_ORDER_BY_DESC))
                     continue;
             }
-            sb.append(f.getName() + " " + seq);
-            if(i < fields.length - 1)
-                sb.append(", ");
+            list.add(f.getName() + " " + seq);
         }
-        return sb.toString();
+        return list != null ? STL.CollectionJoin(list, ", ") : null;
     }
 
 }

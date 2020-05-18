@@ -29,6 +29,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 	public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
 		addPreferencesFromResource(R.xml.settings_preference);
 		Preference preference;
+		final Configs configs = Configs.Instance();
 
 		preference = findPreference(Constants.ID_PREFERENCE_FACE_FREQUENCY);
 		//((EditTextPreference)(preference)).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
@@ -235,5 +236,35 @@ public class SettingsFragment extends PreferenceFragmentCompat
 				return true;
 			}
 		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_DEBUG_MODE);
+		preference.setDefaultValue("" + configs.GetConfig(Configs.ID_CONFIG_DEBUG));
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
+				try
+				{
+					configs.SetConfig(Configs.ID_CONFIG_DEBUG, Integer.parseInt(newValue.toString()));
+				}
+				catch (Exception e)
+				{
+					configs.SetConfig(Configs.ID_CONFIG_DEBUG, 0);
+					e.printStackTrace();
+				}
+				return true;
+			}
+		});
+
+		preference = findPreference(Constants.ID_PREFERENCE_PLAY_VOICE_ALERT);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT);
+		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
+			@Override
+			public boolean onPreferenceChange(Preference preference, Object newValue) {
+				preference.setSummary(newValue.toString());
+				return true;
+			}
+		});
 	}
+
 }

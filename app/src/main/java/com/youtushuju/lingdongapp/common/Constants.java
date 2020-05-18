@@ -18,6 +18,8 @@ public final class Constants
 	public static final String ID_PREFERENCE_PREVIEW_CAPTURE_CROP = "PREVIEW_CAPTURE_CROP";
 	public static final String ID_PREFERENCE_CLEAN_RECORD = "CLEAN_RECORD";
 	public static final String ID_PREFERENCE_RECORD_HISTORY = "RECORD_HISTORY";
+	public static final String ID_PREFERENCE_DEBUG_MODE = "DEBUG_MODE";
+	public static final String ID_PREFERENCE_PLAY_VOICE_ALERT = "PLAY_VOICE_ALERT";
 	
 	public static final int ID_REQUEST_RESULT_SUCCESS = 0;
 	public static final int ID_REQUEST_RESULT_FAIL = 1;
