@@ -155,4 +155,19 @@ public final class Common
 
 		return Character.toUpperCase(str.charAt(0)) + str.substring(1);
 	}
+
+	public static<T> String ArrayJoin(T list[], String ch)
+	{
+		if(list == null)
+			return null;
+
+		String ret = "";
+		for(int i = 0; i < list.length; i++)
+		{
+			ret += list[i].toString();
+			if(i < list.length - 1)
+				ret += ch;
+		}
+		return ret;
+	}
 }
