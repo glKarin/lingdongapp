@@ -254,6 +254,7 @@ public class MainActivity extends AppCompatActivity {
     private Runnable m_openScreenSaver = new Runnable() {
         @Override
         public void run() {
+            m_webView.onResume();
             m_webView.Load();
             m_screenSaverView.setVisibility(View.VISIBLE);
         }
@@ -262,6 +263,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void run() {
             //m_screenSaverView.setVisibility(View.INVISIBLE);
+            m_webView.onPause();
             m_screenSaverView.setVisibility(View.GONE);
         }
     };
@@ -1004,7 +1006,7 @@ public class MainActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("程序无权限访问摄像头设备!");
         builder.setMessage("请前往系统设置手动授权程序访问摄像头");
-        builder.setIcon(R.drawable.icon_profile);
+        builder.setIcon(R.drawable.icon_warning);
         builder.setCancelable(false);
         builder.setPositiveButton("确定", listener);
         builder.setNegativeButton("退出", listener);
@@ -1199,7 +1201,7 @@ public class MainActivity extends AppCompatActivity {
             AlertDialog.Builder builder = new AlertDialog.Builder(this);
             builder.setTitle("错误");
             builder.setMessage(message);
-            builder.setIcon(R.drawable.icon_profile);
+            builder.setIcon(R.drawable.icon_warning);
             builder.setPositiveButton("确定", null);
             AlertDialog dialog = builder.create();
             dialog.show();

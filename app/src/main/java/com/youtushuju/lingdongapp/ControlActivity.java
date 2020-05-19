@@ -136,7 +136,7 @@ public class ControlActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("警告");
         builder.setMessage("确定要" + message + "?");
-        builder.setIcon(R.drawable.icon_profile);
+        builder.setIcon(R.drawable.icon_warning);
         builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {

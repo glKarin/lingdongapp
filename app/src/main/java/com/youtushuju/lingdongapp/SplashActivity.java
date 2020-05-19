@@ -289,7 +289,7 @@ public class SplashActivity extends AppCompatActivity
 		for (String p : list)
 			sb.append("  " + permissions.get(p) + "\n");
 		builder.setMessage(sb.toString());
-		builder.setIcon(R.drawable.icon_profile);
+		builder.setIcon(R.drawable.icon_warning);
 		builder.setCancelable(false);
 		builder.setPositiveButton("授权", listener);
 		builder.setNegativeButton("拒绝", listener);

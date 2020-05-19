@@ -7,6 +7,7 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Handler;
 import android.view.Menu;
@@ -140,7 +141,7 @@ public class RecordActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("警告");
         builder.setMessage("确定要清空所有记录?");
-        builder.setIcon(R.drawable.icon_profile);
+        builder.setIcon(R.drawable.icon_warning);
         builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -205,7 +206,7 @@ public class RecordActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle(title);
         builder.setMessage(message);
-        builder.setIcon(R.drawable.icon_profile);
+        builder.setIcon(R.drawable.icon_info);
         builder.setPositiveButton("复制", listener);
         builder.setNegativeButton("关闭", null);
         builder.setNeutralButton("删除", listener);
@@ -238,7 +239,6 @@ public class RecordActivity extends AppCompatActivity {
         {
             TextView textView;
             int result = data.Result();
-            int color;
 
             textView = (TextView)view.findViewById(R.id.record_delegate_name);
             textView.setText(data.Name());
@@ -251,8 +251,10 @@ public class RecordActivity extends AppCompatActivity {
             textView = (TextView)view.findViewById(R.id.record_delegate_time);
             textView.setText(Common.TimestampToStr(data.Time()));
 
-            color = result == RecordModel.ID_RESULT_SUCCESS ? Color.GREEN : (result == RecordModel.ID_RESULT_ERROR ? Color.RED : Color.YELLOW);
-            ((ImageView)view.findViewById(R.id.record_delegate_icon)).setImageDrawable(new ColorDrawable(color));
+            //int color = result == RecordModel.ID_RESULT_SUCCESS ? Color.GREEN : (result == RecordModel.ID_RESULT_ERROR ? Color.RED : Color.YELLOW);
+            int resource = result == RecordModel.ID_RESULT_SUCCESS ? R.drawable.icon_success : (result == RecordModel.ID_RESULT_ERROR ? R.drawable.icon_error : R.drawable.icon_warning);
+
+            ((ImageView)view.findViewById(R.id.record_delegate_icon)).setImageResource(resource);
 
             return view;
         }

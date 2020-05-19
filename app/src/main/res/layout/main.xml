@@ -79,11 +79,13 @@
             <ImageButton
                 android:id="@+id/main_menu_button"
                 style="?metaButtonBarButtonStyle"
+                android:background="#00FFFFFF"
+                android:scaleType="centerCrop"
                 android:layout_width="48dp"
                 android:layout_height="48dp"
                 android:layout_marginTop="20dp"
-                android:layout_marginRight="20dp"
-                android:src="@drawable/icon_profile" />
+                android:layout_marginRight="10dp"
+                android:src="@drawable/icon_menu" />
 
         </LinearLayout>
 

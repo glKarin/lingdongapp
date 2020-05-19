@@ -142,7 +142,7 @@ public class LogActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("警告");
         builder.setMessage("确定要清空所有日志文件?");
-        builder.setIcon(R.drawable.icon_profile);
+        builder.setIcon(R.drawable.icon_warning);
         builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
@@ -288,7 +288,7 @@ public class LogActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("程序无权限访问外部存储!");
         builder.setMessage("请前往系统设置手动授权程序读取外部存储");
-        builder.setIcon(R.drawable.icon_profile);
+        builder.setIcon(R.drawable.icon_warning);
         builder.setCancelable(false);
         builder.setPositiveButton("确定", listener);
         builder.setNegativeButton("返回", listener);

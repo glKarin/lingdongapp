@@ -136,11 +136,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 		preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			@Override
 			public boolean onPreferenceClick(final Preference preference) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-				builder.setTitle("警告");
-				builder.setMessage("确定要清空所有日志文件?");
-				builder.setIcon(R.drawable.icon_profile);
-				builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+				OpenQueryDialog("警告", "确定要清空所有日志文件?", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						boolean res = App.Instance().CleanLog();
@@ -153,9 +149,6 @@ public class SettingsFragment extends PreferenceFragmentCompat
 							Toast.makeText(getContext(), "清空日志文件失败", Toast.LENGTH_LONG).show();
 					}
 				});
-				builder.setNegativeButton("取消", null);
-				AlertDialog dialog = builder.create();
-				dialog.show();
 				return true;
 			}
 		});
@@ -218,11 +211,7 @@ public class SettingsFragment extends PreferenceFragmentCompat
 		preference.setOnPreferenceClickListener(new Preference.OnPreferenceClickListener() {
 			@Override
 			public boolean onPreferenceClick(final Preference preference) {
-				AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
-				builder.setTitle("警告");
-				builder.setMessage("确定要清空所有历史记录?");
-				builder.setIcon(R.drawable.icon_profile);
-				builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
+				OpenQueryDialog("警告", "确定要清空所有日志文件?", new DialogInterface.OnClickListener() {
 					@Override
 					public void onClick(DialogInterface dialog, int which) {
 						recordServices.DeleteAll();
@@ -230,9 +219,6 @@ public class SettingsFragment extends PreferenceFragmentCompat
 						Toast.makeText(getContext(), "历史记录已清空", Toast.LENGTH_SHORT).show();
 					}
 				});
-				builder.setNegativeButton("取消", null);
-				AlertDialog dialog = builder.create();
-				dialog.show();
 				return true;
 			}
 		});
@@ -267,4 +253,15 @@ public class SettingsFragment extends PreferenceFragmentCompat
 		});
 	}
 
+	private void OpenQueryDialog(String title, String message, DialogInterface.OnClickListener listener)
+	{
+		AlertDialog.Builder builder = new AlertDialog.Builder(getContext());
+		builder.setTitle(title);
+		builder.setMessage(message);
+		builder.setIcon(R.drawable.icon_warning);
+		builder.setPositiveButton("确定", listener);
+		builder.setNegativeButton("取消", null);
+		AlertDialog dialog = builder.create();
+		dialog.show();
+	}
 }

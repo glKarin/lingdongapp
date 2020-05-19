@@ -197,7 +197,7 @@ public class SerialActivity extends AppCompatActivity {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("错误");
         builder.setMessage(message);
-        builder.setIcon(R.drawable.icon_profile);
+        builder.setIcon(R.drawable.icon_error);
         builder.setPositiveButton("确定", null);
         AlertDialog dialog = builder.create();
         dialog.show();

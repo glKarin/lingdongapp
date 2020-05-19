@@ -49,7 +49,7 @@ public class ProfileActivity extends AppCompatActivity {
 
         menuList = new ArrayList<ProfileMenuModel>();
 
-        item = new ProfileMenuModel("历史记录", "record", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("历史记录", "record", R.drawable.icon_record, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
@@ -60,7 +60,7 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("系统信息", "system_info", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("系统信息", "system_info", R.drawable.icon_systeminfo, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
@@ -71,7 +71,7 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("文件系统", "file_system", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("文件系统", "file_system", R.drawable.icon_fs, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
@@ -82,7 +82,7 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("系统控制", "system_control", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("系统控制", "system_control", R.drawable.icon_control, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
@@ -93,7 +93,7 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("串口操作", "serial", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("串口操作", "serial", R.drawable.icon_serialport, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
@@ -104,7 +104,7 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("运行日志", "log", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("运行日志", "log", R.drawable.icon_log, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
@@ -115,7 +115,7 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("设置", "setting", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("设置", "setting", R.drawable.icon_settings, new Runnable() {
             @Override
             public void run() {
                 OpenSettingsPage();
@@ -123,7 +123,7 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("关于", "about", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("关于", "about", R.drawable.icon_about, new Runnable() {
             @Override
             public void run() {
                 Intent intent;
@@ -134,7 +134,7 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
-        item = new ProfileMenuModel("退出", "exit", R.drawable.icon_profile, new Runnable() {
+        item = new ProfileMenuModel("退出", "exit", R.drawable.icon_quit, new Runnable() {
             @Override
             public void run() {
                 Exit();

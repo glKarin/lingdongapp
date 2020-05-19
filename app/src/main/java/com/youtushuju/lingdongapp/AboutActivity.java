@@ -157,7 +157,7 @@ public class AboutActivity extends AppCompatActivity {
         }, true, null);
         menuList.add(item);
 
-        item = new AboutMenuModel("检查更新", "update", R.drawable.icon_profile, new Runnable() {
+        item = new AboutMenuModel("检查更新", "update", R.drawable.icon_sync, new Runnable() {
             @Override
             public void run() {
                 AppCheckUpdate();
@@ -293,7 +293,7 @@ public class AboutActivity extends AppCompatActivity {
                 sb.append(str + '\n');
         }
         builder.setMessage(sb.toString());
-        builder.setIcon(R.drawable.icon_profile);
+        builder.setIcon(R.drawable.icon_sync);
         builder.setNeutralButton("下载", new DialogInterface.OnClickListener() {
             @Override
             public void onClick(DialogInterface dialog, int which) {
