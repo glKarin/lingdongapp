@@ -64,6 +64,7 @@
 
 
 	<string-array name="update_info">
+		<item>设置界面优化.</item>
 		<item>启动图/图标更新.</item>
 	</string-array>
 </resources>

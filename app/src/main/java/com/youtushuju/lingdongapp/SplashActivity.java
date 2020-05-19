@@ -99,6 +99,9 @@ public class SplashActivity extends AppCompatActivity
 		}
 		editor.commit();
 
+		if((int)configs.GetConfig(Configs.ID_CONFIG_DEBUG) == 0)
+			findViewById(R.id.splash_debug_panel).setVisibility(View.GONE);
+
 		SetupUI();
 
 		App.Instance().PushActivity(this);

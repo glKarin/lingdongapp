@@ -4,7 +4,7 @@
 	android:title="设置">
 	
 	<PreferenceCategory
-		android:title="一般"
+		android:title="相机预览"
 		>
 		<EditTextPreference
 			android:dialogTitle="刷脸检测频率(毫秒)"
@@ -67,6 +67,16 @@
 			android:persistent="true"
 			android:title="设置是否裁剪照片"
 			android:defaultValue="false"
+			/>
+		<ListPreference
+			android:dialogTitle="相机使用计划"
+			android:key="CAMERA_USAGE_PLAN"
+			android:summary="相机使用计划"
+			android:persistent="true"
+			android:title="设置相机使用计划(重启后生效)"
+			android:entries="@array/camera_usage_plan_name"
+			android:entryValues="@array/camera_usage_plan_key"
+			android:defaultValue="1"
 			/>
 	</PreferenceCategory>
 
@@ -142,16 +152,6 @@
 			android:defaultValue="10000"
 			>
 		</EditTextPreference>
-		<ListPreference
-			android:dialogTitle="相机使用计划"
-			android:key="CAMERA_USAGE_PLAN"
-			android:summary="相机使用计划"
-			android:persistent="true"
-			android:title="设置相机使用计划(重启后生效)"
-			android:entries="@array/camera_usage_plan_name"
-			android:entryValues="@array/camera_usage_plan_key"
-			android:defaultValue="1"
-			/>
 
 		<SwitchPreference
 			android:dialogTitle="记录历史"
