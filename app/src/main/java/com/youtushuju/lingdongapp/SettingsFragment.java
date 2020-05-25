@@ -2,6 +2,7 @@ package com.youtushuju.lingdongapp;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.widget.Toast;
@@ -122,6 +123,9 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 		preference = findPreference(Constants.ID_PREFERENCE_SERIAL_DRIVER);
 		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_SERIAL_DRIVER);
 		preference.setOnPreferenceChangeListener(this);
+
+		preference = findPreference(Constants.ID_PREFERENCE_LAYOUT_EDIT);
+		preference.setOnPreferenceClickListener(this);
 	}
 
 	@Override
@@ -157,6 +161,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 	@Override
 	public boolean onPreferenceClick(final Preference preference) {
 		String key = preference.getKey();
+		final Context context = getContext();
 
 		if(Constants.ID_PREFERENCE_CLEAN_LOG.equals(key))
 		{
@@ -167,10 +172,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 					if(res)
 					{
 						SetSummary(Constants.ID_PREFERENCE_CLEAN_LOG, null);
-						Toast.makeText(getContext(), "日志文件已清空", Toast.LENGTH_SHORT).show();
+						Toast.makeText(context, "日志文件已清空", Toast.LENGTH_SHORT).show();
 					}
 					else
-						Toast.makeText(getContext(), "清空日志文件失败", Toast.LENGTH_LONG).show();
+						Toast.makeText(context, "清空日志文件失败", Toast.LENGTH_LONG).show();
 				}
 			});
 		}
@@ -179,12 +184,17 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 			OpenQueryDialog("警告", "确定要清空所有历史记录?", new DialogInterface.OnClickListener() {
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
-					RecordServices recordServices = new RecordServices(getContext());
+					RecordServices recordServices = new RecordServices(context);
 					recordServices.DeleteAll();
 					SetSummary(Constants.ID_PREFERENCE_CLEAN_RECORD, null);
-					Toast.makeText(getContext(), "历史记录已清空", Toast.LENGTH_SHORT).show();
+					Toast.makeText(context, "历史记录已清空", Toast.LENGTH_SHORT).show();
 				}
 			});
+		}
+		else if(Constants.ID_PREFERENCE_LAYOUT_EDIT.equals(key))
+		{
+			Intent intent = new Intent(context, LayoutActivity.class);
+			startActivity(intent);
 		}
 		else
 			return false;

@@ -3,6 +3,7 @@ package com.youtushuju.lingdongapp.api;
 import android.graphics.Bitmap;
 
 public class UserModel {
+    private String m_id = null;
     private String m_username = null;
     private Bitmap m_photo = null;
 
@@ -10,8 +11,9 @@ public class UserModel {
     {
     }
 
-    public UserModel(String username, Bitmap photo)
+    public UserModel(String id, String username, Bitmap photo)
     {
+        m_id = id;
         m_username = username;
         m_photo = photo;
     }
@@ -42,8 +44,18 @@ public class UserModel {
         }
     }
 
+    public String Id()
+    {
+        return m_id;
+    }
+
+    public void SetId(String id)
+    {
+        m_id = id;
+    }
+
     public boolean IsValid()
     {
-        return m_username != null;
+        return m_id != null;
     }
 }

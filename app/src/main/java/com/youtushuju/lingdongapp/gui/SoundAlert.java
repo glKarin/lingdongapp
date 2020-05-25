@@ -16,11 +16,11 @@ import java.io.IOException;
 
 public class SoundAlert {
     private static final String ID_TAG = "SoundAlert";
-    private static final String ID_FILE_SUFFIX = ".ogg";
+    private static final String ID_FILE_SUFFIX = "";
 
-    public static final String ID_SOUND_ALERT_WELCOME = "welcome";
-    public static final String ID_SOUND_ALERT_OPERATION_SUCCESS = "operation_success";
-    public static final String ID_SOUND_ALERT_OPERATION_ERROR = "operation_error";
+    public static final String ID_SOUND_ALERT_WELCOME = "welcome.ogg";
+    public static final String ID_SOUND_ALERT_OPERATION_SUCCESS = "operation_success.ogg";
+    public static final String ID_SOUND_ALERT_OPERATION_ERROR = "operation_error.ogg";
 
     private Context m_context = null;
     private MediaPlayer m_player = null;
@@ -92,7 +92,7 @@ public class SoundAlert {
             {
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) // 牛轧糖
                 {
-                    Logf.e(ID_TAG, fd);
+                    //Logf.e(ID_TAG, fd);
                     if(fd != null)
                         player.setDataSource(fd);
                     else

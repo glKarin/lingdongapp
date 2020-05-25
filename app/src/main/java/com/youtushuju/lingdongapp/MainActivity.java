@@ -32,11 +32,14 @@ import android.util.Size;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
 import android.webkit.JavascriptInterface;
+import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -94,6 +97,10 @@ public class MainActivity extends AppCompatActivity {
     private static final int ID_PERSON_VIEW_ANIM_DELAY = 500;
     private static final int ID_SCREEN_SAVER_ANIM_DELAY = 500;
 
+    private static final int ENUM_STATE_READY = 0;
+    private static final int ENUM_STATE_SCREENSAVER = 1;
+    private static final int ENUM_STATE_PREVIEW = 2;
+
     private static final boolean ID_SAVE_RECORD = true;
 
     /**
@@ -132,6 +139,7 @@ public class MainActivity extends AppCompatActivity {
     private boolean m_recordHistory = Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY;
     private boolean m_playAlert = Configs.ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT;
     private SoundAlert m_soundAlert = null;
+    private int m_state = ENUM_STATE_READY;
 
     // 设备交互
     private LingDongApi m_lingdongApi = null;
@@ -155,6 +163,7 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable m_finishOperation = new Runnable() {
         @Override
         public void run() {
+            SetState(ENUM_STATE_SCREENSAVER);
             findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
             CloseResultDialog(true);
 
@@ -165,6 +174,12 @@ public class MainActivity extends AppCompatActivity {
             CloseSerialPortDriver();
             m_hideFacePanel.run();
 
+            ((TextView)m_afterApiDebugView.findViewById(R.id.main_request_debug_text)).setText("");
+            ((TextView)m_afterApiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
+            ((TextView)m_apiDebugView.findViewById(R.id.main_request_debug_text)).setText("");
+            ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
+            ((TextView)m_serialPortDebugView.findViewById(R.id.main_request_debug_text)).setText("");
+            ((TextView)m_serialPortDebugView.findViewById(R.id.main_response_debug_text)).setText("");
             m_cameraMask.SetState(CameraMaskView.ID_STATE_READY);
         }
     };
@@ -228,7 +243,7 @@ public class MainActivity extends AppCompatActivity {
                     m_personTime.setText("");
                 }
             }).start();
-            mHideHandler.removeCallbacks(m_hideFacePanel);
+            //mHideHandler.removeCallbacks(m_hideFacePanel); // TODO: ???
         }
     };
     private final Runnable mHideRunnable = new Runnable() {
@@ -378,6 +393,10 @@ public class MainActivity extends AppCompatActivity {
         @JavascriptInterface
         public void ToFace(final String name)
         {
+            if(m_state == ENUM_STATE_PREVIEW)
+                return;
+
+            SetState(ENUM_STATE_PREVIEW);
             m_handler.post(new Runnable(){
                 @Override
                 public void run() {
@@ -772,7 +791,7 @@ public class MainActivity extends AppCompatActivity {
                 m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_SUCCESS);
 
                 // 继续上报重量
-                String uuid = DoUploadWeight(session);
+                String uuid = DoUploadWeight(session, user);
                 if(uuid != null)
                 {
                     m_cameraMask.SetState(CameraMaskView.ID_STATE_UPLOAD_SUCCESS);
@@ -842,7 +861,8 @@ public class MainActivity extends AppCompatActivity {
         if (actionBar != null) {
             actionBar.hide();
         }*/
-        mControlsView.setVisibility(View.GONE);
+        mControlsView.setVisibility(View.INVISIBLE);
+        //mControlsView.setVisibility(View.GONE); // ori
         mVisible = false;
 
         // Schedule a runnable to remove the status and navigation bar after a delay
@@ -885,6 +905,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onResume() {
         super.onResume();
 
+        SetState(ENUM_STATE_SCREENSAVER);
         m_cameraMask.SetState(CameraMaskView.ID_STATE_READY);
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         try
@@ -915,14 +936,48 @@ public class MainActivity extends AppCompatActivity {
             OpenCamera();
         }
 */
-
        // CloseScreenSaver();
+    }
+
+    @Override
+    public void onWindowFocusChanged(boolean hasFocus) {
+        super.onWindowFocusChanged(hasFocus);
+        if(!hasFocus)
+            return;
+
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String menuGeometry = preferences.getString(Constants.ID_PREFERENCE_MAIN_MENU_GEOMETRY, null/*Configs.ID_PREFERENCE_DEFAULT_MAIN_MENU_GEOMETRY*/);
+        if(!Common.StringIsEmpty(menuGeometry))
+        {
+            String parts[] = menuGeometry.split(",");
+            if(parts.length >= 2)
+            {
+                FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(mControlsView.getLayoutParams());
+                View view = findViewById(R.id.main_second_content);
+                try {
+                    int horizontalMargin = Integer.parseInt(parts[0]);
+                    int verticalMargin = Integer.parseInt(parts[1]);
+                    params.setMargins(
+                            horizontalMargin >= 0 ? horizontalMargin : (view.getWidth() - (-horizontalMargin) - mControlsView.getWidth()),
+                            verticalMargin >= 0 ? verticalMargin : (view.getHeight() - (-verticalMargin) - mControlsView.getHeight()),
+                            0,
+                            0
+                    );
+                    mControlsView.setLayoutParams(params);
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
     }
 
     @Override
     protected void onPause() {
         super.onPause();
 
+        SetState(ENUM_STATE_SCREENSAVER);
         mHideHandler.postDelayed(m_hideFacePanel, 100);
         delayedHide(100);
 
@@ -932,12 +987,7 @@ public class MainActivity extends AppCompatActivity {
 
         CloseSerialPortDriver();
 
-        //StopAlert();
-        if(m_soundAlert != null)
-        {
-            m_soundAlert.Shutdown();
-            m_soundAlert = null;
-        }
+        StopAlert();
 
         ((TextView)findViewById(R.id.main_camera_info_text)).setText("");
     }
@@ -965,11 +1015,7 @@ public class MainActivity extends AppCompatActivity {
         m_deviceHandler = null;
         m_deviceHandlerThread.quit();
         m_deviceHandlerThread = null;
-        if(m_soundAlert != null)
-        {
-            m_soundAlert.Shutdown();
-            m_soundAlert = null;
-        }
+        StopAlert();
         App.Instance().PopActivity();
     }
 
@@ -1078,6 +1124,7 @@ public class MainActivity extends AppCompatActivity {
                 {
                     if(ActivityUtility.BuildOnDebug(this) /*&& false*/) // TODO: 仅开发测试
                     {
+                        user.SetId("2014");
                         user.SetUsername("开发者");
                     }
                     Logf.e(ID_TAG, "未识别人员: " + Common.Now());
@@ -1088,6 +1135,8 @@ public class MainActivity extends AppCompatActivity {
                     {
                         JsonMap data = (JsonMap)resp.data;
                         String name = data.<String>GetT("username");
+                        String uid = data.Get("id").toString();
+                        user.SetId(uid);
                         user.SetUsername(name);
                         user.SetPhoto(bitmap);
                     }
@@ -1291,11 +1340,16 @@ public class MainActivity extends AppCompatActivity {
             m_camera.StopPreview();
     }
 
-    private String DoUploadWeight(SerialSessionStruct session)
+    private String DoUploadWeight(SerialSessionStruct session, final UserModel user)
     {
         if(!session.IsValidSession())
         {
             Logf.e(ID_TAG, "无效对话");
+            return null;
+        }
+        if(!user.IsValid())
+        {
+            Logf.e(ID_TAG, "无效用户");
             return null;
         }
 
@@ -1324,14 +1378,17 @@ public class MainActivity extends AppCompatActivity {
                 JsonMap map = new JsonMap();
                 map.put("c", DeviceApi.ID_DEVICE_API_COMMAND_UPLOAD_FACE);
                 map.put("imei", Sys.GetIMEI(MainActivity.this));
+                map.put("n", user.Id());
                 map.put("m", resp.weight);
+                map.put("res", resp.res);
+                map.put("device_id", resp.device_id);
                 String json = JSON.Stringify(map);
                 ((TextView)m_afterApiDebugView.findViewById(R.id.main_request_debug_text)).setText(json);
                 }
             });
         }
 
-        final DeviceApiResp apiResp = DeviceApi.UploadWeight(Sys.GetIMEI(MainActivity.this), resp.weight);
+        final DeviceApiResp apiResp = DeviceApi.UploadWeight(Sys.GetIMEI(MainActivity.this), user.Id(), resp.weight, resp.res, resp.device_id);
         if(apiResp != null)
         {
             runOnUiThread(new Runnable() {
@@ -1409,6 +1466,13 @@ public class MainActivity extends AppCompatActivity {
     {
         if(m_soundAlert == null)
             return;
-        m_soundAlert.Reset();
+        m_soundAlert.Shutdown();
+        m_soundAlert = null;
+    }
+
+    private void SetState(int state)
+    {
+        if(m_state != state)
+            m_state = state;
     }
 }

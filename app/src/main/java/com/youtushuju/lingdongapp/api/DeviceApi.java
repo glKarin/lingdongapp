@@ -82,7 +82,7 @@ public class DeviceApi {
         return resp;
     }
 
-    public static DeviceApiResp UploadWeight(String imei, String weight)
+    public static DeviceApiResp UploadWeight(String imei, String id, String weight, String res, String deviceId)
     {
         JsonMap data;
         NetworkAccessManager manager;
@@ -93,7 +93,10 @@ public class DeviceApi {
         data = new JsonMap();
         data.put("c", ID_DEVICE_API_COMMAND_UPLOAD_FACE);
         data.put("imei", imei);
+        data.put("n", id);
         data.put("m", weight);
+        data.put("res", res);
+        data.put("device_id", deviceId);
         String json = JSON.Stringify(data);
         Logf.d(ID_TAG, "上报重量请求数据(%s)", json);
 

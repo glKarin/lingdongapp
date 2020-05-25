@@ -6,9 +6,9 @@ public final class GetOpenDoorRespStruct extends SerialRespStruct {
         super();
     }
 
-    public GetOpenDoorRespStruct(String res, String token)
+    public GetOpenDoorRespStruct(String token, String res)
     {
-        super(SerialDataDef.ID_SERIAL_DATA_TYPE_GET_OPEN_DOOR, res, token);
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_GET_OPEN_DOOR, null, token, res);
     }
 
     @Override

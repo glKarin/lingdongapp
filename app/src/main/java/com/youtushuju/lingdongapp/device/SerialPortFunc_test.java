@@ -131,6 +131,7 @@ public final class SerialPortFunc_test extends SerialPortFunc {
                             "       \"type\":	\"PutOpenDoor\"," +
                             "       \"device_id\":	\"01\","  +
                             "       \"weight\":	\"5000\"," +
+                            "       \"res\":	\"01\"," +
                             "       \"token\":	\"123456\"" +
                             "}";
 

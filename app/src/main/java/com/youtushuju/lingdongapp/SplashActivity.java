@@ -38,6 +38,7 @@ public class SplashActivity extends AppCompatActivity
 	private int m_timerDelay = SPLASH_DELAY;
 	private boolean m_started = false;
 	private AlertDialog m_permissionDialog = null;
+	private boolean m_granted = false;
 	
 	private Handler m_handler = new Handler(){
 		@Override
@@ -105,9 +106,8 @@ public class SplashActivity extends AppCompatActivity
 		SetupUI();
 
 		App.Instance().PushActivity(this);
-		Test();
 
-		CheckAppNecessaryPermission(true);
+		//CheckAppNecessaryPermission(false, true);
 	}
 
 	private void SetupUI()
@@ -166,6 +166,8 @@ public class SplashActivity extends AppCompatActivity
 	
 	private void ToMainPage()
 	{
+		if(Test() != null)
+			return;
 		if(m_navLocked)
 			return;
 		m_navLocked = true;
@@ -207,7 +209,7 @@ public class SplashActivity extends AppCompatActivity
 		}
 	}
 
-	private void CheckAppNecessaryPermission(boolean grant)
+	private void CheckAppNecessaryPermission(boolean grant, boolean direct)
 	{
 		Map<String, String> permissions = (Map<String, String>)Configs.Instance().GetConfig(Configs.ID_CONFIG_APP_NECESSARY_PERMISSIONS);
 		List<String> list = null;
@@ -230,7 +232,7 @@ public class SplashActivity extends AppCompatActivity
 			if(grant)
 				ActivityCompat.requestPermissions(this, rps, ActivityUtility.ID_REQUEST_PERMISSION_RESULT);
 			else
-				OpenPermissionGrantFailDialog(list);
+				OpenPermissionGrantFailDialog(list, direct);
 		}
 		else
 		{
@@ -241,6 +243,7 @@ public class SplashActivity extends AppCompatActivity
 	@Override
 	public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
 		super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+		m_granted = true;
 		if(requestCode == ActivityUtility.ID_REQUEST_PERMISSION_RESULT)
 		{
 			List<String> ps = null;
@@ -254,13 +257,14 @@ public class SplashActivity extends AppCompatActivity
 				}
 			}
 			if(ps != null)
-				OpenPermissionGrantFailDialog(ps);
+				OpenPermissionGrantFailDialog(ps, false);
 			else
 				StartSplash();
 		}
 	}
 
-	private void OpenPermissionGrantFailDialog(List<String> list) {
+	// grant = true: 程序里授权, = false: 设置里手动授权
+	private void OpenPermissionGrantFailDialog(final List<String> list, final boolean grant) {
 		if(list == null || list.isEmpty())
 			return;
 
@@ -275,7 +279,15 @@ public class SplashActivity extends AppCompatActivity
 			public void onClick(DialogInterface dialog, int which) {
 				switch (which) {
 					case DialogInterface.BUTTON_POSITIVE:
-						ActivityUtility.OpenAppSetting(SplashActivity.this);
+						if(grant)
+						{
+							String rps[] = new String[list.size()];
+							for (int i = 0; i < list.size(); i++)
+								rps[i] = list.get(i);
+							ActivityCompat.requestPermissions(SplashActivity.this, rps, ActivityUtility.ID_REQUEST_PERMISSION_RESULT);
+						}
+						else
+							ActivityUtility.OpenAppSetting(SplashActivity.this);
 						break;
 					case DialogInterface.BUTTON_NEGATIVE:
 					default:
@@ -303,7 +315,7 @@ public class SplashActivity extends AppCompatActivity
 	@Override
 	protected void onResume() {
 		super.onResume();
-		CheckAppNecessaryPermission(false);
+		CheckAppNecessaryPermission(false, !m_granted);
 	}
 
 	@Override
@@ -316,23 +328,11 @@ public class SplashActivity extends AppCompatActivity
 	{
 		Object ret = null;
 
-		/*LingDongApi api = Configs.Instance().GetLingDongApi(this);
-		api.DeviceSetLCDBlackLight(true);*/
+		if(true) return  null;
 
-		if(true) return null;
-
-		{
-			Size src = new Size(1280, 720);
-			Size dst = new Size(1080, 1856);
-			Rect rect = MainActivity.CaleCropSize(dst, src);
-			Logf.e(ID_TAG, rect);
-		}
-		{
-			Size src = new Size(1280, 720);
-			Size dst = new Size(1080, 1794);
-			Rect rect = MainActivity.CaleCropSize(dst, src);
-			Logf.e(ID_TAG, rect);
-		}
+		Intent intent = new Intent(this, LayoutActivity.class);
+		startActivity(intent);
+		ret = intent;
 
 		return ret;
 	}

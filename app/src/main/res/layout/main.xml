@@ -59,6 +59,7 @@
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->
     <FrameLayout
+        android:id="@+id/main_second_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
@@ -67,6 +68,10 @@
             layout="@layout/main_screensaver"
             />
 
+        <include
+            android:id="@+id/main_response_debug_view"
+            layout="@layout/main_response_debug"/>
+
         <LinearLayout
             android:id="@+id/main_layer"
             style="?metaButtonBarStyle"
@@ -74,24 +79,19 @@
             android:layout_height="wrap_content"
             android:layout_gravity="top|right"
             android:gravity="right"
+            android:layout_marginTop="20dp"
+            android:layout_marginRight="10dp"
             android:orientation="vertical">
-
             <ImageButton
                 android:id="@+id/main_menu_button"
                 style="?metaButtonBarButtonStyle"
                 android:background="#00FFFFFF"
                 android:scaleType="centerCrop"
-                android:layout_width="48dp"
-                android:layout_height="48dp"
-                android:layout_marginTop="20dp"
-                android:layout_marginRight="10dp"
+                android:layout_width="64dp"
+                android:layout_height="64dp"
                 android:src="@drawable/icon_menu" />
-
         </LinearLayout>
 
-        <include
-            android:id="@+id/main_response_debug_view"
-            layout="@layout/main_response_debug"/>
     </FrameLayout>
 
 </FrameLayout>

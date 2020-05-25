@@ -8,9 +8,9 @@ public final class PutOpenDoorRespStruct extends SerialRespStruct {
         super();
     }
 
-    public PutOpenDoorRespStruct(String deviceId, String weight, String token)
+    public PutOpenDoorRespStruct(String deviceId, String weight, String token, String res)
     {
-        super(SerialDataDef.ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR, deviceId, token);
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR, deviceId, token, res);
         this.weight = weight;
     }
 

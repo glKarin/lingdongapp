@@ -164,6 +164,17 @@
 	</PreferenceCategory>
 
 	<PreferenceCategory
+		android:title="界面"
+		>
+		<Preference
+			android:key="LAYOUT_EDIT"
+			android:summary="编辑主界面布局"
+			android:title="编辑布局"
+			android:persistent="false">
+		</Preference>
+	</PreferenceCategory>
+
+	<PreferenceCategory
 		android:title="功能"
 		>
 		<Preference

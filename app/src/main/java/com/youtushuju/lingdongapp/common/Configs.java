@@ -41,6 +41,7 @@ public final class Configs
 	public static final boolean ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP = false;
 	public static final boolean ID_PREFERENCE_DEFAULT_RECORD_HISTORY = true;
 	public static final boolean ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT = true;
+	public static final String ID_PREFERENCE_DEFAULT_MAIN_MENU_GEOMETRY = "-10,20,64,64";
 
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";
