@@ -130,7 +130,9 @@ public final class SerialPortFunc_test extends SerialPortFunc {
                     String testStr = "{" +
                             "       \"type\":	\"PutOpenDoor\"," +
                             "       \"device_id\":	\"01\","  +
-                            "       \"weight\":	\"5000\"," +
+                            "       \"weightOld\":	\"5000\"," +
+                            "       \"weightNew\":	\"6600\"," +
+                            "       \"weightAll\":	\"7770\"," +
                             "       \"res\":	\"01\"," +
                             "       \"token\":	\"123456\"" +
                             "}";

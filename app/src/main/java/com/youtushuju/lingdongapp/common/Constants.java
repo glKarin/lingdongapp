@@ -22,6 +22,7 @@ public final class Constants
 	public static final String ID_PREFERENCE_PLAY_VOICE_ALERT = "PLAY_VOICE_ALERT";
 	public static final String ID_PREFERENCE_LAYOUT_EDIT = "LAYOUT_EDIT";
 	public static final String ID_PREFERENCE_MAIN_MENU_GEOMETRY = "MAIN_MENU_GEOMETRY";
+	public static final String ID_PREFERENCE_HEARTBEAT_INTERVAL = "HEARTBEAT_INTERVAL";
 	
 	public static final int ID_REQUEST_RESULT_SUCCESS = 0;
 	public static final int ID_REQUEST_RESULT_FAIL = 1;

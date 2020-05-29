@@ -3,9 +3,14 @@ package com.youtushuju.lingdongapp.api;
 import android.graphics.Bitmap;
 
 public class UserModel {
+    public static final String ENUM_USER_ROLE_NORMAL = "0";
+    public static final String ENUM_USER_ROLE_ADMIN = "1";
+    public static final String CONST_TEST_USER_ID = "1";
+
     private String m_id = null;
     private String m_username = null;
     private Bitmap m_photo = null;
+    private String m_isEmployee = ENUM_USER_ROLE_NORMAL;
 
     public UserModel()
     {
@@ -49,6 +54,16 @@ public class UserModel {
         return m_id;
     }
 
+    public void SetIsEmployee(String i)
+    {
+        m_isEmployee = i;
+    }
+
+    public String IsEmployee()
+    {
+        return m_isEmployee;
+    }
+
     public void SetId(String id)
     {
         m_id = id;
@@ -57,5 +72,10 @@ public class UserModel {
     public boolean IsValid()
     {
         return m_id != null;
+    }
+
+    public boolean IsAdministrator()
+    {
+        return m_isEmployee == ENUM_USER_ROLE_ADMIN;
     }
 }

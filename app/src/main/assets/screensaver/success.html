@@ -1,0 +1,67 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
+    <title>底部导航</title>
+    <link rel="stylesheet" type="text/css" href="./css/api.css"/>
+    <link rel="stylesheet" type="text/css" href="./css/style.css"/>
+    <link rel="stylesheet" type="text/css" href="./css/aui.css"/>
+    <link rel="stylesheet" type="text/css" href="./css/aui-slide.css"/>
+    <style>
+    #wrap{
+		position: relative;
+		
+	}
+    body, html{
+      height: 100%;
+      overflow: hidden;
+    }
+	.mian{
+		
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		transform:translate(-50%,-50%);
+		width: 60%;
+		height: 60%;
+		min-width: 200px;
+		min-height: 400px;
+		display:flex;
+		justify-content:space-around;
+		align-content: center;
+		align-items: center;
+		flex-direction: column;
+	}
+	.mian_img{
+		min-width: 140px;
+		min-height: 140px;
+		width: 75%;
+		overflow: hidden;
+	}
+	
+	
+	
+    </style>
+</head>
+<body>
+	<div id="wrap" class="flex-wrap flex-vertical">
+		<div class="mian">
+			<div class="mian_title"> 投递成功 </div>
+			<div class="mian_img"> <img style="width: 100%;border-radius: 5px;" src="./img/success.jpg"/></div>
+			<div class="mian_footer">
+				<div style="margin-bottom: 10px;">本次共投放： </div>
+				<div>积分将稍后发放至您的账号</div>
+			</div>
+		</div>
+	</div>
+</body>
+</html>
+<script type="text/javascript" src="./js/aui-slide.js"></script>
+<script type="text/javascript">
+// 本地宿主环境注册到window对象的对象名为`_Native_object`;
+	var native_object = window._Native_object;
+	
+
+</script>

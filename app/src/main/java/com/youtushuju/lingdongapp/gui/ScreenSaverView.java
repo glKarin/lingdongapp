@@ -15,14 +15,16 @@ import android.widget.Toast;
 
 import com.youtushuju.lingdongapp.R;
 import com.youtushuju.lingdongapp.common.Common;
+import com.youtushuju.lingdongapp.common.Configs;
 
 public class ScreenSaverView extends WebView
 {
     private static final String ID_TAG = "ScreenSaverView";
     private static final String ID_WINDOW_OBJECT_NAME = "_Native_object";
-    //private static final String ID_SCREENSAVER_URL = "file:///android_asset/screensaver.html";
+    private static final String ID_SCREENSAVER_FILE_PATH = "file:///android_asset/screensaver/screensaver.html";
     private static final String ID_SCREENSAVER_URL = "http://ryce2-test.youtushuju.cn/screensaver.html";
 
+    private String m_url = null;
     private WindowObject m_object = null;
     private Handler m_handler = new Handler();
 
@@ -46,6 +48,7 @@ public class ScreenSaverView extends WebView
 
     private void Setup() {
         WebSettings settings = getSettings();
+        m_url = ActivityUtility.BuildOnDebug(getContext()) ? ID_SCREENSAVER_URL : ID_SCREENSAVER_FILE_PATH;
 
         settings.setJavaScriptEnabled(true);
         settings.setUseWideViewPort(true);
@@ -93,7 +96,7 @@ public class ScreenSaverView extends WebView
     public void Load()
     {
         if(Common.StringIsEmpty(getUrl()))
-            loadUrl(ID_SCREENSAVER_URL);
+            loadUrl(m_url);
     }
 
     public void SetNativeObject(WindowObject obj)

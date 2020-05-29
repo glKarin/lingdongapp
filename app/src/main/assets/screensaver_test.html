@@ -1,0 +1,146 @@
+<!doctype html>
+<html>
+    <head>
+        <meta name="viewport" content="width=device-width">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta charset="utf-8">
+        <title>恭喜，站点创建成功！</title>
+        <style>
+        .container {
+            width: 90%;
+            margin: 10% auto 0;
+            background-color: #f0f0f0;
+            padding: 2% 5%;
+            border-radius: 10px
+        }
+
+        ul {
+            padding-left: 20px;
+        }
+
+            ul li {
+                line-height: 2.3
+            }
+
+        a {
+            color: #20a53a
+        }
+    </style>
+    </head>
+    <body>
+        <div class="container">
+            <h1>恭喜, 站点创建成功！</h1>
+            <h3>这是默认index.html，本页面由系统自动生成</h3>
+            <ul style="display: none;">
+                <li>本页面在FTP根目录下的index.html</li>
+                <li>您可以修改、删除或覆盖本页面</li>
+                <li>FTP相关信息，请到“面板系统后台 > FTP” 查看</li>
+                <li>更多功能了解，请查看<a href="https://www.bt.cn" target="_blank">宝塔官网(www.bt.cn)</a></li>
+            </ul>
+            <h1>演示</h1>
+            <div>
+                <p>获取参数Get(): <span id="TEST_GET_RES"></span></p>
+                <form id="TEST_GET_FORM">
+                    名称: <input name="name" value="key"/>
+                    默认值: <input name="default_value" value="default value"/>
+                    <input type="button" value="执行" onclick="Get();"/>
+                </form>
+            </div>
+
+            <div>
+                <p>设置参数Set(): <span id="TEST_SET_RES"></span></p>
+                <form id="TEST_SET_FORM">
+                    名称: <input name="name" value="key"/>
+                    值: <input name="value" value="value"/>
+                    <input type="button" value="执行" onclick="Set();"/>
+                </form>
+            </div>
+
+            <div>
+                <p>调用函数Call(): <span id="TEST_CALL_RES"></span></p>
+                <form id="TEST_CALL_FORM">
+                    名称: <input name="name" value="func"/>
+                    <input type="button" value="执行" onclick="ToFace();"/>
+                </form>
+            </div>
+        </div>
+    </body>
+
+    <script type="text/javascript">
+    // 本地宿主环境注册到window对象的对象名为`_Native_object`;
+	var native_object = window._Native_object;
+
+    // 当网页加载完成后会调用, 不需要则可以不声明
+    // 目前仅支持 `alert()` 对话框
+    // 也可以调用`window._Native_object.Toast(message)` 弹出吐司
+	function OnPageFinished()
+	{
+	    console.log("页面加载完毕");
+	    alert("页面加载完毕");
+	    native_object.Toast("页面加载完毕");
+	}
+
+    // 调用Get本地宿主方法, 如果需要返回值, 则声明`Get_result(value)`函数, `value`为本地宿主Get方法的返回值
+    // 即以后业务需求需要调用本地宿主方法`XXXXX`, 如果js需要返回值则需要声明`XXXXX_result(value)函数, `value`为返回值`
+	function Get()
+    {
+        var form = document.getElementById("TEST_GET_FORM");
+
+        var name = form.name.value;
+        var default_value = form.default_value.value;
+        console.log(name, default_value);
+        native_object.Get(name, default_value);
+        return false;
+    }
+
+    // 不需要则可以不声明
+    function Get_result(res)
+    {
+        document.getElementById("TEST_GET_RES").innerText = res;
+        console.log('Get()返回: ' + res);
+    }
+
+	function Set()
+    {
+        var form = document.getElementById("TEST_SET_FORM");
+
+        var name = form.name.value;
+        var value = form.value.value;
+        console.log(name, value);
+        native_object.Set(name, value);
+        return false;
+    }
+
+    function Set_result(res)
+    {
+        document.getElementById("TEST_SET_RES").innerText = res;
+        console.log('Set()返回: ' + res);
+    }
+
+	function Call()
+    {
+        var form = document.getElementById("TEST_CALL_FORM");
+
+        var name = form.name.value;
+        console.log(name);
+        native_object.Call(name, "213");
+        return false;
+    }
+
+    function Call_result(res)
+    {
+        document.getElementById("TEST_CALL_RES").innerText = res;
+        console.log('Call()返回: ' + res);
+    }
+
+    function ToFace()
+    {
+        var form = document.getElementById("TEST_CALL_FORM");
+
+        var name = form.name.value;
+        console.log(name);
+        native_object.ToFace(name);
+    }
+
+</script>
+</html>

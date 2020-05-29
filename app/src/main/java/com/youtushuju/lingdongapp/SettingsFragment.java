@@ -126,6 +126,11 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 
 		preference = findPreference(Constants.ID_PREFERENCE_LAYOUT_EDIT);
 		preference.setOnPreferenceClickListener(this);
+
+		preference = findPreference(Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL);
+		//((EditTextPreference)(preference)).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_HEARTBEAT_INTERVAL);
+		preference.setOnPreferenceChangeListener(this);
 	}
 
 	@Override
@@ -418,6 +423,14 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 			summary = GetSerialDriverName(value);
 			if (summary != null)
 				preference.setSummary(summary);
+		}
+
+		if(key == null || Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL.equals(key))
+		{
+			preference = findPreference(Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL);
+			value = newValue != null ? newValue.toString() : sharedPreferences.getString(Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL, "" + Configs.ID_PREFERENCE_DEFAULT_HEARTBEAT_INTERVAL);
+			summary = value + "毫秒";
+			preference.setSummary(summary);
 		}
 	}
 }

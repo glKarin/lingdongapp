@@ -124,6 +124,15 @@
 	<PreferenceCategory
 		android:title="其他"
 		>
+		<EditTextPreference
+			android:dialogTitle="心跳间隔(毫秒, 重启生效)"
+			android:key="HEARTBEAT_INTERVAL"
+			android:summary="心跳间隔"
+			android:persistent="true"
+			android:inputType="number"
+			android:title="设置心跳间隔"
+			android:defaultValue="1800"
+			/>
 		<SwitchPreference
 			android:dialogTitle="播放语音提示"
 			android:key="PLAY_VOICE_ALERT"

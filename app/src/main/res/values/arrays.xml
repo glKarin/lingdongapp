@@ -64,6 +64,9 @@
 
 
 	<string-array name="update_info">
-		<item>界面按钮布局编辑.</item>
+		<item>定时心跳服务.</item>
+		<item>启动图.</item>
+		<item>设备Api更新.</item>
+		<item>管理员进入菜单.</item>
 	</string-array>
 </resources>

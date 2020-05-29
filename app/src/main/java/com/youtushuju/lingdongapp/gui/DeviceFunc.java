@@ -109,7 +109,7 @@ public final class DeviceFunc {
         return m_serialSession;
     }
 
-    public void SetDoorId(String doorId) {
+    private void SetDoorId(String doorId) {
         m_device = doorId;
         Logf.e(ID_TAG, "设备ID: " + m_device);
     }
@@ -193,7 +193,7 @@ public final class DeviceFunc {
     }
 
     // timeout = 0: 不等待, < 0 无限等待, > 0 毫秒
-    public boolean OpenDoor(int timeout)
+    public int OpenDoor(String device, int timeout)
     {
         if(m_state == ID_STATE_INIT)
         {
@@ -206,15 +206,17 @@ public final class DeviceFunc {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("上次发送流程未结束");
-            return false;
+            return -1;
         }
 
-        if(Common.StringIsBlank(m_device))
+        if(Common.StringIsBlank(device))
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("缺失门ID");
-            return false;
+            return -2;
         }
+
+        SetDoorId(device);
         m_serialReq = new PutOpenDoorReqStruct(m_device);
         m_serialResp = null;
         m_serialSession = new SerialSessionStruct();
@@ -225,11 +227,11 @@ public final class DeviceFunc {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("发送失败");
-            return false;
+            return -3;
         }
 
         if(timeout == 0) // 不等待
-            return true;
+            return 0;
         else
         {
             StringBuffer sb = new StringBuffer();
@@ -279,7 +281,7 @@ public final class DeviceFunc {
                         m_serialPortListener.OnRecv(m_lastRecvData, m_lastSendData, m_serialResp, m_serialReq);
                     SetState(ID_STATE_DONE);
                     Logf.d(ID_TAG, "读取结束: " + m_lastRecvData);
-                    return true;
+                    return 1;
                 }
 
                 if(timeout > 0)
@@ -291,11 +293,11 @@ public final class DeviceFunc {
                         SetState(ID_STATE_TIMEOUT);
                         if (m_serialPortListener != null && (m_state == ID_STATE_SENDED || m_state == ID_STATE_RECVING))
                             m_serialPortListener.OnTimeout(m_lastSendData, timeout);
-                        return false;
+                        return -4;
                     }
                 }
             }
-            return false;
+            return -5;
         }
     }
 

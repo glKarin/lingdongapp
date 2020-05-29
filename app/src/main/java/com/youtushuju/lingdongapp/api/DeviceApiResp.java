@@ -66,7 +66,7 @@ public class DeviceApiResp {
 
     public boolean IsSuccess()
     {
-        return error_code == DeviceApi.ID_ERROR_CODE_SUCCESS;
+        return error_code == DeviceApiDef.ID_ERROR_CODE_SUCCESS;
     }
 
     private void Reset()

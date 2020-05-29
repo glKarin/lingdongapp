@@ -24,6 +24,11 @@
         <service
             android:name=".UploadLogService"
             android:exported="false"></service>
+        <service android:name=".HeartbeatService">
+            <intent-filter>
+                <action android:name="com.youtushuju.lingdongapp.HEARTBEAT_SERVICE"/>
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".FileBrowserActivity"
