@@ -1,0 +1,14 @@
+package com.youtushuju.lingdongapp.device;
+
+public final class DropModeRespStruct extends SerialRespStruct {
+
+    public DropModeRespStruct()
+    {
+        super();
+    }
+
+    public DropModeRespStruct(String token, String res)
+    {
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_DROP_MODE, token, res);
+    }
+}

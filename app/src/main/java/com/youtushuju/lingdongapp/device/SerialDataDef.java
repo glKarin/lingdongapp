@@ -6,6 +6,8 @@ public final class SerialDataDef {
 
     public static final String ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR = "PutOpenDoor"; // 投放开门
     public static final String ID_SERIAL_DATA_TYPE_GET_OPEN_DOOR = "GetOpenDoor"; // 取货开门(维护专用)
+    public static final String ID_SERIAL_DATA_TYPE_HEARTBEAT = "heartbeat"; // 心跳
+    public static final String ID_SERIAL_DATA_TYPE_DROP_MODE = "dropMode"; // 设置投放模式
 
     public static final String ID_SERIAL_DATA_DEFAULT_TOKEN = "123456"; // 固定token
 

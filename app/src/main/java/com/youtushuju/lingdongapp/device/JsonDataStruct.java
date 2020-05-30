@@ -1,5 +1,6 @@
 package com.youtushuju.lingdongapp.device;
 
+import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
 import com.youtushuju.lingdongapp.json.JsonResult;

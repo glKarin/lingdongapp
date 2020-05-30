@@ -31,7 +31,7 @@ public final class Configs
 	public static final int ID_PREFERENCE_DEFAULT_FACE_CAMERA = CameraCharacteristics.LENS_FACING_FRONT; //ms
 	public static final String ID_PREFERENCE_DEFAULT_SERIAL_PATH = "/dev/ttyS1";
 	public static final int ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE = 0;
-	public static final String ID_PREFERENCE_DEFAULT_SERIAL_DRIVER = Constants.ID_CONFIG_SERIAL_DRIVER_UART;
+	public static final String ID_PREFERENCE_DEFAULT_SERIAL_DRIVER = Constants.ID_CONFIG_SERIAL_DRIVER_CEPR;
 	public static final int ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY = 50;
 	public static final String ID_PREFERENCE_DEFAULT_FACE_CAPTURE_SCHEME = Constants.ID_CONFIG_FACE_CAPTURE_SCHEME_WHEN_FACE;
 	public static final String ID_PREFERENCE_DEFAULT_CAMERA_RESOLUTION = Constants.ID_CONFIG_CAMERA_RESOLUTION_HIGHER;
@@ -42,12 +42,17 @@ public final class Configs
 	public static final boolean ID_PREFERENCE_DEFAULT_RECORD_HISTORY = true;
 	public static final boolean ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT = true;
 	public static final String ID_PREFERENCE_DEFAULT_MAIN_MENU_GEOMETRY = "-10,20,64,64";
-	public static final int ID_PREFERENCE_DEFAULT_HEARTBEAT_INTERVAL = 30 * 60 * 1000;
+	public static final boolean ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX = false;
+
+	public static final int CONST_DEFAULT_HEARTBEAT_INTERVAL = 1000;
 
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";
 	public static final String ID_CONFIG_DEBUG = "debug";
 	public static final String ID_CONFIG_APP_NECESSARY_PERMISSIONS = "app_necessary_permissions";
+	public static final String ID_CONFIG_SERIAL_PORT_DEVICE_DRIVER = "serial_port_device_driver";
+	public static final String ID_CONFIG_SERIAL_PORT_DEVICE_BAUDRATE = "serial_port_device_baudrate";
+	public static final String ID_CONFIG_SERIAL_PORT_DEVICE_PATH = "serial_port_device_path";
 
 	private static final String ID_CONFIG_LOG_FILE_PREFIX = "ling_dong_app.";
 	private static final String ID_CONFIG_LOG_FILE_SUFFIX = ".log.txt";
@@ -61,11 +66,20 @@ public final class Configs
 
 	private Configs()
 	{
-		m_configs = new HashMap<String, Object>();
+		InitConfigs();
+	}
+
+	private void InitConfigs()
+	{
+		if(m_configs == null)
+			m_configs = new HashMap<String, Object>();
 
 		m_configs.put(ID_CONFIG_LINGDONG_API, Constants.ID_CONFIG_API_REAL); // 默认真机
 		m_configs.put(ID_CONFIG_LOG_FILE, GetFile(ID_CONFIG_LOG_DIRECTORY + File.separator + ID_CONFIG_LOG_FILE_PREFIX + new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss").format(new Date()) + ID_CONFIG_LOG_FILE_SUFFIX, true));
 		m_configs.put(ID_CONFIG_DEBUG, 0);
+		m_configs.put(ID_CONFIG_SERIAL_PORT_DEVICE_DRIVER, ID_PREFERENCE_DEFAULT_SERIAL_DRIVER);
+		m_configs.put(ID_CONFIG_SERIAL_PORT_DEVICE_PATH, ID_PREFERENCE_DEFAULT_SERIAL_PATH);
+		m_configs.put(ID_CONFIG_SERIAL_PORT_DEVICE_BAUDRATE, ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE);
 
 		Map<String, String> permissions = new HashMap<String, String>();
 		permissions.put(Manifest.permission.CAMERA, "使用摄像头");
@@ -97,11 +111,15 @@ public final class Configs
 
 	public SerialPortFunc GetLingDongSerialDriver(Context context)
 	{
+		String driver = null;
 		if(context == null)
-			return null;
+			driver = (String)GetConfig(ID_CONFIG_SERIAL_PORT_DEVICE_DRIVER);
+		else
+		{
+			SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+			driver = preferences.getString(Constants.ID_PREFERENCE_SERIAL_DRIVER, Constants.ID_CONFIG_SERIAL_DRIVER_CEPR);
+		}
 
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
-		String driver = preferences.getString(Constants.ID_PREFERENCE_SERIAL_DRIVER, Constants.ID_CONFIG_SERIAL_DRIVER_CEPR);
 		if(Constants.ID_CONFIG_SERIAL_DRIVER_CEPR.equals(driver))
 			return new SerialPortFunc_cepr();
 		else if(Constants.ID_CONFIG_SERIAL_DRIVER_TEST.equals(driver))
@@ -122,6 +140,17 @@ public final class Configs
 	{
 		m_configs.put(key, value);
 		return this;
+	}
+
+	public Object GetConfig(String key, Object value)
+	{
+		if(m_configs.containsKey(key))
+			return m_configs.get(key);
+		else
+		{
+			SetConfig(key, value);
+			return value;
+		}
 	}
 
 	public String GetFilePath(String name)

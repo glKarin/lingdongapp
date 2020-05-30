@@ -39,7 +39,7 @@ public class DeviceApiReq {
         JsonMap map = new JsonMap();
         map.put("method", method);
         map.put("imei", imei);
-        map.put("data", JsonMap.FromMap(data));
+        map.put("data", data);
         return JSON.Stringify(map);
     }
 

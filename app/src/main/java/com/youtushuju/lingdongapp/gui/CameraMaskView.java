@@ -18,6 +18,7 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.youtushuju.lingdongapp.R;
 import com.youtushuju.lingdongapp.common.Logf;
 
 import java.util.List;
@@ -77,6 +78,8 @@ public class CameraMaskView extends View
     private Paint m_centerPaint = null;
     private Paint m_labelPaint = null;
     private Paint m_statePaint = null;
+    private boolean m_drawBox = false;
+    private int m_bottomPadding = 0; // px
 
     public CameraMaskView(Context context)
     {
@@ -159,16 +162,16 @@ public class CameraMaskView extends View
 
     public void SetSize(int width, int height)
     {
-        m_size = new Size(Math.min(width, getWidth()), Math.min(height, getHeight()));
+        m_size = new Size(Math.min(width, getWidth()), Math.min(height, getHeight() - m_bottomPadding));
         Relayout();
     }
 
     private void Relayout()
     {
-        float cw = m_size.getWidth() < 0 ? ((float)getWidth() / 100.0f) * (-m_size.getWidth()) : m_size.getWidth();
-        float ch = m_size.getHeight() < 0 ? ((float)getHeight() / 100.0f) * (-m_size.getHeight()) : m_size.getHeight();
         float tw = (float)getWidth();
-        float th = (float)getHeight();
+        float th = (float)getHeight() - m_bottomPadding;
+        float cw = m_size.getWidth() < 0 ? (tw / 100.0f) * (-m_size.getWidth()) : m_size.getWidth();
+        float ch = m_size.getHeight() < 0 ? (th / 100.0f) * (-m_size.getHeight()) : m_size.getHeight();
 
         // 计算中间镂空的路径
         float radius = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, m_radius, getContext().getResources().getDisplayMetrics());
@@ -191,6 +194,7 @@ public class CameraMaskView extends View
     private void Setup()
     {
         setLayerType(View.LAYER_TYPE_SOFTWARE, null); // setXfermode不支持GPU渲染, 关闭硬件加速
+        m_bottomPadding = (int)getContext().getResources().getDimension(R.dimen.person_panel_height); // 150dp
 
         m_path = new Path();
         m_size = new Size(-80, -75);
@@ -231,13 +235,25 @@ public class CameraMaskView extends View
         Relayout();
     }
 
+    public void SetDrawBox(boolean on)
+    {
+        if(m_drawBox != on)
+        {
+            m_drawBox = on;
+            invalidate();
+        }
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
 
-        canvas.drawColor(m_backgroundColor);
-        canvas.drawPath(m_path, m_borderPaint);
-        canvas.drawPath(m_path, m_centerPaint);
+        if(m_drawBox)
+        {
+            canvas.drawColor(m_backgroundColor);
+            canvas.drawPath(m_path, m_borderPaint);
+            canvas.drawPath(m_path, m_centerPaint);
+        }
         canvas.drawText("自动扫脸垃圾箱", m_labelPosition.x, m_labelPosition.y, m_labelPaint);
         canvas.drawText(m_label, m_statePosition.x, m_statePosition.y, m_statePaint);
     }

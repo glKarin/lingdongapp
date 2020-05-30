@@ -28,7 +28,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"/>
 
-        <LinearLayout
+        <RelativeLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
@@ -37,20 +37,18 @@
             <com.youtushuju.lingdongapp.gui.CameraMaskView
                 android:id="@+id/main_camera_mask_layer"
                 android:layout_width="match_parent"
-                android:layout_height="0dp"
-                android:layout_weight="1"/>
+                android:layout_centerInParent="true"
+                android:layout_height="match_parent"/>
 
-            <LinearLayout
-                android:layout_width="match_parent"
-                android:layout_height="150dp"
-                android:gravity="center"
-                android:background="#CC000000">
-                <include
-                    android:id="@+id/main_person_view"
-                    layout="@layout/main_person"/>
-            </LinearLayout>
-        </LinearLayout>
+            <include
+                android:id="@+id/main_person_view"
+                layout="@layout/main_person"
+                />
+        </RelativeLayout>
 
+        <include
+            android:id="@+id/main_maintenance_dialog"
+            layout="@layout/main_maintenance_panel"/>
         <include
             android:id="@+id/main_result_dialog"
             layout="@layout/main_result_panel"/>

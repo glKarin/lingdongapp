@@ -76,6 +76,11 @@ public class DeviceApiResp {
         data = null;
     }
 
+    public String ResultString()
+    {
+        return "状态码: " + error_code + "(" + error_msg + ")";
+    }
+
     public String toString()
     {
         return "Response -> " + json;

@@ -7,7 +7,8 @@ public class OperationIntent {
     // 刷脸意图枚举
     public static final int ENUM_FACE_INTENT_NOTHING = 0;
     public static final int ENUM_FACE_INTENT_OPEN_DOOR = 1; // 开门
-    public static final int ENUM_FACE_INTENT_OPEN_MENU = 2; // 进入菜单
+    public static final int ENUM_FACE_INTENT_OPEN_MAINTENANCE_DOOR = 2; // 打开清维门
+    public static final int ENUM_FACE_INTENT_OPEN_MENU = 3; // 进入菜单
 
     private int m_type = ENUM_FACE_INTENT_NOTHING;
     private Map<String, Object> m_data = null;

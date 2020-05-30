@@ -3,7 +3,6 @@ package com.youtushuju.lingdongapp.json;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 
-import java.lang.reflect.Array;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -97,7 +96,7 @@ public class JsonMap extends HashMap<String, Object> implements JsonResult
 			type = JsonResult.JSON_VALUE_TYPE_FLOAT;
 		else if(value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long)
 			type = JsonResult.JSON_VALUE_TYPE_INTEGER;
-		else if(value instanceof Array) // TODO
+		else if(value instanceof Object[])
 			type = JsonResult.JSON_VALUE_TYPE_ARRAY;
 		else if(value instanceof Boolean)
 			type = JsonResult.JSON_VALUE_TYPE_BOOL;

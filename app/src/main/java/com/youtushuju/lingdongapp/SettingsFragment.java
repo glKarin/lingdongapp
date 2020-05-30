@@ -127,9 +127,8 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 		preference = findPreference(Constants.ID_PREFERENCE_LAYOUT_EDIT);
 		preference.setOnPreferenceClickListener(this);
 
-		preference = findPreference(Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL);
-		//((EditTextPreference)(preference)).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
-		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_HEARTBEAT_INTERVAL);
+		preference = findPreference(Constants.ID_PREFERENCE_CAMERA_DRAW_BOX);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX);
 		preference.setOnPreferenceChangeListener(this);
 	}
 
@@ -425,11 +424,12 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 				preference.setSummary(summary);
 		}
 
-		if(key == null || Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL.equals(key))
+		if(key == null || Constants.ID_PREFERENCE_CAMERA_DRAW_BOX.equals(key))
 		{
-			preference = findPreference(Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL);
-			value = newValue != null ? newValue.toString() : sharedPreferences.getString(Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL, "" + Configs.ID_PREFERENCE_DEFAULT_HEARTBEAT_INTERVAL);
-			summary = value + "毫秒";
+			preference = findPreference(Constants.ID_PREFERENCE_CAMERA_DRAW_BOX);
+			boolean b = newValue != null ? (boolean)newValue : sharedPreferences.getBoolean(Constants.ID_PREFERENCE_CAMERA_DRAW_BOX, Configs.ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX);
+			value = b ? "显示" : "隐藏";
+			summary = value;
 			preference.setSummary(summary);
 		}
 	}

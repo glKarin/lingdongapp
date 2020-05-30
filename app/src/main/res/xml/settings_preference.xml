@@ -114,7 +114,7 @@
 			android:key="SERIAL_DRIVER"
 			android:summary="串口读写方式"
 			android:persistent="true"
-			android:title="设置串口读写驱动"
+			android:title="设置串口读写驱动(重启后生效)"
 			android:entries="@array/serial_driver_name"
 			android:entryValues="@array/serial_driver_key"
 			android:defaultValue="uart"
@@ -124,14 +124,13 @@
 	<PreferenceCategory
 		android:title="其他"
 		>
-		<EditTextPreference
-			android:dialogTitle="心跳间隔(毫秒, 重启生效)"
-			android:key="HEARTBEAT_INTERVAL"
-			android:summary="心跳间隔"
+		<SwitchPreference
+			android:dialogTitle="显示相机背景框"
+			android:key="CAMERA_DRAW_BOX"
+			android:summary="是否显示相机背景框"
 			android:persistent="true"
-			android:inputType="number"
-			android:title="设置心跳间隔"
-			android:defaultValue="1800"
+			android:title="设置显示相机背景框"
+			android:defaultValue="false"
 			/>
 		<SwitchPreference
 			android:dialogTitle="播放语音提示"

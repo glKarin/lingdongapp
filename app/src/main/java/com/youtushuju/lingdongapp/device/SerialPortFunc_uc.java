@@ -107,6 +107,7 @@ public final class SerialPortFunc_uc extends SerialPortFunc {
         }
         m_isOpened = false;
         mNeedSendData = false;
+        CleanBuffer();
         Logf.d(ID_TAG, "串口读写关闭");
         return true;
     }
@@ -188,7 +189,10 @@ public final class SerialPortFunc_uc extends SerialPortFunc {
                                 int size = data.length;
                                 Logf.e(ID_TAG, "串口读取: " + new String(data));
                                 if (parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
+                                {
+                                    RecvBuffer(data, size);
                                     parent.m_onDataReceivedListener.OnDataReceived(data, size);
+                                }
                             }
                         }
                         catch (IOException e)

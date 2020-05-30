@@ -64,9 +64,9 @@
 
 
 	<string-array name="update_info">
-		<item>定时心跳服务.</item>
-		<item>启动图.</item>
-		<item>设备Api更新.</item>
-		<item>管理员进入菜单.</item>
+		<item>串口心跳/投放模式通信.</item>
+		<item>启动图全屏.</item>
+		<item>可设置是否显示相机背景框.</item>
+		<item>清维人员操作.</item>
 	</string-array>
 </resources>

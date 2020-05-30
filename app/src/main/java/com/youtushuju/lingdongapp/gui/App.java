@@ -163,6 +163,10 @@ public final class App {
         System.exit(code);
     }
 
+    public void Reboot()
+    {
+    }
+
     public boolean CleanLog()
     {
         File file = Configs.Instance().GetFile(Configs.ID_CONFIG_LOG_DIRECTORY);

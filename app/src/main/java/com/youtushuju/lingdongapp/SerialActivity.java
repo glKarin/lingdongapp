@@ -111,7 +111,8 @@ public class SerialActivity extends AppCompatActivity {
                 if(d != null)
                 {
                     d.type = type;
-                    d.door_id = doorId;
+                    if(d instanceof GetOpenDoorReqStruct) ((GetOpenDoorReqStruct)d).door_id = doorId;
+                    else if(d instanceof PutOpenDoorReqStruct) ((PutOpenDoorReqStruct)d).door_id = doorId;
                     d.token = token;
                     d.time = time;
                     Send(d);

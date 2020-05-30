@@ -11,17 +11,23 @@ import android.preference.PreferenceManager;
 import androidx.annotation.Nullable;
 
 import com.youtushuju.lingdongapp.api.DeviceApi;
+import com.youtushuju.lingdongapp.api.DeviceApiResp;
+import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.common.Sys;
+import com.youtushuju.lingdongapp.device.HeartbeatRespStruct;
+import com.youtushuju.lingdongapp.device.SerialSessionStruct;
+import com.youtushuju.lingdongapp.gui.SerialPortDeviceDriver;
+import com.youtushuju.lingdongapp.json.JsonMap;
 
 import java.util.Timer;
 import java.util.TimerTask;
 
 public class HeartbeatService extends Service {
     private static final String ID_TAG = "HeartbeatService";
-    private int m_timerInterval = Configs.ID_PREFERENCE_DEFAULT_HEARTBEAT_INTERVAL;
+    private int m_timerInterval = 1000;
     private Timer m_timer = null;
     private HeartbeatTimerTask m_timerTask = null;
     private HeartbeatBinder m_binder = new HeartbeatBinder();
@@ -30,7 +36,88 @@ public class HeartbeatService extends Service {
     private class HeartbeatTimerTask extends TimerTask {
         public void run()
         {
-            DeviceApi.Heartbeat(Sys.GetIMEI(HeartbeatService.this), "1", "在线");
+            try
+            {
+                String res = DoHeartbeat();
+                if(Common.StringIsEmpty(res))
+                {
+                    Logf.e(ID_TAG, "串口返回心跳设备状态错误");
+                    return;
+                }
+                DeviceApiResp resp = DeviceApi.Heartbeat(Sys.GetIMEI(HeartbeatService.this), res, HeartbeatRespStruct.GetDeviceStatusName(res));
+                if(resp == null)
+                {
+                    Logf.e(ID_TAG, "心跳Api请求错误");
+                    return;
+                }
+                if(!resp.IsSuccess())
+                {
+                    Logf.e(ID_TAG, "心跳Api请求错误: " + resp.ResultString());
+                    return;
+                }
+                if(resp.data == null || resp.data instanceof String) // device not registered
+                {
+                    Logf.e(ID_TAG, "心跳设备错误: " + resp.data);
+                    return;
+                }
+
+                JsonMap data = (JsonMap)resp.data;
+                int heartbeatTime = (int)data.get("heartbeatTime");
+                m_timerInterval = heartbeatTime * 1000; // 毫秒
+                String dropmode = data.<String>GetT("dropmode");
+
+                DoSetDropMode(dropmode);
+            }
+            catch (Throwable e)
+            {
+                e.printStackTrace();
+                Logf.e(ID_TAG, "心跳数据解析错误: " + Common.Now());
+            }
+            finally {
+                // next heartbeat
+                m_timer.purge();
+                Logf.e(ID_TAG, m_timerInterval);
+                //m_timerInterval = 10000; // for test
+                m_timerTask = new HeartbeatTimerTask();
+                m_timer.schedule(m_timerTask, m_timerInterval);
+            }
+        }
+
+        private String DoHeartbeat()
+        {
+            SerialPortDeviceDriver driver = SerialPortDeviceDriver.Instance();
+            if(!driver.CanIO())
+                return null;
+            int res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_HEARTBEAT, -1); // 会阻塞线程
+            String ret = null;
+            if(res < 0)
+            {
+                // TODO: 处理???
+                Logf.e(ID_TAG, "获取心跳设备状态失败");
+            }
+            else
+            {
+                SerialSessionStruct session = driver.LastSession();
+                HeartbeatRespStruct resp = (HeartbeatRespStruct)session.resp;
+                ret = resp.res;
+            }
+            driver.Shutdown();
+            return ret;
+        }
+
+        private boolean DoSetDropMode(String dropmode)
+        {
+            SerialPortDeviceDriver driver = SerialPortDeviceDriver.Instance();
+            if(!driver.CanIO())
+                return false;
+            int res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_DROP_SET_MODE, 0, dropmode); // 会阻塞线程
+            if(res < 0)
+            {
+                // TODO: 处理???
+                Logf.e(ID_TAG, "传递心跳投放模式失败");
+            }
+            driver.Shutdown();
+            return res >= 0;
         }
     }
 
@@ -42,17 +129,7 @@ public class HeartbeatService extends Service {
     public void onCreate() {
         Logf.d(ID_TAG, "启动心跳服务");
         super.onCreate();
-
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        try
-        {
-            m_timerInterval = Integer.parseInt(preferences.getString(Constants.ID_PREFERENCE_HEARTBEAT_INTERVAL, "" + Configs.ID_PREFERENCE_DEFAULT_HEARTBEAT_INTERVAL));
-         }
-        catch (Exception e)
-        {
-            e.printStackTrace();
-            m_timerInterval = Configs.ID_PREFERENCE_DEFAULT_HEARTBEAT_INTERVAL;
-        }
+        m_timerInterval = Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL;
     }
 
     @Override
@@ -62,7 +139,7 @@ public class HeartbeatService extends Service {
         {
             m_timer = new Timer();
             m_timerTask = new HeartbeatTimerTask();
-            m_timer.scheduleAtFixedRate(m_timerTask, 1000, m_timerInterval);
+            m_timer.schedule(m_timerTask, 1000);
         }
         return super.onStartCommand(intent, flags, startId);
     }

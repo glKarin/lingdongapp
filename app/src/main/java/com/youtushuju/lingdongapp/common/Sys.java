@@ -5,6 +5,8 @@ import android.os.Build;
 import android.telephony.TelephonyManager;
 import android.text.TextUtils;
 
+import com.youtushuju.lingdongapp.gui.ActivityUtility;
+
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.DataOutputStream;
@@ -158,6 +160,8 @@ public final class Sys
             e.printStackTrace();
             imei = "863412048794880"; // TODO: test
         }
+        if(ActivityUtility.BuildOnDebug(context))
+            imei = "863412048794880"; // TODO: test
         return imei;
     }
 }

@@ -22,14 +22,11 @@ public final class Constants
 	public static final String ID_PREFERENCE_PLAY_VOICE_ALERT = "PLAY_VOICE_ALERT";
 	public static final String ID_PREFERENCE_LAYOUT_EDIT = "LAYOUT_EDIT";
 	public static final String ID_PREFERENCE_MAIN_MENU_GEOMETRY = "MAIN_MENU_GEOMETRY";
-	public static final String ID_PREFERENCE_HEARTBEAT_INTERVAL = "HEARTBEAT_INTERVAL";
+	public static final String ID_PREFERENCE_CAMERA_DRAW_BOX = "CAMERA_DRAW_BOX";
 	
 	public static final int ID_REQUEST_RESULT_SUCCESS = 0;
 	public static final int ID_REQUEST_RESULT_FAIL = 1;
 	public static final int ID_REQUEST_RESULT_ERROR = 2;
-	
-	public static final String ALIYUN_APP_KEY = "203795630";
-	public static final String ALIYUN_APP_SECRET = "wh3c2ws3b92s3nzzc64up2b8m7npa4zf";
 
 	public static final String ID_CONFIG_API_EMULATE = "emulate";
 	public static final String ID_CONFIG_API_REAL = "real";

@@ -7,7 +7,6 @@ import java.util.Date;
 
 public class SerialReqStruct extends JsonDataStruct {
     public String type;
-    public String door_id;
     public String time; // yyyyMMddHHmm
     public String token;
 
@@ -23,14 +22,6 @@ public class SerialReqStruct extends JsonDataStruct {
         Finish();
     }
 
-    public SerialReqStruct(String type, String door_id)
-    {
-        super();
-        this.type = type;
-        this.door_id = door_id;
-        Finish();
-    }
-
     public void Finish()
     {
         this.time = CurrentTime();
@@ -40,7 +31,6 @@ public class SerialReqStruct extends JsonDataStruct {
     public boolean IsValid()
     {
         return !Common.StringIsBlank(type)
-                && !Common.StringIsBlank(door_id)
                 && !Common.StringIsBlank(time)
                 && !Common.StringIsBlank(token)
                 ;
@@ -49,8 +39,8 @@ public class SerialReqStruct extends JsonDataStruct {
     @Override
     public String toString()
     {
-        return String.format("[%s]: Type(%s), Door(%s), Time(%s), Token(%s)",
-                getClass().getName(), type, door_id, time, token);
+        return String.format("[%s]: Type(%s), Time(%s), Token(%s)",
+                getClass().getName(), type, time, token);
     }
 
     public static String CurrentTime()

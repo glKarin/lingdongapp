@@ -101,6 +101,7 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
             m_thread = null;
         }
         m_isOpened = false;
+        CleanBuffer();
         Logf.d(ID_TAG, "串口读写关闭");
         return true;
     }
@@ -212,7 +213,10 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
                     }
                     Logf.e(ID_TAG, "java.io串口读取buf(%s), 实际读取rlen(%d), 长度len(%d)", new String(buf), rlen, len);
                     if(parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
+                    {
+                        RecvBuffer(buf, rlen);
                         parent.m_onDataReceivedListener.OnDataReceived(buf, rlen);
+                    }
                 }
             }
             catch (IOException e)
@@ -247,7 +251,10 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
                 Logf.e(ID_TAG, "C(read)串口读取buf(%s), 实际读取rlen(%d)", new String(data, 0, rlen), rlen);
                 Logf.e(ID_TAG, "C(read)16进制(%s), 长度rlen(%d)", Common.ByteArrayDebugString(data, ' '), rlen);
                 if(parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
+                {
+                    RecvBuffer(data, rlen);
                     parent.m_onDataReceivedListener.OnDataReceived(data, rlen);
+                }
             }
         }
 /*

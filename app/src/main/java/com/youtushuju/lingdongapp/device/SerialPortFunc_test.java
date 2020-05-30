@@ -9,6 +9,30 @@ public final class SerialPortFunc_test extends SerialPortFunc {
     private String m_lastData = null;
     private boolean m_inited = false;
 
+    private static final String CONST_TEST_PUT_OPEN_DOOR = "{" +
+            "       \"type\":	\"PutOpenDoor\"," +
+            "       \"device_id\":	\"01\","  +
+            "       \"weightOld\":	\"5000\"," +
+            "       \"weightNew\":	\"6600\"," +
+            "       \"weightAll\":	\"7770\"," +
+            "       \"res\":	\"01\"," +
+            "       \"token\":	\"123456\"" +
+            "}";
+    private static final String CONST_TEST_GET_OPEN_DOOR = "{" +
+            "       \"type\":	\"GetOpenDoor\"," +
+            "       \"device_id\":	\"01\","  +
+            "       \"weightOld\":	\"5000\"," +
+            "       \"weightNew\":	\"6600\"," +
+            "       \"weightAll\":	\"7770\"," +
+            "       \"res\":	\"01\"," +
+            "       \"token\":	\"123456\"" +
+            "}";
+    private static final String CONST_TEST_HEARTBEAT = "{" +
+            "       \"type\":	\"heartbeat\"," +
+            "       \"res\":	\"01\","  +
+            "       \"token\":	\"123456\"" +
+            "}";
+
     public SerialPortFunc_test()
     {
         super();
@@ -67,6 +91,7 @@ public final class SerialPortFunc_test extends SerialPortFunc {
             m_thread = null;
         }
         m_isOpened = false;
+        CleanBuffer();
         Logf.d(ID_TAG, "串口读写关闭");
         return true;
     }
@@ -125,17 +150,13 @@ public final class SerialPortFunc_test extends SerialPortFunc {
         public void run()
         {
             while(!isInterrupted()) {
-                if(parent.m_lastData != null && parent.m_onDataReceivedListener != null)
+                if(parent.m_lastData != null)
                 {
-                    String testStr = "{" +
-                            "       \"type\":	\"PutOpenDoor\"," +
-                            "       \"device_id\":	\"01\","  +
-                            "       \"weightOld\":	\"5000\"," +
-                            "       \"weightNew\":	\"6600\"," +
-                            "       \"weightAll\":	\"7770\"," +
-                            "       \"res\":	\"01\"," +
-                            "       \"token\":	\"123456\"" +
-                            "}";
+                    String testStr;
+
+                    testStr = CONST_TEST_PUT_OPEN_DOOR;
+                    testStr = CONST_TEST_GET_OPEN_DOOR;
+                    testStr = CONST_TEST_HEARTBEAT;
 
                     byte data[] = Common.String8BitsByteArray(testStr/*parent.m_lastData*/);
                     int i = 0;
@@ -146,7 +167,9 @@ public final class SerialPortFunc_test extends SerialPortFunc {
                         byte bs[] = new byte[max];
                         for (int m = 0; m < max; m++)
                             bs[m] = data[i + m];
-                        parent.m_onDataReceivedListener.OnDataReceived(bs, max);
+                        RecvBuffer(bs, max);
+                        if(parent.m_onDataReceivedListener != null)
+                            parent.m_onDataReceivedListener.OnDataReceived(bs, max);
                         i += max;
 
                         try{sleep(100);}catch (Exception e){}

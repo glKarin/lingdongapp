@@ -21,8 +21,9 @@ import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
+import com.youtushuju.lingdongapp.json.JSON;
+import com.youtushuju.lingdongapp.json.JsonMap;
 
-import java.io.IOException;
 import java.util.*;
 
 public class SplashActivity extends AppCompatActivity
@@ -85,15 +86,16 @@ public class SplashActivity extends AppCompatActivity
 		
 		requestWindowFeature(Window.FEATURE_NO_TITLE);
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
-		
+		ActivityUtility.HideNavBar(this);
 		setContentView(R.layout.splash_page);
 
+		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
 		Configs configs = Configs.Instance();
 		boolean buildOnDebug = ActivityUtility.BuildOnDebug(this);
 		int debugMode = buildOnDebug ? 0xFF : 0;
 		configs.SetConfig(Configs.ID_CONFIG_LINGDONG_API, buildOnDebug ? Constants.ID_CONFIG_API_EMULATE : Constants.ID_CONFIG_API_REAL);
 		configs.SetConfig(Configs.ID_CONFIG_DEBUG, debugMode);
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+		configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_DRIVER, preferences.getString(Constants.ID_PREFERENCE_SERIAL_DRIVER, buildOnDebug ? Constants.ID_CONFIG_SERIAL_DRIVER_TEST : Constants.ID_CONFIG_SERIAL_DRIVER_CEPR));
 		SharedPreferences.Editor editor = preferences.edit();
 		{
 			editor.putString(Constants.ID_PREFERENCE_DEBUG_MODE, "" + debugMode);

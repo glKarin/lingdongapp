@@ -17,12 +17,15 @@ public final class DeviceApiDef {
     public static final int ID_ERROR_CODE_SERVER_ERROR = 500;
     public static final int ID_ERROR_CODE_ERROR = -1;
 
+    // UNUSED: c字段
     public static final String ID_DEVICE_API_COMMAND_VERIFY_FACE = "113";
     public static final String ID_DEVICE_API_COMMAND_UPLOAD_FACE = "27";
 
     public static final String ID_DEVICE_API_METHOD_FACE_LOGIN = "FaceLogin";
     public static final String ID_DEVICE_API_METHOD_DEVICE_STATUS = "DeviceStatus";
     public static final String ID_DEVICE_API_METHOD_RUBBISH_RECORD = "RubbishRecord";
+    public static final String ID_DEVICE_API_METHOD_CLEAR_RUBBISH = "ClearRubbish";
+    public static final String ID_DEVICE_API_METHOD_BASE = "Base";
 
     public static final String ID_KITCHEN_WASTE_DOOR_ID = SerialDataDef.ID_DOOR_ID_1; // 厨余垃圾
     public static final String ID_OTHER_WASTE_DOOR_ID = SerialDataDef.ID_DOOR_ID_2; // 其他垃圾

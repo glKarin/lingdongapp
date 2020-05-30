@@ -2,10 +2,14 @@ package com.youtushuju.lingdongapp.api;
 
 import android.graphics.Bitmap;
 
+import com.youtushuju.lingdongapp.common.Common;
+
 public class UserModel {
-    public static final String ENUM_USER_ROLE_NORMAL = "0";
-    public static final String ENUM_USER_ROLE_ADMIN = "1";
-    public static final String CONST_TEST_USER_ID = "1";
+    public static final String ENUM_USER_ROLE_NORMAL = "0"; // 普通用户
+    public static final String ENUM_USER_ROLE_MAINTENANCE = "1"; // 维护人员
+    public static final String ENUM_USER_ROLE_ADMIN = "2"; // 管理员
+
+    public static final String CONST_TEST_USER_ID = "1"; // 测试人员ID
 
     private String m_id = null;
     private String m_username = null;
@@ -76,6 +80,42 @@ public class UserModel {
 
     public boolean IsAdministrator()
     {
-        return m_isEmployee == ENUM_USER_ROLE_ADMIN;
+        return ContainRole(ENUM_USER_ROLE_ADMIN);
+    }
+
+    public boolean IsMaintenance()
+    {
+        return ContainRole(ENUM_USER_ROLE_MAINTENANCE);
+    }
+
+    public boolean IsNormal()
+    {
+        return ContainRole(ENUM_USER_ROLE_NORMAL);
+    }
+
+    private boolean ContainRole(String role)
+    {
+        if(Common.StringIsEmpty(m_isEmployee))
+            return false;
+        String roles[] = m_isEmployee.split(",");
+        for(String r : roles)
+        {
+            if(role.equals(r))
+                return true;
+        }
+        return false;
+    }
+
+    public String GetRoleName()
+    {
+        if(IsAdministrator())
+            return "管理员";
+        if(IsMaintenance())
+            return "清维人员";
+        if(IsNormal())
+            return "普通用户";
+        if(!Common.StringIsEmpty(m_isEmployee))
+            return "其他人员(" + m_isEmployee + ")";
+        return "未识别人员";
     }
 }

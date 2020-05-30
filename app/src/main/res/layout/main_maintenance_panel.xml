@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="480dp"
+    android:layout_height="360dp"
+    android:orientation="vertical"
+    android:layout_centerInParent="true"
+    android:background="@drawable/main_result_background"
+    android:gravity="center"
+>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:gravity="center"
+        android:textSize="24dp"
+        android:text="请选择清维门"
+        android:textStyle="bold"
+        />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="300dp"
+        android:gravity="center"
+        android:orientation="horizontal">
+        <TextView
+            android:id="@+id/main_maintenance_door3"
+            android:background="@drawable/door_button"
+            android:layout_width="180dp"
+            android:layout_marginRight="10dp"
+            android:layout_height="240dp"
+            android:gravity="center"
+            android:textSize="20dp"
+            android:text="厨余垃圾回收"
+            />
+        <TextView
+            android:id="@+id/main_maintenance_door4"
+            android:background="@drawable/door_button"
+            android:layout_width="180dp"
+            android:layout_marginLeft="10dp"
+            android:layout_height="240dp"
+            android:gravity="center"
+            android:textSize="20dp"
+            android:text="其他垃圾回收"
+            />
+    </LinearLayout>
+</LinearLayout>

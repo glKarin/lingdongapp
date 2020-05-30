@@ -9,6 +9,7 @@ import android.content.pm.PackageManager;
 import android.net.Uri;
 import android.os.Build;
 import android.provider.Settings;
+import android.view.View;
 import android.webkit.MimeTypeMap;
 
 import androidx.core.app.ActivityCompat;
@@ -102,5 +103,37 @@ public final class ActivityUtility {
             e.printStackTrace();
             return false; // default is release
         }
+    }
+
+    public static void HideNavBar(Activity activity)
+    {
+        View decorView = activity.getWindow().getDecorView();
+        int uiOptions = View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY
+                | View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                | View.SYSTEM_UI_FLAG_LAYOUT_HIDE_NAVIGATION
+                | View.SYSTEM_UI_FLAG_IMMERSIVE
+                | View.SYSTEM_UI_FLAG_FULLSCREEN;
+        decorView.setSystemUiVisibility(uiOptions);
+    }
+
+    public static int dp2px(Context context, float dp){
+        float scale=context.getResources().getDisplayMetrics().density;
+        return (int) (dp * scale + 0.5f);
+    }
+
+    public static int px2dp(Context context, float px){
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int) (px / scale + 0.5f);
+    }
+
+    public static int dp2px(Context context, int dp){
+        float scale=context.getResources().getDisplayMetrics().density;
+        return (int)((float)dp * scale + 0.5f);
+    }
+
+    public static int px2dp(Context context, int px){
+        float scale = context.getResources().getDisplayMetrics().density;
+        return (int)((float)px / scale + 0.5f);
     }
 }

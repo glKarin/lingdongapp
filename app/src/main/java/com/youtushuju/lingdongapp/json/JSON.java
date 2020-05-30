@@ -56,9 +56,25 @@ public final class JSON
 					ret = ((JSONObject)o).toString();
 				}
 			}
+			if(obj instanceof Map)
+			{
+				o = FormatObject((Map)obj);
+				if(o != null && !JSONObject.NULL.equals(o))
+				{
+					ret = ((JSONObject)o).toString();
+				}
+			}
 			else if(obj instanceof JsonList)
 			{
 				o = FormatArray((JsonList) obj);
+				if(o != null && !JSONObject.NULL.equals(o))
+				{
+					ret = ((JsonList)o).toString();
+				}
+			}
+			else if(obj instanceof List)
+			{
+				o = FormatArray((List) obj);
 				if(o != null && !JSONObject.NULL.equals(o))
 				{
 					ret = ((JsonList)o).toString();
@@ -137,8 +153,14 @@ public final class JSON
 			Object value = object.Get(name);
 			if(value instanceof JsonMap)
 				ret.put(name, FormatObject((JsonMap)value));
+			else if(value instanceof Map)
+				ret.put(name, FormatObject((Map)value));
 			else if(value instanceof JsonList)
 				ret.put(name, FormatArray((JsonList)value));
+			else if(value instanceof List)
+				ret.put(name, FormatArray((List)value));
+			else if(value instanceof Object[])
+				ret.put(name, FormatArray((Object[])value));
 			else if(JSONObject.NULL.equals(value))
 				ret.put(name, null);
 			else
@@ -159,8 +181,14 @@ public final class JSON
 			Object value = array.Get(i);
 			if(value instanceof JsonMap)
 				ret.put(FormatObject((JsonMap)value));
+			else if(value instanceof Map)
+				ret.put(FormatObject((Map)value));
 			else if(value instanceof JsonList)
 				ret.put(FormatArray((JsonList)value));
+			else if(value instanceof List)
+				ret.put(FormatArray((List)value));
+			else if(value instanceof Object[])
+				ret.put(FormatArray((Object[])value));
 			else if(JSONObject.NULL.equals(value))
 				ret.put(null);
 			else
@@ -169,4 +197,84 @@ public final class JSON
 		return ret;
 	}
 
+	private static Object FormatObject(Map object) throws Exception
+	{
+		if(object == null)
+			return JSONObject.NULL;
+
+		JSONObject ret = new JSONObject();
+		Set<Object> keys = object.keySet();
+		for (Object o : keys)
+		{
+			String name = o.toString();
+			Object value = object.get(name);
+			if(value instanceof JsonMap)
+				ret.put(name, FormatObject((JsonMap)value));
+			else if(value instanceof Map)
+				ret.put(name, FormatObject((Map)value));
+			else if(value instanceof JsonList)
+				ret.put(name, FormatArray((JsonList)value));
+			else if(value instanceof List)
+				ret.put(name, FormatArray((List)value));
+			else if(value instanceof Object[])
+				ret.put(name, FormatArray((Object[])value));
+			else if(JSONObject.NULL.equals(value))
+				ret.put(name, null);
+			else
+				ret.put(name, value);
+		}
+		return ret;
+	}
+
+	private static Object FormatArray(List array) throws Exception
+	{
+		if(array == null)
+			return JSONObject.NULL;
+
+		JSONArray ret = new JSONArray();
+		for(Object value : array)
+		{
+			if(value instanceof JsonMap)
+				ret.put(FormatObject((JsonMap)value));
+			else if(value instanceof Map)
+				ret.put(FormatObject((Map)value));
+			else if(value instanceof JsonList)
+				ret.put(FormatArray((JsonList)value));
+			else if(value instanceof List)
+				ret.put(FormatArray((List)value));
+			else if(value instanceof Object[])
+				ret.put(FormatArray((Object[])value));
+			else if(JSONObject.NULL.equals(value))
+				ret.put(null);
+			else
+				ret.put(value);
+		}
+		return ret;
+	}
+
+	private static Object FormatArray(Object array[]) throws Exception
+	{
+		if(array == null)
+			return JSONObject.NULL;
+
+		JSONArray ret = new JSONArray();
+		for(Object value : array)
+		{
+			if(value instanceof JsonMap)
+				ret.put(FormatObject((JsonMap)value));
+			else if(value instanceof Map)
+				ret.put(FormatObject((Map)value));
+			else if(value instanceof JsonList)
+				ret.put(FormatArray((JsonList)value));
+			else if(value instanceof List)
+				ret.put(FormatArray((List)value));
+			else if(value instanceof Object[])
+				ret.put(FormatArray((Object[])value));
+			else if(JSONObject.NULL.equals(value))
+				ret.put(null);
+			else
+				ret.put(value);
+		}
+		return ret;
+	}
 }

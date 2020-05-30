@@ -116,7 +116,7 @@ public class JsonList extends ArrayList implements JsonResult
 			type = JsonResult.JSON_VALUE_TYPE_FLOAT;
 		else if(value instanceof Byte || value instanceof Short || value instanceof Integer || value instanceof Long)
 			type = JsonResult.JSON_VALUE_TYPE_INTEGER;
-		else if(value instanceof Array)
+		else if(value instanceof Object[])
 			type = JsonResult.JSON_VALUE_TYPE_ARRAY;
 		else if(value instanceof Boolean)
 			type = JsonResult.JSON_VALUE_TYPE_BOOL;
