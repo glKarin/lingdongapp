@@ -27,7 +27,7 @@ import java.util.TimerTask;
 
 public class HeartbeatService extends Service {
     private static final String ID_TAG = "HeartbeatService";
-    private int m_timerInterval = 1000;
+    private int m_timerInterval = 2000;
     private Timer m_timer = null;
     private HeartbeatTimerTask m_timerTask = null;
     private HeartbeatBinder m_binder = new HeartbeatBinder();
@@ -62,8 +62,8 @@ public class HeartbeatService extends Service {
                 }
 
                 JsonMap data = (JsonMap)resp.data;
-                int heartbeatTime = (int)data.get("heartbeatTime");
-                m_timerInterval = heartbeatTime * 1000; // 毫秒
+                int heartbeatTime = (int)data.get("heartbeatTime"); // 分钟
+                m_timerInterval = Math.max(heartbeatTime * 60000, Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL); // 毫秒
                 String dropmode = data.<String>GetT("dropmode");
 
                 DoSetDropMode(dropmode);
@@ -88,20 +88,20 @@ public class HeartbeatService extends Service {
             SerialPortDeviceDriver driver = SerialPortDeviceDriver.Instance();
             if(!driver.CanIO())
                 return null;
-            int res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_HEARTBEAT, -1); // 会阻塞线程
+            SerialPortDeviceDriver.IOResult res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_HEARTBEAT, -1); // 会阻塞线程
             String ret = null;
-            if(res < 0)
+            if(!res.IsSuccess())
             {
                 // TODO: 处理???
-                Logf.e(ID_TAG, "获取心跳设备状态失败");
+                Logf.e(ID_TAG, "获取心跳设备状态失败: " + res.res);
             }
             else
             {
-                SerialSessionStruct session = driver.LastSession();
+                SerialSessionStruct session = res.session;
                 HeartbeatRespStruct resp = (HeartbeatRespStruct)session.resp;
                 ret = resp.res;
+                Logf.e(ID_TAG, "获取心跳设备状态结果: " + ret);
             }
-            driver.Shutdown();
             return ret;
         }
 
@@ -110,14 +110,14 @@ public class HeartbeatService extends Service {
             SerialPortDeviceDriver driver = SerialPortDeviceDriver.Instance();
             if(!driver.CanIO())
                 return false;
-            int res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_DROP_SET_MODE, 0, dropmode); // 会阻塞线程
-            if(res < 0)
+            SerialPortDeviceDriver.IOResult res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_DROP_SET_MODE, 0, dropmode); // 会阻塞线程
+            boolean ret = res.IsSuccess();
+            if(!ret)
             {
                 // TODO: 处理???
-                Logf.e(ID_TAG, "传递心跳投放模式失败");
+                Logf.e(ID_TAG, "传递心跳投放模式失败: " + res.res);
             }
-            driver.Shutdown();
-            return res >= 0;
+            return ret;
         }
     }
 

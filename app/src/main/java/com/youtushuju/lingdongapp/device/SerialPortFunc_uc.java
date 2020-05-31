@@ -188,11 +188,9 @@ public final class SerialPortFunc_uc extends SerialPortFunc {
                             if (data != null && data.length > 0) {
                                 int size = data.length;
                                 Logf.e(ID_TAG, "串口读取: " + new String(data));
+                                RecvBuffer(data, size);
                                 if (parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
-                                {
-                                    RecvBuffer(data, size);
                                     parent.m_onDataReceivedListener.OnDataReceived(data, size);
-                                }
                             }
                         }
                         catch (IOException e)

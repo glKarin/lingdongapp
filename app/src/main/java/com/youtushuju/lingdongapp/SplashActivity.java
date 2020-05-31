@@ -58,7 +58,7 @@ public class SplashActivity extends AppCompatActivity
 						}
 						TextView delayView = (TextView)findViewById(R.id.splash_delay);
 						if(m_timerDelay > 0)
-							delayView.setText(String.format("%ds", Math.round((double)m_timerDelay / 1000.0)));
+							delayView.setText(String.format("%d", Math.round((double)m_timerDelay / 1000.0)));
 						else
 						{
 							ToMainPage();
@@ -88,26 +88,16 @@ public class SplashActivity extends AppCompatActivity
 		getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN, WindowManager.LayoutParams.FLAG_FULLSCREEN);
 		ActivityUtility.HideNavBar(this);
 		setContentView(R.layout.splash_page);
+		App app = App.Instance();
 
-		SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-		Configs configs = Configs.Instance();
-		boolean buildOnDebug = ActivityUtility.BuildOnDebug(this);
-		int debugMode = buildOnDebug ? 0xFF : 0;
-		configs.SetConfig(Configs.ID_CONFIG_LINGDONG_API, buildOnDebug ? Constants.ID_CONFIG_API_EMULATE : Constants.ID_CONFIG_API_REAL);
-		configs.SetConfig(Configs.ID_CONFIG_DEBUG, debugMode);
-		configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_DRIVER, preferences.getString(Constants.ID_PREFERENCE_SERIAL_DRIVER, buildOnDebug ? Constants.ID_CONFIG_SERIAL_DRIVER_TEST : Constants.ID_CONFIG_SERIAL_DRIVER_CEPR));
-		SharedPreferences.Editor editor = preferences.edit();
-		{
-			editor.putString(Constants.ID_PREFERENCE_DEBUG_MODE, "" + debugMode);
-		}
-		editor.commit();
+		app.Init(this);
 
-		if((int)configs.GetConfig(Configs.ID_CONFIG_DEBUG) == 0)
+		if((int)Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG) == 0)
 			findViewById(R.id.splash_debug_panel).setVisibility(View.GONE);
 
 		SetupUI();
 
-		App.Instance().PushActivity(this);
+		app.PushActivity(this);
 
 		//CheckAppNecessaryPermission(false, true);
 	}

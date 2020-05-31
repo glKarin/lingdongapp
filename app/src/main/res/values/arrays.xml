@@ -68,5 +68,6 @@
 		<item>启动图全屏.</item>
 		<item>可设置是否显示相机背景框.</item>
 		<item>清维人员操作.</item>
+		<item>菜单活动新增启动器.</item>
 	</string-array>
 </resources>

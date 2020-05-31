@@ -30,21 +30,21 @@ public final class Configs
 	public static final int ID_PREFERENCE_DEFAULT_FACE_FREQUENCY = 2000; //ms
 	public static final int ID_PREFERENCE_DEFAULT_FACE_CAMERA = CameraCharacteristics.LENS_FACING_FRONT; //ms
 	public static final String ID_PREFERENCE_DEFAULT_SERIAL_PATH = "/dev/ttyS1";
-	public static final int ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE = 0;
+	public static final int ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE = 9600;
 	public static final String ID_PREFERENCE_DEFAULT_SERIAL_DRIVER = Constants.ID_CONFIG_SERIAL_DRIVER_CEPR;
 	public static final int ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY = 50;
 	public static final String ID_PREFERENCE_DEFAULT_FACE_CAPTURE_SCHEME = Constants.ID_CONFIG_FACE_CAPTURE_SCHEME_WHEN_FACE;
 	public static final String ID_PREFERENCE_DEFAULT_CAMERA_RESOLUTION = Constants.ID_CONFIG_CAMERA_RESOLUTION_HIGHER;
 	public static final int ID_PREFERENCE_DEFAULT_OPEN_SCREEN_SAVER_MAX_INTERVAL = 10000;
 	public static final int ID_PREFERENCE_DEFAULT_OPERATE_DEVICE_TIMEOUT = 10000;
-	public static final int ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN = Constants.ID_CONFIG_CAMERA_USAGE_PLAN_OPEN_ONCE_AND_ONLY_STOP_PREVIEW_WHEN_UNUSED;
+	public static final int ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN = Constants.ID_CONFIG_CAMERA_USAGE_PLAN_CLOSE_WHEN_UNUSED_AND_REOPEN_WHEN_NEED;
 	public static final boolean ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP = false;
 	public static final boolean ID_PREFERENCE_DEFAULT_RECORD_HISTORY = true;
 	public static final boolean ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT = true;
 	public static final String ID_PREFERENCE_DEFAULT_MAIN_MENU_GEOMETRY = "-10,20,64,64";
 	public static final boolean ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX = false;
 
-	public static final int CONST_DEFAULT_HEARTBEAT_INTERVAL = 1000;
+	public static final int CONST_DEFAULT_HEARTBEAT_INTERVAL = 2000;
 
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";

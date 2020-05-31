@@ -76,7 +76,7 @@
 			android:title="设置相机使用计划(重启后生效)"
 			android:entries="@array/camera_usage_plan_name"
 			android:entryValues="@array/camera_usage_plan_key"
-			android:defaultValue="1"
+			android:defaultValue="0"
 			/>
 	</PreferenceCategory>
 
@@ -106,7 +106,7 @@
 			android:inputType="number"
 			android:persistent="true"
 			android:title="串口Baudrate"
-			android:defaultValue="115200"
+			android:defaultValue="9600"
 			/>
 
 		<ListPreference

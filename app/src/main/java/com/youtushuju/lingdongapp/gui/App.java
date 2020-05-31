@@ -1,14 +1,18 @@
 package com.youtushuju.lingdongapp.gui;
 
 import android.app.Activity;
+import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Build;
 
 import androidx.annotation.NonNull;
 import androidx.core.app.ActivityCompat;
+import androidx.preference.PreferenceManager;
 
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
+import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.common.FS;
 import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.json.JSON;
@@ -37,6 +41,7 @@ public final class App {
     private static App _app = null;
     private Stack<Activity> m_activityStack;
     private Thread.UncaughtExceptionHandler m_defaultUncaughtExceptionHandler = null;
+    private boolean m_inited = false;
 
     private App()
     {
@@ -263,5 +268,34 @@ public final class App {
         }
 
         return file;
+    }
+
+    public void Init(Context context)
+    {
+        if(m_inited)
+            return;
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
+        Configs configs = Configs.Instance();
+        boolean buildOnDebug = ActivityUtility.BuildOnDebug(context);
+        int debugMode = buildOnDebug ? 0xFF : 0;
+        configs.SetConfig(Configs.ID_CONFIG_LINGDONG_API, buildOnDebug ? Constants.ID_CONFIG_API_EMULATE : Constants.ID_CONFIG_API_REAL);
+        configs.SetConfig(Configs.ID_CONFIG_DEBUG, debugMode);
+        configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_DRIVER, preferences.getString(Constants.ID_PREFERENCE_SERIAL_DRIVER, buildOnDebug ? Constants.ID_CONFIG_SERIAL_DRIVER_TEST : Constants.ID_CONFIG_SERIAL_DRIVER_CEPR));
+        configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_PATH, preferences.getString(Constants.ID_PREFERENCE_SERIAL_PATH, Configs.ID_PREFERENCE_DEFAULT_SERIAL_PATH));
+        try
+        {
+            configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_BAUDRATE, Integer.parseInt(preferences.getString(Constants.ID_PREFERENCE_SERIAL_BAUDRATE, "" + Configs.ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE)));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+        }
+
+        SharedPreferences.Editor editor = preferences.edit();
+        {
+            editor.putString(Constants.ID_PREFERENCE_DEBUG_MODE, "" + debugMode);
+        }
+        editor.commit();
+        m_inited = true;
     }
 }

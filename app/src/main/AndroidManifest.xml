@@ -51,10 +51,6 @@
             android:label="串口操作"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".ProfileActivity"
-            android:label="信息"
-            android:theme="@style/AppTheme" />
-        <activity
             android:name=".AboutActivity"
             android:label="关于"
             android:theme="@style/AppTheme" />
@@ -97,6 +93,16 @@
             android:name=".SplashActivity"
             android:label="@string/app_name"
             android:theme="@style/AppTheme.NoActionBar">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+        <activity
+            android:name=".ProfileActivity"
+            android:label="@string/app_maintenance_name"
+            android:theme="@style/AppTheme">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

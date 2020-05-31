@@ -2,6 +2,9 @@ package com.youtushuju.lingdongapp.device;
 
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Logf;
+import com.youtushuju.lingdongapp.json.JSON;
+import com.youtushuju.lingdongapp.json.JsonMap;
+import com.youtushuju.lingdongapp.json.JsonResult;
 
 public final class SerialPortFunc_test extends SerialPortFunc {
     private static final String ID_TAG = "SerialPortFunc_test";
@@ -29,6 +32,11 @@ public final class SerialPortFunc_test extends SerialPortFunc {
             "}";
     private static final String CONST_TEST_HEARTBEAT = "{" +
             "       \"type\":	\"heartbeat\"," +
+            "       \"res\":	\"01\","  +
+            "       \"token\":	\"123456\"" +
+            "}";
+    private static final String CONST_TEST_DROP_MODE = "{" +
+            "       \"type\":	\"dropMode\"," +
             "       \"res\":	\"01\","  +
             "       \"token\":	\"123456\"" +
             "}";
@@ -124,6 +132,28 @@ public final class SerialPortFunc_test extends SerialPortFunc {
         return m_lastData.length();
     }
 
+    private String GetTestRespJson()
+    {
+        final String Samples[] = {
+                CONST_TEST_PUT_OPEN_DOOR,
+                CONST_TEST_GET_OPEN_DOOR,
+                CONST_TEST_HEARTBEAT,
+                CONST_TEST_DROP_MODE,
+        };
+        int index = m_lastData.lastIndexOf('\r');
+        String json = m_lastData.substring(0, index);
+        JsonResult result = JSON.Parse(json);
+        if(result == null || !(result instanceof JsonMap))
+            return "";
+        String protocol = (String)((JsonMap)result).get("type");
+        for (String str : Samples)
+        {
+            if(str.contains(protocol))
+                return str;
+        }
+        return "";
+    }
+
     private class TestThread extends Thread
     {
         private static final String ID_TAG = "SerialPortFunc_test::TestThread";
@@ -152,11 +182,7 @@ public final class SerialPortFunc_test extends SerialPortFunc {
             while(!isInterrupted()) {
                 if(parent.m_lastData != null)
                 {
-                    String testStr;
-
-                    testStr = CONST_TEST_PUT_OPEN_DOOR;
-                    testStr = CONST_TEST_GET_OPEN_DOOR;
-                    testStr = CONST_TEST_HEARTBEAT;
+                    String testStr = GetTestRespJson();
 
                     byte data[] = Common.String8BitsByteArray(testStr/*parent.m_lastData*/);
                     int i = 0;

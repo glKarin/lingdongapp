@@ -136,6 +136,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 	public boolean onPreferenceChange(Preference preference, Object newValue) {
 		String key = preference.getKey();
 		Context context = getContext();
+		Configs configs = Configs.Instance();
 
 		if(Constants.ID_PREFERENCE_SERIAL_PATH_SELECT.equals(key))
 		{
@@ -143,10 +144,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 			editor.putString(Constants.ID_PREFERENCE_SERIAL_PATH, newValue.toString());
 			editor.commit();
 			SetSummary(Constants.ID_PREFERENCE_SERIAL_PATH, null);
+			configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_PATH, newValue.toString());
 		}
 		else if(Constants.ID_PREFERENCE_DEBUG_MODE.equals(key))
 		{
-			Configs configs = Configs.Instance();
 			try
 			{
 				configs.SetConfig(Configs.ID_CONFIG_DEBUG, Integer.parseInt(newValue.toString()));
@@ -154,6 +155,26 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 			catch (Exception e)
 			{
 				configs.SetConfig(Configs.ID_CONFIG_DEBUG, 0);
+				e.printStackTrace();
+			}
+		}
+		else if(Constants.ID_PREFERENCE_SERIAL_DRIVER.equals(key))
+		{
+			configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_DRIVER, newValue.toString());
+		}
+		else if(Constants.ID_PREFERENCE_SERIAL_PATH.equals(key))
+		{
+			configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_PATH, newValue.toString());
+		}
+		else if(Constants.ID_PREFERENCE_SERIAL_BAUDRATE.equals(key))
+		{
+			try
+			{
+				int b = Integer.parseInt(newValue.toString());
+				configs.SetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_BAUDRATE, b);
+			}
+			catch (Exception e)
+			{
 				e.printStackTrace();
 			}
 		}

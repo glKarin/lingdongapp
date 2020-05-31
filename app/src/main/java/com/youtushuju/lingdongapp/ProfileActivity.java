@@ -34,11 +34,14 @@ public class ProfileActivity extends AppCompatActivity {
 
         setContentView(R.layout.profile_page);
 
+        App app = App.Instance();
+        app.Init(this);
+
        m_contentMenu = (ListView)findViewById(R.id.profile_content);
 
         SetupUI();
 
-        App.Instance().PushActivity(this);
+        app.PushActivity(this);
     }
 
     private void SetupUI()

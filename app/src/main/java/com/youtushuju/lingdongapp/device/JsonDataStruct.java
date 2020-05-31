@@ -7,6 +7,7 @@ import com.youtushuju.lingdongapp.json.JsonResult;
 
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.net.IDN;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;

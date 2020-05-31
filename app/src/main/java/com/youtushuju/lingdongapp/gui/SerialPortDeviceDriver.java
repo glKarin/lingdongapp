@@ -38,9 +38,15 @@ public final class SerialPortDeviceDriver {
     public static final int ID_STATE_UNSEND = -1; // 未发送成功
     public static final int ID_STATE_TIMEOUT = -2; // 超时
 
-    public static final int CONST_RESULT_LOCKED = -999; // 读写锁住
-    public static final int CONST_RESULT_EXCEPTION = -998; // 读写异常
-    public static final int CONST_RESULT_FUNC_EXCEPT = -997; // 无效动作
+    public static final int ENUM_RESULT_LOCKED = -999; // 读写锁住
+    public static final int ENUM_RESULT_EXCEPTION = -998; // 读写异常
+    public static final int ENUM_RESULT_FUNC_EXCEPT = -997; // 无效动作
+    public static final int ENUM_RESULT_NOT_WAIT = 0; // 不等待直接返回
+    public static final int ENUM_RESULT_LAST_NOT_FINISHED = -1; // 上次读写流程未结束
+    public static final int ENUM_RESULT_MISSING_PARAMETER = -2; // 参数缺失
+    public static final int ENUM_RESULT_SEND_ERROR = -3; // 发送错误
+    public static final int ENUM_RESULT_TIMEOUT = -4; // 读取超时
+    public static final int ENUM_RESULT_OTHER = -5; // 其他错误
 
     public static final String ENUM_ACTION_OPEN_DOOR = "OpenDoor";
     public static final String ENUM_ACTION_HEARTBEAT = "Heartbeat";
@@ -67,6 +73,24 @@ public final class SerialPortDeviceDriver {
     private SerialReqStruct m_serialReq = null;
     private SerialRespStruct m_serialResp = null;
     private SerialSessionStruct m_serialSession = null;
+
+    public static class IOResult{
+        public int res;
+        public SerialSessionStruct session;
+
+        private IOResult(){}
+
+        private IOResult(int res, SerialSessionStruct session)
+        {
+            this.res = res;
+            this.session = session;
+        }
+
+        public boolean IsSuccess()
+        {
+            return res >= 0;
+        }
+    }
 
     // TODO: UNUSED
     private SerialPortFunc.OnDataReceivedListener m_dataReceivedListener = new SerialPortFunc.OnDataReceivedListener() {
@@ -147,6 +171,8 @@ public final class SerialPortDeviceDriver {
         String path = (String)configs.GetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_PATH, Configs.ID_PREFERENCE_DEFAULT_SERIAL_PATH);
         int baudrate = (int)configs.GetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_BAUDRATE, Configs.ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE);
 
+        Logf.e(ID_TAG, "当前串口信息: IO Driver(%s), Path(%s), Baudrate(%d)", configs.GetConfig(Configs.ID_CONFIG_SERIAL_PORT_DEVICE_DRIVER), path, baudrate);
+
         if (!m_serialPortDriver.InitSerialPort(path, baudrate)) {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnError("串口初始化错误");
@@ -221,11 +247,19 @@ public final class SerialPortDeviceDriver {
     }
 
     // timeout = 0: 不等待, < 0 无限等待, > 0 毫秒
-    public synchronized int IO(String func, int timeout, Object ...args)
+    // 不会返回NULL
+    public synchronized IOResult IO(String func, int timeout, Object ...args)
     {
+        IOResult result = new IOResult();
         if (IsLock())
-            return CONST_RESULT_LOCKED;
+        {
+            result.res = ENUM_RESULT_LOCKED;
+            return result;
+        }
         Lock();
+        m_serialReq = null;
+        m_serialResp = null;
+        m_serialSession = null;
         int ret = 0;
         try
         {
@@ -238,17 +272,21 @@ public final class SerialPortDeviceDriver {
             else if(ENUM_ACTION_DROP_SET_MODE.equals(func))
                 ret = SetDropMode((String)args[0], timeout);
             else
-                ret = CONST_RESULT_FUNC_EXCEPT;
+                ret = ENUM_RESULT_FUNC_EXCEPT;
         }
         catch (Throwable t)
         {
             t.printStackTrace();
-            ret = CONST_RESULT_EXCEPTION;
+            ret = ENUM_RESULT_EXCEPTION;
+            m_serialSession = null;
         }
         finally {
+            Shutdown(); // 自动关闭, 每次读写重新打开和关闭
             Unlock();
         }
-        return ret;
+        result.res = ret;
+        result.session = m_serialSession;
+        return result;
     }
 
     public int OpenDoor(String device, int timeout)
@@ -264,14 +302,14 @@ public final class SerialPortDeviceDriver {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("上次发送流程未结束");
-            return -1;
+            return ENUM_RESULT_LAST_NOT_FINISHED;
         }
 
         if(Common.StringIsBlank(device))
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("缺失门ID");
-            return -2;
+            return ENUM_RESULT_MISSING_PARAMETER;
         }
 
         SetDoorId(device);
@@ -292,7 +330,7 @@ public final class SerialPortDeviceDriver {
 
         if(timeout == 0) // 不等待
         {
-            return 0;
+            return ENUM_RESULT_NOT_WAIT;
         }
         else
         {
@@ -319,9 +357,9 @@ public final class SerialPortDeviceDriver {
                 SetState(ID_STATE_TIMEOUT);
                 if (m_serialPortListener != null && (m_state == ID_STATE_SENDED || m_state == ID_STATE_RECVING))
                     m_serialPortListener.OnTimeout(m_lastSendData, timeout);
-                return -4;
+                return ENUM_RESULT_TIMEOUT;
             }
-            return -5;
+            return ENUM_RESULT_OTHER;
         }
     }
 
@@ -404,7 +442,6 @@ public final class SerialPortDeviceDriver {
         return m_state == ID_STATE_INIT;
     }
 
-    // timeout = 0: 不等待, < 0 无限等待, > 0 毫秒
     public int OpenMaintenanceDoor(String device, int timeout)
     {
         if(m_state == ID_STATE_INIT)
@@ -418,14 +455,14 @@ public final class SerialPortDeviceDriver {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("上次发送流程未结束");
-            return -1;
+            return ENUM_RESULT_LAST_NOT_FINISHED;
         }
 
         if(Common.StringIsBlank(device))
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("缺失门ID");
-            return -2;
+            return ENUM_RESULT_MISSING_PARAMETER;
         }
 
         SetDoorId(device);
@@ -441,11 +478,11 @@ public final class SerialPortDeviceDriver {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("发送失败");
-            return -3;
+            return ENUM_RESULT_SEND_ERROR;
         }
 
         if(timeout == 0) // 不等待
-            return 0;
+            return ENUM_RESULT_NOT_WAIT;
         else
         {
             int res = ReadData(timeout);
@@ -471,9 +508,9 @@ public final class SerialPortDeviceDriver {
                 SetState(ID_STATE_TIMEOUT);
                 if (m_serialPortListener != null && (m_state == ID_STATE_SENDED || m_state == ID_STATE_RECVING))
                     m_serialPortListener.OnTimeout(m_lastSendData, timeout);
-                return -4;
+                return ENUM_RESULT_TIMEOUT;
             }
-            return -5;
+            return ENUM_RESULT_OTHER;
         }
     }
 
@@ -554,7 +591,7 @@ public final class SerialPortDeviceDriver {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("上次发送流程未结束");
-            return -1;
+            return ENUM_RESULT_LAST_NOT_FINISHED;
         }
 
         HeartbeatReqStruct req = new HeartbeatReqStruct();
@@ -569,12 +606,12 @@ public final class SerialPortDeviceDriver {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("发送失败");
-            return -3;
+            return ENUM_RESULT_SEND_ERROR;
         }
 
         if(timeout == 0) // 不等待
         {
-            return 0;
+            return ENUM_RESULT_NOT_WAIT;
         }
         else
         {
@@ -601,9 +638,9 @@ public final class SerialPortDeviceDriver {
                 SetState(ID_STATE_TIMEOUT);
                 if (m_serialPortListener != null && (m_state == ID_STATE_SENDED || m_state == ID_STATE_RECVING))
                     m_serialPortListener.OnTimeout(m_lastSendData, timeout);
-                return -4;
+                return ENUM_RESULT_TIMEOUT;
             }
-            return -5;
+            return ENUM_RESULT_OTHER;
         }
     }
 
@@ -620,14 +657,14 @@ public final class SerialPortDeviceDriver {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("上次发送流程未结束");
-            return -1;
+            return ENUM_RESULT_LAST_NOT_FINISHED;
         }
 
         if(Common.StringIsBlank(dropMode))
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("缺失投放模式");
-            return -2;
+            return ENUM_RESULT_MISSING_PARAMETER;
         }
 
         DropModeReqStruct req = new DropModeReqStruct(dropMode);
@@ -642,12 +679,12 @@ public final class SerialPortDeviceDriver {
         {
             if (m_serialPortListener != null)
                 m_serialPortListener.OnFatal("发送失败");
-            return -3;
+            return ENUM_RESULT_SEND_ERROR;
         }
 
         if(timeout == 0) // 不等待
         {
-            return 0;
+            return ENUM_RESULT_NOT_WAIT;
         }
         else
         {
@@ -674,9 +711,9 @@ public final class SerialPortDeviceDriver {
                 SetState(ID_STATE_TIMEOUT);
                 if (m_serialPortListener != null && (m_state == ID_STATE_SENDED || m_state == ID_STATE_RECVING))
                     m_serialPortListener.OnTimeout(m_lastSendData, timeout);
-                return -4;
+                return ENUM_RESULT_TIMEOUT;
             }
-            return -5;
+            return ENUM_RESULT_OTHER;
         }
     }
 

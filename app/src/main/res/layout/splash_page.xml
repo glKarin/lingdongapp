@@ -33,16 +33,14 @@
 		android:layout_alignParentRight="true"
 		android:layout_alignParentTop="true"
 		android:id="@+id/splash_indicator"
-		android:layout_marginBottom="2dp"
-		android:layout_marginTop="2dp"
-		android:layout_marginLeft="5dp"
-		android:layout_marginRight="5dp"
+		android:layout_marginTop="10dp"
+		android:layout_marginRight="10dp"
 		android:background="@drawable/corner_border">
 
 		<TextView
 			android:layout_width="wrap_content"
 			android:layout_height="wrap_content"
-			android:text="跳过"
+			android:text="跳过 "
 			android:textAppearance="?android:attr/textAppearanceSmall"
 			android:textColor="#FFFFFF"
 			android:paddingRight="2dp"/>
@@ -53,7 +51,7 @@
 			android:textAppearance="?android:attr/textAppearanceSmall"
 			android:id="@+id/splash_delay"
 			android:textColor="#FFFFFF"
-			android:text="0s"/>
+			android:text="0"/>
 
 	</LinearLayout>
 
