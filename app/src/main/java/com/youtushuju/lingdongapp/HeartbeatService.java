@@ -110,7 +110,16 @@ public class HeartbeatService extends Service {
             SerialPortDeviceDriver driver = SerialPortDeviceDriver.Instance();
             if(!driver.CanIO())
                 return false;
-            SerialPortDeviceDriver.IOResult res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_DROP_SET_MODE, 0, dropmode); // 会阻塞线程
+            try
+            {
+                Thread.sleep(5000);
+            }
+            catch (Exception e)
+            {
+                e.printStackTrace();
+            }
+            int timeout = 0; // 5000
+            SerialPortDeviceDriver.IOResult res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_DROP_SET_MODE, timeout, dropmode); // 会阻塞线程
             boolean ret = res.IsSuccess();
             if(!ret)
             {

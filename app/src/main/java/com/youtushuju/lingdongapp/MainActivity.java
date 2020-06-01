@@ -315,6 +315,7 @@ public class MainActivity extends AppCompatActivity {
         @Override
         public void onClick(View v) {
             CloseMaintenanceDialog(true);
+            m_handler.removeCallbacks(m_maintenanceOperation); // TODO: !!!未测试!!!
             switch(v.getId())
             {
                 case R.id.main_maintenance_door3:
@@ -1826,7 +1827,7 @@ public class MainActivity extends AppCompatActivity {
             m_maintenanceDialogOpenAnimation.start();
         else
             m_maintenanceDialogOpenAnimation.end();
-        m_handler.postDelayed(m_maintenanceOperation, ID_MAINTENANCE_WAITING_INTERVAL);
+        m_handler.postDelayed(m_maintenanceOperation, ID_MAINTENANCE_WAITING_INTERVAL); // TODO: !!!Runnable可能不会执行!!!
     }
 
     // 关闭结果对话框, 主线程

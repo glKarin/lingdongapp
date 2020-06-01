@@ -48,6 +48,8 @@ public final class SerialPortDeviceDriver {
     public static final int ENUM_RESULT_TIMEOUT = -4; // 读取超时
     public static final int ENUM_RESULT_OTHER = -5; // 其他错误
 
+    public static final int CONST_RETURN_DELAY = 0; // 延时返回
+
     public static final String ENUM_ACTION_OPEN_DOOR = "OpenDoor";
     public static final String ENUM_ACTION_HEARTBEAT = "Heartbeat";
     public static final String ENUM_ACTION_OPEN_MAINTENANCE_DOOR = "OpenMaintenanceDoor";
@@ -68,6 +70,7 @@ public final class SerialPortDeviceDriver {
     private static SerialPortDeviceDriver _instance = null;
     private boolean m_lock = false;
     private boolean m_usingCallback = false; // 使用回调接收数据
+    private int m_delay = CONST_RETURN_DELAY; // 延时返回时间间隔
 
     private SerialPortFunc m_serialPortDriver = null;
     private SerialReqStruct m_serialReq = null;
@@ -273,6 +276,20 @@ public final class SerialPortDeviceDriver {
                 ret = SetDropMode((String)args[0], timeout);
             else
                 ret = ENUM_RESULT_FUNC_EXCEPT;
+            if(ret >= 0)
+            {
+                if(m_delay > 0)
+                {
+                    try
+                    {
+                        Thread.sleep(m_delay);
+                    }
+                    catch (Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }
         }
         catch (Throwable t)
         {
@@ -404,6 +421,7 @@ public final class SerialPortDeviceDriver {
         m_lastRecvData = "";
         m_lastSendData = "";
         m_sendTime = 0L;
+        Unlock();
     }
 
     public void Shutdown()
