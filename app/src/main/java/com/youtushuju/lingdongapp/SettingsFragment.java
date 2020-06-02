@@ -130,6 +130,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 		preference = findPreference(Constants.ID_PREFERENCE_CAMERA_DRAW_BOX);
 		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX);
 		preference.setOnPreferenceChangeListener(this);
+
+		preference = findPreference(Constants.ID_PREFERENCE_AUTO_BOOT);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_AUTO_BOOT);
+		preference.setOnPreferenceChangeListener(this);
 	}
 
 	@Override
@@ -450,6 +454,24 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 			preference = findPreference(Constants.ID_PREFERENCE_CAMERA_DRAW_BOX);
 			boolean b = newValue != null ? (boolean)newValue : sharedPreferences.getBoolean(Constants.ID_PREFERENCE_CAMERA_DRAW_BOX, Configs.ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX);
 			value = b ? "显示" : "隐藏";
+			summary = value;
+			preference.setSummary(summary);
+		}
+
+		if(key == null || Constants.ID_PREFERENCE_AUTO_BOOT.equals(key))
+		{
+			preference = findPreference(Constants.ID_PREFERENCE_AUTO_BOOT);
+			boolean b = newValue != null ? (boolean)newValue : sharedPreferences.getBoolean(Constants.ID_PREFERENCE_AUTO_BOOT, Configs.ID_PREFERENCE_DEFAULT_AUTO_BOOT);
+			value = b ? "自动启动" : "禁止";
+			summary = value;
+			preference.setSummary(summary);
+		}
+
+		if(key == null || Constants.ID_PREFERENCE_ALLOW_EXIT.equals(key))
+		{
+			preference = findPreference(Constants.ID_PREFERENCE_ALLOW_EXIT);
+			boolean b = newValue != null ? (boolean)newValue : sharedPreferences.getBoolean(Constants.ID_PREFERENCE_ALLOW_EXIT, Configs.ID_PREFERENCE_DEFAULT_ALLOW_EXIT);
+			value = b ? "允许" : "禁止";
 			summary = value;
 			preference.setSummary(summary);
 		}

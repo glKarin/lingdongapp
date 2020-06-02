@@ -128,6 +128,11 @@ public class LingDongApi_emulate extends LingDongApi
         EmulateControl("设备设置开关屏幕背光: %b", on);
     }
 
+    public void DeviceControlNavGesture(boolean enable)
+    {
+        EmulateControl("设备设置控制向上的手势显示导航栏: %b", enable);
+    }
+
     private void EmulateControl(String type, Object... args)
     {
         Toast.makeText(m_context, String.format(type, args), Toast.LENGTH_LONG).show();

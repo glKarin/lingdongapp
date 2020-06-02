@@ -161,6 +161,13 @@ public class LingDongApi_real extends LingDongApi
         m_smatekManager.setLcdBlackLight(on);
     }
 
+    public void DeviceControlNavGesture(boolean enable)
+    {
+        if(!IsValid())
+            return;
+        m_smatekManager.controlUpwardGesture(enable);
+    }
+
     public int GetSystemScreenWidth()
     {
         if(!IsValid())

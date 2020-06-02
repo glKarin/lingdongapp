@@ -172,6 +172,27 @@
 	</PreferenceCategory>
 
 	<PreferenceCategory
+		android:title="系统"
+		>
+		<SwitchPreference
+			android:dialogTitle="开机自启"
+			android:key="AUTO_BOOT"
+			android:summary="是否开机自启"
+			android:persistent="true"
+			android:title="设置是否开机自启"
+			android:defaultValue="true"
+			/>
+		<SwitchPreference
+			android:dialogTitle="返回键退出"
+			android:key="ALLOW_EXIT"
+			android:summary="是否允许返回键退出"
+			android:persistent="true"
+			android:title="设置是否允许返回键退出"
+			android:defaultValue="false"
+			/>
+	</PreferenceCategory>
+
+	<PreferenceCategory
 		android:title="界面"
 		>
 		<Preference

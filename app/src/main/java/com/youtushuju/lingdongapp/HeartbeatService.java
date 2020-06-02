@@ -3,6 +3,7 @@ package com.youtushuju.lingdongapp;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Binder;
 import android.os.IBinder;
@@ -44,7 +45,11 @@ public class HeartbeatService extends Service {
                     Logf.e(ID_TAG, "串口返回心跳设备状态错误");
                     return;
                 }
-                DeviceApiResp resp = DeviceApi.Heartbeat(Sys.GetIMEI(HeartbeatService.this), res, HeartbeatRespStruct.GetDeviceStatusName(res));
+                String desc = HeartbeatRespStruct.GetDeviceStatusName(res);
+                m_binder.GetDeviceStatus(res, desc);
+                /*if(true)
+                    return;*/
+                DeviceApiResp resp = DeviceApi.Heartbeat(Sys.GetIMEI(HeartbeatService.this), res, desc);
                 if(resp == null)
                 {
                     Logf.e(ID_TAG, "心跳Api请求错误");
@@ -57,11 +62,17 @@ public class HeartbeatService extends Service {
                 }
                 if(resp.data == null || resp.data instanceof String) // device not registered
                 {
-                    Logf.e(ID_TAG, "心跳设备错误: " + resp.data);
+                    Logf.e(ID_TAG, "心跳Api错误: " + resp.data);
                     return;
                 }
 
                 JsonMap data = (JsonMap)resp.data;
+                if(!data.Contains("heartbeatTime") || !data.Contains("dropmode"))
+                {
+                    Logf.e(ID_TAG, "心跳Api缺失必要字段: " + resp.data);
+                    return;
+                }
+
                 int heartbeatTime = (int)data.get("heartbeatTime"); // 分钟
                 m_timerInterval = Math.max(heartbeatTime * 60000, Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL); // 毫秒
                 String dropmode = data.<String>GetT("dropmode");
@@ -132,6 +143,23 @@ public class HeartbeatService extends Service {
 
     public class HeartbeatBinder extends Binder
     {
+        private DeviceStatusListener m_listener = null;
+
+        public void SetDeviceStatusListener(DeviceStatusListener l)
+        {
+            m_listener = l;
+        }
+
+        private void GetDeviceStatus(String code, String desc)
+        {
+            if(m_listener != null)
+                m_listener.OnGetDeviceStatus(code, desc);
+        }
+    }
+
+    public interface DeviceStatusListener
+    {
+        public void OnGetDeviceStatus(String code, String desc);
     }
 
     @Override
@@ -172,6 +200,13 @@ public class HeartbeatService extends Service {
         return m_binder;
     }
 
+    @Override
+    public boolean onUnbind(Intent intent) {
+        //return super.onUnbind(intent);
+        Logf.d(ID_TAG, "解绑心跳服务");
+        return true;
+    }
+
     public static void Start(Context context)
     {
         if(_intent != null)
@@ -189,5 +224,19 @@ public class HeartbeatService extends Service {
             return;
         context.stopService(_intent);
         _intent = null;
+    }
+
+    public static void Bind(Context context, ServiceConnection conn)
+    {
+        Intent intent = new Intent();
+        String packageName = context.getPackageName();
+        intent.setAction(packageName + ".HEARTBEAT_SERVICE");
+        intent.setPackage(packageName);
+        context.bindService(intent, conn, 0);
+    }
+
+    public static void Unbind(Context context, ServiceConnection conn)
+    {
+        context.unbindService(conn);
     }
 }

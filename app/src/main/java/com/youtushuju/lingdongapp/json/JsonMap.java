@@ -128,5 +128,10 @@ public class JsonMap extends HashMap<String, Object> implements JsonResult
 	{
 		return new JsonMap(m);
 	}
+
+	public boolean Contains(String name)
+	{
+		return containsKey(name);
+	}
 }
 

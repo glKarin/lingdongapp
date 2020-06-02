@@ -35,6 +35,7 @@ public abstract class LingDongApi
     public abstract void DeviceSetOrientation(int angle);
     public abstract void DeviceSetBrightness(int brightness); // 0 - 255
     public abstract void DeviceSetLCDBlackLight(boolean on);
+    public abstract void DeviceControlNavGesture(boolean enable);
     
     public LingDongSystemInfo GetSystemInfo()
     {

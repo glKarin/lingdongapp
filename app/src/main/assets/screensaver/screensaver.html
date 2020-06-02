@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
+    <meta name="viewport" content="target-densitydpi=device-dpi,maximum-scale=1.0,minimum-scale=1.0,user-scalable=0,width=device-width,initial-scale=1.0"/>
     <meta name="format-detection" content="telephone=no,email=no,date=no,address=no">
     <title>底部导航</title>
     <link rel="stylesheet" type="text/css" href="./css/api.css"/>
@@ -22,6 +22,7 @@
       height: 40%;
       background: #ffffff;
       overflow: hidden;
+	  position:relative;
     }
     .w-btn{
       width:50%;
@@ -69,6 +70,25 @@
 		align-items:center;
 		border:1px solid #abcdef;
 		border-radius: 50%;
+	}
+	.bottom-msg{
+		position:absolute;
+		left: 50%;
+		transform: translateX(-50%);
+		top: 10px;
+		//font-size: 14px;
+		font-size: 0.9rem;
+		//border: 1px solid #32CD32;
+		padding:3px 10px;
+		border-radius: 5px;
+		font-weight: 900;
+		//color: #32CD32;
+	}
+	.red{
+		color: #FF4500;
+	}
+	.yellow{
+		color: #FF8C00;
 	}
 	
     </style>
@@ -142,6 +162,7 @@
       <div class="aui-slide-page-wrap"><!--分页容器--></div>
   </div>
   <div class="bottom aui-content aui-row-padded">
+		<div class="bottom-msg" id="bottomMsg"> <span class="">请选择垃圾投放类型</span> </div>
       <div class="aui-col-xs-6 btn_warp btn_warp_l" style="height: 100%;" onclick="toFace('waste')">
         <div class="w-btn">厨余垃圾</div>
       </div>
@@ -173,6 +194,17 @@
 
 	function currentFun(index) {
 		
+	}
+	
+	function setbottomMsg(des, type) {
+		var el = document.getElementById("bottomMsg");
+		if(type != '01') {
+			el.innerHTML = des;
+			el.classList.add('red')
+		}else{
+			el.innerHTML = "请选择垃圾投放类型";
+			el.classList.remove("red");
+		}
 	}
 	
 	function toFace(name){

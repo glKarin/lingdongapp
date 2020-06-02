@@ -16,6 +16,7 @@ import android.widget.Toast;
 import com.youtushuju.lingdongapp.R;
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
+import com.youtushuju.lingdongapp.common.Logf;
 
 public class ScreenSaverView extends WebView
 {
@@ -49,6 +50,7 @@ public class ScreenSaverView extends WebView
     private void Setup() {
         WebSettings settings = getSettings();
         m_url = ActivityUtility.BuildOnDebug(getContext()) ? ID_SCREENSAVER_URL : ID_SCREENSAVER_FILE_PATH;
+        //m_url = ID_SCREENSAVER_URL; // for test
 
         settings.setJavaScriptEnabled(true);
         settings.setUseWideViewPort(true);
@@ -108,6 +110,7 @@ public class ScreenSaverView extends WebView
 
     public static class WindowObject
     {
+        private static final String ID_TAG = "WindowObject";
         protected Handler m_handler = null;
         protected Context m_context = null;
         protected WebView m_webView = null;
@@ -126,37 +129,16 @@ public class ScreenSaverView extends WebView
         @JavascriptInterface
         public void Get(final String name, final Object defaultValue)
         {
-            m_handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(m_context, String.format("获取属性: name(%s), 默认值(%s)", name, defaultValue != null ? defaultValue.toString() : null), Toast.LENGTH_SHORT).show();
-                    m_webView.loadUrl("javascript:typeof(Get_result) == 'function' && Get_result('" + name + "');");
-                }
-            });
         }
 
         @JavascriptInterface
         public void Set(final String name, final String value)
         {
-            m_handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(m_context, String.format("设置属性: name(%s), 值(%s)", name, value != null ? value.toString() : null), Toast.LENGTH_SHORT).show();
-                    m_webView.loadUrl("javascript:typeof(Set_result) == 'function' && Set_result('" + name + " -> " + value + "');");
-                }
-            });
         }
 
         @JavascriptInterface
         public void Call(final String func, final String args)
         {
-            m_handler.post(new Runnable() {
-                @Override
-                public void run() {
-                    Toast.makeText(m_context, String.format("调用: 函数(%s), 参数(%s)", func, args), Toast.LENGTH_SHORT).show();
-                    m_webView.loadUrl("javascript:typeof(Call_result) == 'function' && Call_result('" + func + " -> " + args + "');", null);
-                }
-            });
         }
 
         @JavascriptInterface
@@ -166,6 +148,27 @@ public class ScreenSaverView extends WebView
                 @Override
                 public void run() {
                     Toast.makeText(m_context, message, Toast.LENGTH_SHORT).show();
+                }
+            });
+        }
+
+        protected void CallJSFunc(final String func, Object...args)
+        {
+            StringBuffer sb = new StringBuffer();
+            for(int i = 0; i < args.length; i++)
+            {
+                sb.append("'" + args[i].toString() + "'");
+                if(i < args.length - 1)
+                    sb.append(", ");
+            }
+            final String arg = sb.toString();
+            m_handler.post(new Runnable() {
+                @Override
+                public void run() {
+                    Logf.e(ID_TAG, String.format("调用js函数: 函数(%s), 参数(%s)", func, arg));
+                    String script = "javascript:typeof(" + func + ") == 'function' && " + func + "(" + arg + ");";
+                    Logf.e(ID_TAG, script);
+                    m_webView.loadUrl(script, null);
                 }
             });
         }

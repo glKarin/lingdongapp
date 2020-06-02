@@ -10,8 +10,10 @@ import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 
+import android.content.ComponentName;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
@@ -27,9 +29,11 @@ import android.hardware.camera2.params.Face;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.IBinder;
 import android.os.Looper;
 import android.preference.PreferenceManager;
 import android.util.Size;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
@@ -142,6 +146,7 @@ public class MainActivity extends AppCompatActivity {
     private AnimatorSet m_resultDialogCloseAnimation = null; // 结果对话框关闭动画
     private RecordServices m_recordDB = null; // 记录数据库
     private boolean m_recordHistory = Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY; // 是否储存本地记录
+    private boolean m_allowExit = Configs.ID_PREFERENCE_DEFAULT_ALLOW_EXIT; // 是否允许退出
     private boolean m_playAlert = Configs.ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT; // 是否播放语音
     private SoundAlert m_soundAlert = null; // 语音播放
     private int m_state = ENUM_STATE_READY; // 界面状态
@@ -155,7 +160,7 @@ public class MainActivity extends AppCompatActivity {
     private View m_maintenanceMenuButton = null; // 清维菜单按钮
 
     // 设备交互
-    //private LingDongApi m_lingdongApi = null; // 灵动API
+    private LingDongApi m_lingdongApi = null; // 灵动API
     private SerialPortDeviceDriver m_deviceFunc = null; // 串口功能封装
     private CameraFunc m_camera = null; // 相机功能封装
 
@@ -516,7 +521,12 @@ public class MainActivity extends AppCompatActivity {
     };
 
     // 屏保webview宿主对象
-    private ScreenSaverView.WindowObject m_windowObject = new ScreenSaverView.WindowObject(this, m_handler) {
+    private ScreenSaverWindowObject m_windowObject = new ScreenSaverWindowObject();
+    private class ScreenSaverWindowObject extends ScreenSaverView.WindowObject {
+        public ScreenSaverWindowObject()
+        {
+            super(MainActivity.this, MainActivity.this.m_handler);
+        }
         // 开始刷脸
         @JavascriptInterface
         public void ToFace(final String name)
@@ -556,6 +566,11 @@ public class MainActivity extends AppCompatActivity {
                     ScanFace(OperationIntent.ENUM_FACE_INTENT_OPEN_MENU);
                 }
             });
+        }
+
+        public void NotifyDeviceStatus(String code, String desc)
+        {
+            CallJSFunc("setbottomMsg", desc, code);
         }
     };
     // 串口事件回调
@@ -822,7 +837,7 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.main);
 
         preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        //m_lingdongApi = Configs.Instance().GetLingDongApi(this);
+        m_lingdongApi = Configs.Instance().GetLingDongApi(this);
 
         mVisible = true;
         mControlsView = findViewById(R.id.main_layer);
@@ -1202,6 +1217,7 @@ public class MainActivity extends AppCompatActivity {
         m_cropBitmap = preferences.getBoolean(Constants.ID_PREFERENCE_PREVIEW_CAPTURE_CROP, Configs.ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP);
         m_recordHistory = preferences.getBoolean(Constants.ID_PREFERENCE_RECORD_HISTORY, Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY);
         m_playAlert = preferences.getBoolean(Constants.ID_PREFERENCE_PLAY_VOICE_ALERT, Configs.ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT);
+        m_allowExit = preferences.getBoolean(Constants.ID_PREFERENCE_ALLOW_EXIT, Configs.ID_PREFERENCE_DEFAULT_ALLOW_EXIT);
         m_cameraMask.SetDrawBox(preferences.getBoolean(Constants.ID_PREFERENCE_CAMERA_DRAW_BOX, Configs.ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX));
         OpenScreenSaver(true);
         CloseMaintenanceDialog(false);
@@ -1213,6 +1229,9 @@ public class MainActivity extends AppCompatActivity {
         m_debugMode = 0;
 
         findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+
+        HeartbeatService.Bind(this, m_heartbeatConn);
+        m_lingdongApi.DeviceControlNavGesture(false);
 /*
         if(ActivityUtility.IsGrantPermission(this, Manifest.permission.CAMERA))
         {
@@ -1275,6 +1294,9 @@ public class MainActivity extends AppCompatActivity {
         StopAlert();
 
         ((TextView)findViewById(R.id.main_camera_info_text)).setText("");
+
+        HeartbeatService.Unbind(this, m_heartbeatConn);
+        m_lingdongApi.DeviceControlNavGesture(true);
     }
 
     // 非UI线程显示吐司
@@ -1921,4 +1943,56 @@ public class MainActivity extends AppCompatActivity {
             return null;
         }
     }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event)
+    {
+        switch(keyCode)
+        {
+            case KeyEvent.KEYCODE_BACK:
+            {
+                if(!m_allowExit)
+                    return true;
+            }
+            break;
+            /*case KeyEvent.KEYCODE_HOME:
+            {
+                if(!m_allowExit)
+                    return true;
+            }
+            break;*/
+            default:
+                break;
+        }
+        return super.onKeyDown(keyCode, event);
+    }
+
+    private ServiceConnection m_heartbeatConn = new ServiceConnection() {
+
+        @Override
+        public void onServiceDisconnected(ComponentName name) {
+            Logf.e(ID_TAG, "MainActivity解绑心跳服务");
+            if(m_heartbeatBinder != null)
+            {
+                m_heartbeatBinder.SetDeviceStatusListener(null);
+                m_heartbeatBinder = null;
+            }
+        }
+
+        @Override
+        public void onServiceConnected(ComponentName name, IBinder service) {
+            Logf.e(ID_TAG, "MainActivity绑定心跳服务");
+            m_heartbeatBinder = (HeartbeatService.HeartbeatBinder) service;
+            m_heartbeatBinder.SetDeviceStatusListener(m_heartbeatListener);
+        }
+    };
+
+    private HeartbeatService.HeartbeatBinder m_heartbeatBinder = null;
+    private HeartbeatService.DeviceStatusListener m_heartbeatListener = new HeartbeatService.DeviceStatusListener()
+    {
+        @Override
+        public void OnGetDeviceStatus(String code, String desc) {
+            m_windowObject.NotifyDeviceStatus(code, desc);
+        }
+    };
 }

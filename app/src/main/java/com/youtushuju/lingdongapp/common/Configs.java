@@ -43,6 +43,8 @@ public final class Configs
 	public static final boolean ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT = true;
 	public static final String ID_PREFERENCE_DEFAULT_MAIN_MENU_GEOMETRY = "-10,20,64,64";
 	public static final boolean ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX = false;
+	public static final boolean ID_PREFERENCE_DEFAULT_AUTO_BOOT = true;
+	public static final boolean ID_PREFERENCE_DEFAULT_ALLOW_EXIT = false;
 
 	public static final int CONST_DEFAULT_HEARTBEAT_INTERVAL = 2000;
 
@@ -86,6 +88,7 @@ public final class Configs
 		permissions.put(Manifest.permission.READ_PHONE_STATE, "获取设备信息");
 		permissions.put(Manifest.permission.READ_EXTERNAL_STORAGE, "访问设备外部存储");
 		permissions.put(Manifest.permission.WRITE_EXTERNAL_STORAGE, "写入设备外部存储");
+		permissions.put(Manifest.permission.RECEIVE_BOOT_COMPLETED, "开机自启");
 		m_configs.put(ID_CONFIG_APP_NECESSARY_PERMISSIONS, permissions);
 	}
 

@@ -160,7 +160,7 @@ public final class Sys
             e.printStackTrace();
             imei = "863412048794880"; // TODO: test
         }
-        if(ActivityUtility.BuildOnDebug(context))
+        if(false && ActivityUtility.BuildOnDebug(context))
             imei = "863412048794880"; // TODO: test
         return imei;
     }
