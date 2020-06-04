@@ -47,6 +47,7 @@ public final class Configs
 	public static final boolean ID_PREFERENCE_DEFAULT_ALLOW_EXIT = false;
 
 	public static final int CONST_DEFAULT_HEARTBEAT_INTERVAL = 2000;
+	public static final int CONST_DEFAULT_BGM_PLAY_END_INTERVAL = 0;
 
 	public static final String ID_CONFIG_LINGDONG_API = "ling_dong_api";
 	public static final String ID_CONFIG_LOG_FILE = "log_file";

@@ -74,6 +74,17 @@ public class ProfileActivity extends AppCompatActivity {
         }, true);
         menuList.add(item);
 
+        item = new ProfileMenuModel("运行状态", "runtime_status", R.drawable.icon_terminal, new Runnable() {
+            @Override
+            public void run() {
+                Intent intent;
+
+                intent = new Intent(ProfileActivity.this, RuntimeStatusActivity.class);
+                ProfileActivity.this.startActivity(intent);
+            }
+        }, true);
+        menuList.add(item);
+
         item = new ProfileMenuModel("文件系统", "file_system", R.drawable.icon_fs, new Runnable() {
             @Override
             public void run() {

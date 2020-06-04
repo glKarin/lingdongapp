@@ -30,6 +30,11 @@
                 <action android:name="com.youtushuju.lingdongapp.HEARTBEAT_SERVICE"/>
             </intent-filter>
         </service>
+        <service android:name=".BackgroundService">
+            <intent-filter>
+                <action android:name="com.youtushuju.lingdongapp.BACKGROUND_SERVICE"/>
+            </intent-filter>
+        </service>
 
         <activity
             android:name=".FileBrowserActivity"
@@ -42,6 +47,10 @@
         <activity
             android:name=".SystemInfoActivity"
             android:label="系统信息"
+            android:theme="@style/AppTheme" />
+        <activity
+            android:name=".RuntimeStatusActivity"
+            android:label="运行状态"
             android:theme="@style/AppTheme" />
         <activity
             android:name=".ControlActivity"

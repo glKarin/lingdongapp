@@ -21,6 +21,7 @@ import com.youtushuju.lingdongapp.common.Sys;
 import com.youtushuju.lingdongapp.device.HeartbeatRespStruct;
 import com.youtushuju.lingdongapp.device.SerialSessionStruct;
 import com.youtushuju.lingdongapp.gui.SerialPortDeviceDriver;
+import com.youtushuju.lingdongapp.gui.StatusMachine;
 import com.youtushuju.lingdongapp.json.JsonMap;
 
 import java.util.Timer;
@@ -28,21 +29,30 @@ import java.util.TimerTask;
 
 public class HeartbeatService extends Service {
     private static final String ID_TAG = "HeartbeatService";
-    private int m_timerInterval = 2000;
+    private static final String CONST_SERVICE_NAME = "HEARTBEAT_SERVICE";
+    private int m_timerInterval = Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL;
     private Timer m_timer = null;
-    private HeartbeatTimerTask m_timerTask = null;
+    //private HeartbeatTimerTask m_timerTask = null; // TODO: UNUSED globals
     private HeartbeatBinder m_binder = new HeartbeatBinder();
     private static Intent _intent = null;
 
     private class HeartbeatTimerTask extends TimerTask {
         public void run()
         {
+            StatusMachine statusMachine = StatusMachine.Instance();
             try
             {
+                long ts = System.currentTimeMillis();
+                Logf.e(ID_TAG, "开始同步心跳: " + Common.TimestampToStr(ts));
+                statusMachine.heartbeat_count++;
+
                 String res = DoHeartbeat();
+                statusMachine.device_status = res;
+
                 if(Common.StringIsEmpty(res))
                 {
                     Logf.e(ID_TAG, "串口返回心跳设备状态错误");
+                    statusMachine.heartbeat_err_count++;
                     return;
                 }
                 String desc = HeartbeatRespStruct.GetDeviceStatusName(res);
@@ -53,16 +63,19 @@ public class HeartbeatService extends Service {
                 if(resp == null)
                 {
                     Logf.e(ID_TAG, "心跳Api请求错误");
+                    statusMachine.heartbeat_err_count++;
                     return;
                 }
                 if(!resp.IsSuccess())
                 {
                     Logf.e(ID_TAG, "心跳Api请求错误: " + resp.ResultString());
+                    statusMachine.heartbeat_err_count++;
                     return;
                 }
                 if(resp.data == null || resp.data instanceof String) // device not registered
                 {
                     Logf.e(ID_TAG, "心跳Api错误: " + resp.data);
+                    statusMachine.heartbeat_err_count++;
                     return;
                 }
 
@@ -70,6 +83,7 @@ public class HeartbeatService extends Service {
                 if(!data.Contains("heartbeatTime") || !data.Contains("dropmode"))
                 {
                     Logf.e(ID_TAG, "心跳Api缺失必要字段: " + resp.data);
+                    statusMachine.heartbeat_err_count++;
                     return;
                 }
 
@@ -78,19 +92,31 @@ public class HeartbeatService extends Service {
                 String dropmode = data.<String>GetT("dropmode");
 
                 DoSetDropMode(dropmode);
+                statusMachine.heartbeat_suc_count++;
+                statusMachine.heartbeat_timestamp = ts;
             }
             catch (Throwable e)
             {
                 e.printStackTrace();
+                statusMachine.heartbeat_err_count++;
                 Logf.e(ID_TAG, "心跳数据解析错误: " + Common.Now());
             }
             finally {
                 // next heartbeat
-                m_timer.purge();
                 Logf.e(ID_TAG, m_timerInterval);
                 //m_timerInterval = 10000; // for test
-                m_timerTask = new HeartbeatTimerTask();
-                m_timer.schedule(m_timerTask, m_timerInterval);
+                HeartbeatTimerTask m_timerTask = new HeartbeatTimerTask();
+                try
+                {
+                    // !!! m_timer.cancel(); !!!
+                    m_timer.purge();
+                    m_timer.schedule(m_timerTask, m_timerInterval);
+                }
+                catch (Exception e)
+                {
+                    Logf.e(ID_TAG, "启动下次心跳任务异常");
+                    e.printStackTrace(); // TODO: sometime throw task canceled.
+                }
             }
         }
 
@@ -166,7 +192,6 @@ public class HeartbeatService extends Service {
     public void onCreate() {
         Logf.d(ID_TAG, "启动心跳服务");
         super.onCreate();
-        m_timerInterval = Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL;
     }
 
     @Override
@@ -175,7 +200,7 @@ public class HeartbeatService extends Service {
         if(m_timer == null)
         {
             m_timer = new Timer();
-            m_timerTask = new HeartbeatTimerTask();
+            HeartbeatTimerTask m_timerTask = new HeartbeatTimerTask();
             m_timer.schedule(m_timerTask, 1000);
         }
         return super.onStartCommand(intent, flags, startId);
@@ -213,7 +238,7 @@ public class HeartbeatService extends Service {
             return;
         _intent = new Intent();
         String packageName = context.getPackageName();
-        _intent.setAction(packageName + ".HEARTBEAT_SERVICE");
+        _intent.setAction(packageName + "." + CONST_SERVICE_NAME);
         _intent.setPackage(packageName);
         context.startService(_intent);
     }
@@ -230,7 +255,7 @@ public class HeartbeatService extends Service {
     {
         Intent intent = new Intent();
         String packageName = context.getPackageName();
-        intent.setAction(packageName + ".HEARTBEAT_SERVICE");
+        intent.setAction(packageName + "." + CONST_SERVICE_NAME);
         intent.setPackage(packageName);
         context.bindService(intent, conn, 0);
     }

@@ -64,7 +64,6 @@
 
 
 	<string-array name="update_info">
-		<item>开机启动.</item>
-		<item>禁止返回键退出.</item>
+		<item>音效调整.</item>
 	</string-array>
 </resources>

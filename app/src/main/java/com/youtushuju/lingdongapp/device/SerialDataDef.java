@@ -1,8 +1,8 @@
 package com.youtushuju.lingdongapp.device;
 
 public final class SerialDataDef {
-    public static final String ID_LINGDONG_SERIAL_PATH = "";
-    public static final int ID_LINGDONG_SERIAL_BAUDRATE = 0;
+    public static final String ID_LINGDONG_SERIAL_PATH = "/dev/ttyS1";
+    public static final int ID_LINGDONG_SERIAL_BAUDRATE = 9600;
 
     public static final String ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR = "PutOpenDoor"; // 投放开门
     public static final String ID_SERIAL_DATA_TYPE_GET_OPEN_DOOR = "GetOpenDoor"; // 取货开门(维护专用)

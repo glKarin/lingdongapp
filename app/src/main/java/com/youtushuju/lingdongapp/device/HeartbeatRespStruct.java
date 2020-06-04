@@ -31,4 +31,9 @@ public final class HeartbeatRespStruct extends SerialRespStruct {
             return "重量异常报警";
         return "";
     }
+
+    public static boolean DeviceIsNormal(String status)
+    {
+        return HeartbeatRespStruct.CONST_RES_ONLINE.equals(status);
+    }
 }

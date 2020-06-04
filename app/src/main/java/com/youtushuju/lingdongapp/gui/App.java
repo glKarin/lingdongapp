@@ -76,6 +76,11 @@ public final class App {
                     sb.append("******************* END *******************\n");
                     sb.append("使用线程默认方式处理意外异常.\n");
 
+                    sb.append("\n");
+                    sb.append("******************* STATUS *******************\n");
+                    sb.append(StatusMachine.Instance().toString());
+                    sb.append("******************* END *******************\n");
+
                     FileWriter writer = null;
                     try
                     {

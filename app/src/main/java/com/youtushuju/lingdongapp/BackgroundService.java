@@ -1,0 +1,176 @@
+package com.youtushuju.lingdongapp;
+
+import android.app.Service;
+import android.content.Context;
+import android.content.Intent;
+import android.content.ServiceConnection;
+import android.content.res.AssetFileDescriptor;
+import android.media.MediaPlayer;
+import android.net.Uri;
+import android.os.Binder;
+import android.os.IBinder;
+
+import androidx.annotation.Nullable;
+
+import com.youtushuju.lingdongapp.common.Configs;
+import com.youtushuju.lingdongapp.common.Logf;
+
+import java.util.Timer;
+
+public class BackgroundService extends Service {
+    private static final String ID_TAG = "BackgroundService";
+    private static final String CONST_SERVICE_NAME = "BACKGROUND_SERVICE";
+    private int m_playEndInterval = 1000;
+    private BackgroundBinder m_binder = new BackgroundBinder();
+    private static Intent _intent = null;
+    private MediaPlayer m_player = null;
+
+    private MediaPlayer.OnCompletionListener m_playEndListener = new MediaPlayer.OnCompletionListener()
+    {
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+            if(m_playEndInterval > 0)
+            {
+                try
+                {
+                    Thread.sleep(m_playEndInterval);
+                    m_player.start();
+                }
+                catch (Exception e)
+                {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
+
+    public class BackgroundBinder extends Binder
+    {
+        public void Play()
+        {
+            BackgroundService.this.Play();
+        }
+
+        public void Stop()
+        {
+            BackgroundService.this.Stop();
+        }
+
+        public void Pause()
+        {
+            BackgroundService.this.Pause();
+        }
+
+        public void Replay()
+        {
+            BackgroundService.this.Replay();
+        }
+    }
+
+    @Override
+    public void onCreate() {
+        Logf.d(ID_TAG, "启动背景服务");
+        super.onCreate();
+        m_playEndInterval = Configs.CONST_DEFAULT_BGM_PLAY_END_INTERVAL;
+        m_player = MediaPlayer.create(this, R.raw.bgm);
+        if(m_playEndInterval <= 0)
+            m_player.setLooping(true);
+        m_player.setOnCompletionListener(m_playEndListener);
+    }
+
+    @Override
+    public int onStartCommand(Intent intent, int flags, int startId) {
+        Logf.d(ID_TAG, "开始背景服务");
+        this.Play();
+        return super.onStartCommand(intent, flags, startId);
+    }
+
+    @Override
+    public void onDestroy() {
+        Logf.d(ID_TAG, "销毁背景服务");
+        super.onDestroy();
+
+        this.Stop();
+        m_player.release();
+        m_player = null;
+    }
+
+    @Nullable
+    @Override
+    public IBinder onBind(Intent intent) {
+        Logf.d(ID_TAG, "绑定背景服务");
+        return m_binder;
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        //return super.onUnbind(intent);
+        Logf.d(ID_TAG, "解绑背景服务");
+        return true;
+    }
+
+    private void Play()
+    {
+        if(!m_player.isPlaying())
+        {
+            m_player.start();
+        }
+    }
+
+    private void Replay()
+    {
+        if(m_player.isPlaying())
+            m_player.pause();
+        m_player.seekTo(0);
+        m_player.start();
+    }
+
+    private void Pause()
+    {
+        if(m_player.isPlaying())
+        {
+            m_player.pause();
+        }
+    }
+
+    private void Stop()
+    {
+        if(m_player.isPlaying())
+        {
+            m_player.stop();
+        }
+    }
+
+    public static void Start(Context context)
+    {
+        if(_intent != null)
+            return;
+        _intent = new Intent();
+        String packageName = context.getPackageName();
+        _intent.setAction(packageName + "." + CONST_SERVICE_NAME);
+        _intent.setPackage(packageName);
+        context.startService(_intent);
+    }
+
+    public static void Stop(Context context)
+    {
+        if(_intent == null)
+            return;
+        context.stopService(_intent);
+        _intent = null;
+    }
+
+    public static void Bind(Context context, ServiceConnection conn)
+    {
+        Intent intent = new Intent();
+        String packageName = context.getPackageName();
+        intent.setAction(packageName + "." + CONST_SERVICE_NAME);
+        intent.setPackage(packageName);
+        context.bindService(intent, conn, 0);
+    }
+
+    public static void Unbind(Context context, ServiceConnection conn)
+    {
+        context.unbindService(conn);
+    }
+}
