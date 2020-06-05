@@ -45,6 +45,7 @@ public final class Configs
 	public static final boolean ID_PREFERENCE_DEFAULT_CAMERA_DRAW_BOX = false;
 	public static final boolean ID_PREFERENCE_DEFAULT_AUTO_BOOT = true;
 	public static final boolean ID_PREFERENCE_DEFAULT_ALLOW_EXIT = false;
+	public static final int ID_PREFERENCE_DEFAULT_BGM_INTERVAL = 60000;
 
 	public static final int CONST_DEFAULT_HEARTBEAT_INTERVAL = 2000;
 	public static final int CONST_DEFAULT_BGM_PLAY_END_INTERVAL = 0;

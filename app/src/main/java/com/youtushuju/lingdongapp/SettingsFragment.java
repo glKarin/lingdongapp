@@ -134,6 +134,10 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 		preference = findPreference(Constants.ID_PREFERENCE_AUTO_BOOT);
 		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_AUTO_BOOT);
 		preference.setOnPreferenceChangeListener(this);
+
+		preference = findPreference(Constants.ID_PREFERENCE_BGM_INTERVAL);
+		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_BGM_INTERVAL);
+		preference.setOnPreferenceChangeListener(this);
 	}
 
 	@Override
@@ -473,6 +477,14 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 			boolean b = newValue != null ? (boolean)newValue : sharedPreferences.getBoolean(Constants.ID_PREFERENCE_ALLOW_EXIT, Configs.ID_PREFERENCE_DEFAULT_ALLOW_EXIT);
 			value = b ? "允许" : "禁止";
 			summary = value;
+			preference.setSummary(summary);
+		}
+
+		if(key == null || Constants.ID_PREFERENCE_BGM_INTERVAL.equals(key))
+		{
+			preference = findPreference(Constants.ID_PREFERENCE_BGM_INTERVAL);
+			value = newValue != null ? newValue.toString() : sharedPreferences.getString(Constants.ID_PREFERENCE_BGM_INTERVAL, "" + Configs.ID_PREFERENCE_DEFAULT_BGM_INTERVAL);
+			summary = value + "毫秒";
 			preference.setSummary(summary);
 		}
 	}

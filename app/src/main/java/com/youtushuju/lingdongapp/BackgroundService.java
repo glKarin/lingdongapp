@@ -11,11 +11,14 @@ import android.os.Binder;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
+import androidx.preference.PreferenceManager;
 
 import com.youtushuju.lingdongapp.common.Configs;
+import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.common.Logf;
 
 import java.util.Timer;
+import java.util.TimerTask;
 
 public class BackgroundService extends Service {
     private static final String ID_TAG = "BackgroundService";
@@ -24,21 +27,28 @@ public class BackgroundService extends Service {
     private BackgroundBinder m_binder = new BackgroundBinder();
     private static Intent _intent = null;
     private MediaPlayer m_player = null;
+    private Timer m_timer = null;
 
     private MediaPlayer.OnCompletionListener m_playEndListener = new MediaPlayer.OnCompletionListener()
     {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            if(m_playEndInterval > 0)
+            if(m_playEndInterval > 0 && m_timer != null)
             {
                 try
                 {
-                    Thread.sleep(m_playEndInterval);
-                    m_player.start();
+                    m_timer.purge();
+                    m_timer.schedule(new TimerTask() {
+                        @Override
+                        public void run() {
+                            Play();
+                        }
+                    }, m_playEndInterval);
                 }
                 catch (Exception e)
                 {
-                    e.printStackTrace();
+                    Logf.e(ID_TAG, "启动下次心跳任务异常");
+                    e.printStackTrace(); // TODO: sometime throw task canceled.
                 }
             }
         }
@@ -71,10 +81,21 @@ public class BackgroundService extends Service {
     public void onCreate() {
         Logf.d(ID_TAG, "启动背景服务");
         super.onCreate();
-        m_playEndInterval = Configs.CONST_DEFAULT_BGM_PLAY_END_INTERVAL;
+        try
+        {
+            m_playEndInterval = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString(Constants.ID_PREFERENCE_BGM_INTERVAL, "" + Configs.ID_PREFERENCE_DEFAULT_BGM_INTERVAL));
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            m_playEndInterval = Configs.ID_PREFERENCE_DEFAULT_BGM_INTERVAL;
+        }
+        Logf.e(ID_TAG, "背景音播放间隔: " + m_playEndInterval);
         m_player = MediaPlayer.create(this, R.raw.bgm);
         if(m_playEndInterval <= 0)
             m_player.setLooping(true);
+        else
+            m_timer = new Timer();
         m_player.setOnCompletionListener(m_playEndListener);
     }
 

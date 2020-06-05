@@ -25,6 +25,7 @@ public final class Constants
 	public static final String ID_PREFERENCE_CAMERA_DRAW_BOX = "CAMERA_DRAW_BOX";
 	public static final String ID_PREFERENCE_AUTO_BOOT = "AUTO_BOOT";
 	public static final String ID_PREFERENCE_ALLOW_EXIT = "ALLOW_EXIT";
+	public static final String ID_PREFERENCE_BGM_INTERVAL = "BGM_INTERVAL";
 	
 	public static final int ID_REQUEST_RESULT_SUCCESS = 0;
 	public static final int ID_REQUEST_RESULT_FAIL = 1;

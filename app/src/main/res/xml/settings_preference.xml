@@ -141,6 +141,16 @@
 			android:defaultValue="true"
 			/>
 		<EditTextPreference
+			android:dialogTitle="背景音播放间隔(毫秒)"
+			android:key="BGM_INTERVAL"
+			android:summary="背景音播放间隔"
+			android:inputType="number"
+			android:persistent="true"
+			android:title="设置背景音播放间隔(重启生效)"
+			android:defaultValue="60000"
+			>
+		</EditTextPreference>
+		<EditTextPreference
 			android:dialogTitle="自动进入屏保时间当没有人脸被检测到(毫秒)"
 			android:key="OPEN_SCREEN_SAVER_MAX_INTERVAL"
 			android:summary="自动进入屏保时间"

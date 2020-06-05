@@ -172,7 +172,7 @@ public class SoundAlert {
 
         if(name == null)
         {
-            Stop();
+            //Stop();
             return;
         }
 
@@ -229,7 +229,7 @@ public class SoundAlert {
 
         if(name == null)
         {
-            Stop();
+            //Stop();
             return;
         }
 

@@ -18,7 +18,7 @@ public final class SerialPortFunc_test extends SerialPortFunc {
             "       \"weightOld\":	\"5000\"," +
             "       \"weightNew\":	\"6600\"," +
             "       \"weightAll\":	\"7770\"," +
-            "       \"res\":	\"01\"," +
+            "       \"res\":	\"00\"," +
             "       \"token\":	\"123456\"" +
             "}";
     private static final String CONST_TEST_GET_OPEN_DOOR = "{" +
