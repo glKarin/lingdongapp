@@ -64,6 +64,7 @@
 
 
 	<string-array name="update_info">
-		<item>音效调整.</item>
+		<item>屏保使用安卓原生实现.</item>
+		<item>定时服务使用Handler代替Timer.</item>
 	</string-array>
 </resources>

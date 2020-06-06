@@ -1,6 +1,8 @@
 <resources>
-    <string name="app_name">灵动App</string>
-    <string name="app_maintenance_name">灵动App管理</string>
+    <!--<string name="app_name">灵动App</string>
+    <string name="app_maintenance_name">灵动App管理</string>-->
+    <string name="app_name">智能垃圾箱</string>
+    <string name="app_maintenance_name">智能垃圾箱设置</string>
     <string name="title_activity_file_browser">FileBrowserActivity</string>
 
     <integer name="open_result_anim_delay">500</integer>

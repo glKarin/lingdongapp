@@ -61,9 +61,15 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent">
 
-        <include
+        <!-- Webview屏保实现 -->
+        <!--<include
             android:id="@+id/main_screensaver_view"
             layout="@layout/main_screensaver"
+            />-->
+        <!-- 安卓原生屏保实现 -->
+        <include
+            android:id="@+id/main_screensaver_view"
+            layout="@layout/main_screen_saver"
             />
 
         <include

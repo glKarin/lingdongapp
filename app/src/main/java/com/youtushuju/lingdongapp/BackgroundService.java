@@ -8,6 +8,8 @@ import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Binder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 
 import androidx.annotation.Nullable;
@@ -28,14 +30,23 @@ public class BackgroundService extends Service {
     private static Intent _intent = null;
     private MediaPlayer m_player = null;
     private Timer m_timer = null;
+    private HandlerThread m_thread;
+    private Handler m_handler;
+    private Runnable m_runnable = new Runnable() {
+        @Override
+        public void run() {
+            //Play();
+            Replay();
+        }
+    };
 
     private MediaPlayer.OnCompletionListener m_playEndListener = new MediaPlayer.OnCompletionListener()
     {
         @Override
         public void onCompletion(MediaPlayer mp) {
-            if(m_playEndInterval > 0 && m_timer != null)
+            if(m_playEndInterval > 0)
             {
-                try
+                /*try
                 {
                     m_timer.purge();
                     m_timer.schedule(new TimerTask() {
@@ -49,7 +60,9 @@ public class BackgroundService extends Service {
                 {
                     Logf.e(ID_TAG, "启动下次心跳任务异常");
                     e.printStackTrace(); // TODO: sometime throw task canceled.
-                }
+                }*/
+                if(m_handler != null)
+                    m_handler.postDelayed(m_runnable, m_playEndInterval);
             }
         }
     };
@@ -68,12 +81,16 @@ public class BackgroundService extends Service {
 
         public void Pause()
         {
+            Logf.e(ID_TAG, "暂停播放背景音乐");
             BackgroundService.this.Pause();
+            m_handler.removeCallbacks(m_runnable);
         }
 
         public void Replay()
         {
-            BackgroundService.this.Replay();
+            Logf.e(ID_TAG, "开始播放背景音乐");
+            m_handler.post(m_runnable);
+            //BackgroundService.this.Replay();
         }
     }
 
@@ -81,6 +98,10 @@ public class BackgroundService extends Service {
     public void onCreate() {
         Logf.d(ID_TAG, "启动背景服务");
         super.onCreate();
+        m_thread = new HandlerThread("_Background_thread");
+        m_thread.start();
+        m_handler = new Handler(m_thread.getLooper());
+
         try
         {
             m_playEndInterval = Integer.parseInt(PreferenceManager.getDefaultSharedPreferences(this).getString(Constants.ID_PREFERENCE_BGM_INTERVAL, "" + Configs.ID_PREFERENCE_DEFAULT_BGM_INTERVAL));
@@ -94,8 +115,8 @@ public class BackgroundService extends Service {
         m_player = MediaPlayer.create(this, R.raw.bgm);
         if(m_playEndInterval <= 0)
             m_player.setLooping(true);
-        else
-            m_timer = new Timer();
+        /*else
+            m_timer = new Timer();*/
         m_player.setOnCompletionListener(m_playEndListener);
     }
 
@@ -110,10 +131,20 @@ public class BackgroundService extends Service {
     public void onDestroy() {
         Logf.d(ID_TAG, "销毁背景服务");
         super.onDestroy();
+        if(m_timer != null)
+        {
+            m_timer.purge();
+            m_timer.cancel();
+            m_timer = null;
+        }
 
         this.Stop();
         m_player.release();
         m_player = null;
+
+        m_thread.quit();
+        m_thread = null;
+        m_handler = null;
     }
 
     @Nullable

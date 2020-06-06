@@ -249,7 +249,7 @@ public final class SerialPortFunc_cepr extends SerialPortFunc {
                     System.arraycopy(buf, 0, data, 0, rlen);
                 }
                 Logf.e(ID_TAG, "C(read)串口读取buf(%s), 实际读取rlen(%d)", new String(data, 0, rlen), rlen);
-                Logf.e(ID_TAG, "C(read)16进制(%s), 长度rlen(%d)", Common.ByteArrayDebugString(data, ' '), rlen);
+                //Logf.e(ID_TAG, "C(read)16进制(%s), 长度rlen(%d)", Common.ByteArrayDebugString(data, ' '), rlen);
                 RecvBuffer(data, rlen);
                 if(parent.m_onDataReceivedListener != null) // if(m_onDataReceivedListener != null) // 分离父子关系
                     parent.m_onDataReceivedListener.OnDataReceived(data, rlen);

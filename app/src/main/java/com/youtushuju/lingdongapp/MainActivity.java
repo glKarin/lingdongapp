@@ -73,6 +73,9 @@ import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.gui.CameraFunc;
 import com.youtushuju.lingdongapp.gui.CameraMaskView;
+import com.youtushuju.lingdongapp.gui.MainScreenSaverView;
+import com.youtushuju.lingdongapp.gui.MainScreenSaverView_native;
+import com.youtushuju.lingdongapp.gui.MainScreenSaverView_webview;
 import com.youtushuju.lingdongapp.gui.SerialPortDeviceDriver;
 import com.youtushuju.lingdongapp.gui.DynamicTextureView;
 import com.youtushuju.lingdongapp.gui.FaceRectView;
@@ -136,8 +139,7 @@ public class MainActivity extends AppCompatActivity {
     private View m_personView; // 人脸信息结果
     private CameraFunc.CameraInfoModel m_currentCamera = null; // 当前摄像机信息
     private FaceRectView m_faceRectView = null; // 人脸识别方框, TODO: UNUSED
-    private ScreenSaverView m_webView = null; // 屏保实现View
-    private View m_screenSaverView = null; // 屏保View
+    private MainScreenSaverView m_screenSaverView = null; // 屏保View
     private int m_operateDeviceTimeout = Configs.ID_PREFERENCE_DEFAULT_OPERATE_DEVICE_TIMEOUT; // 操作设备超时
     private boolean m_cropBitmap = true; // 是否裁剪图像到屏幕比例
     private int m_cameraUsagePlan = Configs.ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN; // 相机使用计划
@@ -404,22 +406,6 @@ public class MainActivity extends AppCompatActivity {
             return false;
         }
     };
-    private Runnable m_openScreenSaver = new Runnable() {
-        @Override
-        public void run() {
-            m_webView.onResume();
-            m_webView.Load();
-            m_screenSaverView.setVisibility(View.VISIBLE);
-        }
-    };
-    private Runnable m_closeScreenSaver = new Runnable() {
-        @Override
-        public void run() {
-            //m_screenSaverView.setVisibility(View.INVISIBLE);
-            m_webView.onPause();
-            m_screenSaverView.setVisibility(View.GONE);
-        }
-    };
 
     // 相机事件回调
     private CameraFunc.OnCameraListener m_onCameraListener = new CameraFunc.OnCameraListener() {
@@ -522,72 +508,6 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
-    // 屏保webview宿主对象
-    private ScreenSaverWindowObject m_windowObject = new ScreenSaverWindowObject();
-    private class ScreenSaverWindowObject extends ScreenSaverView.WindowObject {
-        public ScreenSaverWindowObject()
-        {
-            super(MainActivity.this, MainActivity.this.m_handler);
-        }
-        // 开始刷脸
-        @JavascriptInterface
-        public void ToFace(final String name)
-        {
-            if(!StatusMachine.Instance().DeviceIsAccess())
-            {
-                DeviceBrokenAlarm();
-                return;
-            }
-            if(m_state == ENUM_STATE_PREVIEW)
-                return;
-
-            Logf.i(ID_TAG, "设置垃圾类别: " + name);
-            SetState(ENUM_STATE_PREVIEW);
-            m_handler.post(new Runnable(){
-                @Override
-                public void run() {
-                    findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
-
-                if("waste".equals(name))
-                    m_optIntent/*.SetType(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR)*/.SetData("door_id", DeviceApiDef.ID_KITCHEN_WASTE_DOOR_ID);
-                else if("other".equals(name))
-                    m_optIntent/*.SetType(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR)*/.SetData("door_id", DeviceApiDef.ID_OTHER_WASTE_DOOR_ID);
-                else
-                {
-                    Toast.makeText(MainActivity.this, "门类型无效!", Toast.LENGTH_SHORT).show();
-                    return;
-                }
-
-                ScanFace(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR);
-                }
-            });
-        }
-
-        @JavascriptInterface
-        public void OpenMenu()
-        {
-            if(!StatusMachine.Instance().DeviceIsAccess())
-            {
-                DeviceBrokenAlarm();
-                return;
-            }
-            if(m_state == ENUM_STATE_PREVIEW)
-                return;
-            SetState(ENUM_STATE_PREVIEW);
-            Logf.i(ID_TAG, "请求打开菜单");
-            m_handler.post(new Runnable(){
-                @Override
-                public void run() {
-                    ScanFace(OperationIntent.ENUM_FACE_INTENT_OPEN_MENU);
-                }
-            });
-        }
-
-        public void NotifyDeviceStatus(String code, String desc)
-        {
-            CallJSFunc("setbottomMsg", desc, code);
-        }
-    };
     // 串口事件回调
     private SerialPortDeviceDriver.OnSerialPortListener m_deviceFuncListener = new SerialPortDeviceDriver.OnSerialPortListener() {
         @Override
@@ -945,9 +865,12 @@ public class MainActivity extends AppCompatActivity {
         m_faceRectView = (FaceRectView)findViewById(R.id.main_face_rect_layer);
         m_faceRectView.setVisibility(View.GONE);
 
-        m_screenSaverView = findViewById(R.id.main_screensaver_view);
-        m_webView = (ScreenSaverView)findViewById(R.id.main_screensaver_content);
-        m_webView.SetNativeObject(m_windowObject);
+        m_screenSaverView = new
+                //MainScreenSaverView_webview /*屏保实现: webview*/
+                MainScreenSaverView_native /*屏保实现: 原生实现*/
+                (this, m_handler);
+        m_screenSaverView.Setup();
+
         m_resultDialog = findViewById(R.id.main_result_dialog);
         m_maintenanceDialog = findViewById(R.id.main_maintenance_dialog);
         m_door3Button = findViewById(R.id.main_maintenance_door3);
@@ -1012,7 +935,7 @@ public class MainActivity extends AppCompatActivity {
         findViewById(R.id.main_menu_open_screensaver).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(m_screenSaverView.getVisibility() == View.VISIBLE)
+                if(m_screenSaverView.IsVisible())
                     CloseScreenSaver(true);
                 else
                     OpenScreenSaver(true);
@@ -1615,27 +1538,13 @@ public class MainActivity extends AppCompatActivity {
     private void OpenScreenSaver(boolean anim)
     {
         hide();
-        if(anim)
-        {
-            m_screenSaverView.animate().setDuration(ID_SCREEN_SAVER_ANIM_DELAY).alpha(1.0f).withStartAction(m_openScreenSaver).start();
-        }
-        else
-        {
-            m_openScreenSaver.run();
-        }
+        m_screenSaverView.Open(anim);
     }
 
     // 关闭屏保
     private void CloseScreenSaver(boolean anim)
     {
-        if(anim)
-        {
-            m_screenSaverView.animate().setDuration(ID_SCREEN_SAVER_ANIM_DELAY).alpha(0.0f).withEndAction(m_closeScreenSaver).start();
-        }
-        else
-        {
-            m_closeScreenSaver.run();
-        }
+        m_screenSaverView.Close(anim);
     }
 
     // 打开串口文件
@@ -2069,7 +1978,7 @@ public class MainActivity extends AppCompatActivity {
     {
         @Override
         public void OnGetDeviceStatus(String code, String desc) {
-            m_windowObject.NotifyDeviceStatus(code, desc);
+            NotifyDeviceStatus(code, desc);
             if(!HeartbeatRespStruct.DeviceIsNormal(code))
                 DeviceBrokenAlarm();
         }
@@ -2124,5 +2033,61 @@ public class MainActivity extends AppCompatActivity {
         {
             m_backgroundBinder.Replay();
         }
+    }
+
+    public void ToDropWaste(final String name)
+    {
+        if(!StatusMachine.Instance().DeviceIsAccess())
+        {
+            DeviceBrokenAlarm();
+            return;
+        }
+        if(m_state == ENUM_STATE_PREVIEW)
+            return;
+
+        Logf.i(ID_TAG, "设置垃圾类别: " + name);
+        SetState(ENUM_STATE_PREVIEW);
+        m_handler.post(new Runnable(){
+            @Override
+            public void run() {
+                findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+
+                if("waste".equals(name))
+                    m_optIntent/*.SetType(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR)*/.SetData("door_id", DeviceApiDef.ID_KITCHEN_WASTE_DOOR_ID);
+                else if("other".equals(name))
+                    m_optIntent/*.SetType(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR)*/.SetData("door_id", DeviceApiDef.ID_OTHER_WASTE_DOOR_ID);
+                else
+                {
+                    Toast.makeText(MainActivity.this, "门类型无效!", Toast.LENGTH_SHORT).show();
+                    return;
+                }
+
+                ScanFace(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR);
+            }
+        });
+    }
+
+    public void ToOpenMenu()
+    {
+        if(!StatusMachine.Instance().DeviceIsAccess())
+        {
+            DeviceBrokenAlarm();
+            return;
+        }
+        if(m_state == ENUM_STATE_PREVIEW)
+            return;
+        SetState(ENUM_STATE_PREVIEW);
+        Logf.i(ID_TAG, "请求打开菜单");
+        m_handler.post(new Runnable(){
+            @Override
+            public void run() {
+                ScanFace(OperationIntent.ENUM_FACE_INTENT_OPEN_MENU);
+            }
+        });
+    }
+
+    public void NotifyDeviceStatus(String code, String desc)
+    {
+        m_screenSaverView.NotifyDeviceStatus(code, desc);
     }
 }

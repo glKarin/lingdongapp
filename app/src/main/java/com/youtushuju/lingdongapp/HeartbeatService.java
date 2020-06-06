@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.os.Binder;
+import android.os.Handler;
+import android.os.HandlerThread;
 import android.os.IBinder;
 import android.preference.PreferenceManager;
 
@@ -32,11 +34,16 @@ public class HeartbeatService extends Service {
     private static final String CONST_SERVICE_NAME = "HEARTBEAT_SERVICE";
     private int m_timerInterval = Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL;
     private Timer m_timer = null;
-    //private HeartbeatTimerTask m_timerTask = null; // TODO: UNUSED globals
     private HeartbeatBinder m_binder = new HeartbeatBinder();
     private static Intent _intent = null;
+    private HandlerThread m_thread;
+    private Handler m_handler;
+    private HeartbeatTimerTask m_timerTask = new HeartbeatTimerTask();
 
-    private class HeartbeatTimerTask extends TimerTask {
+    private class HeartbeatTimerTask
+            // extends TimerTask
+        implements Runnable
+    {
         public void run()
         {
             StatusMachine statusMachine = StatusMachine.Instance();
@@ -105,7 +112,7 @@ public class HeartbeatService extends Service {
                 // next heartbeat
                 Logf.e(ID_TAG, m_timerInterval);
                 //m_timerInterval = 10000; // for test
-                HeartbeatTimerTask m_timerTask = new HeartbeatTimerTask();
+                /*HeartbeatTimerTask m_timerTask = new HeartbeatTimerTask();
                 try
                 {
                     // !!! m_timer.cancel(); !!!
@@ -116,7 +123,9 @@ public class HeartbeatService extends Service {
                 {
                     Logf.e(ID_TAG, "启动下次心跳任务异常");
                     e.printStackTrace(); // TODO: sometime throw task canceled.
-                }
+                }*/
+                if(m_handler != null)
+                    m_handler.postDelayed(m_timerTask, m_timerInterval);
             }
         }
 
@@ -155,7 +164,7 @@ public class HeartbeatService extends Service {
             {
                 e.printStackTrace();
             }
-            int timeout = 0; // 5000
+            int timeout = 5000; // 0
             SerialPortDeviceDriver.IOResult res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_DROP_SET_MODE, timeout, dropmode); // 会阻塞线程
             boolean ret = res.IsSuccess();
             if(!ret)
@@ -192,17 +201,21 @@ public class HeartbeatService extends Service {
     public void onCreate() {
         Logf.d(ID_TAG, "启动心跳服务");
         super.onCreate();
+        m_thread = new HandlerThread("_Background_thread");
+        m_thread.start();
+        m_handler = new Handler(m_thread.getLooper());
+        m_handler.postDelayed(m_timerTask, 1000);
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         Logf.d(ID_TAG, "开始心跳服务");
-        if(m_timer == null)
+        /*if(m_timer == null)
         {
             m_timer = new Timer();
             HeartbeatTimerTask m_timerTask = new HeartbeatTimerTask();
             m_timer.schedule(m_timerTask, 1000);
-        }
+        }*/
         return super.onStartCommand(intent, flags, startId);
     }
 
@@ -211,11 +224,15 @@ public class HeartbeatService extends Service {
         Logf.d(ID_TAG, "销毁心跳服务");
         super.onDestroy();
 
-        if(m_timer != null)
+        /*if(m_timer != null)
         {
             m_timer.cancel();
             m_timer.purge();
-        }
+        }*/
+
+        m_thread.quit();
+        m_handler = null;
+        m_thread = null;
     }
 
     @Nullable
