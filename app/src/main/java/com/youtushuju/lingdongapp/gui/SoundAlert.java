@@ -10,6 +10,8 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 
+import com.youtushuju.lingdongapp.common.Configs;
+import com.youtushuju.lingdongapp.common.FD;
 import com.youtushuju.lingdongapp.common.Logf;
 
 import java.io.File;
@@ -54,25 +56,16 @@ public class SoundAlert {
         public static final int ID_LOAD_RESULT_NEW_ERROR = -1;
         public static final int ID_LOAD_RESULT_NOT_CHANGED = 0;
         public String name = null;
-        private Uri uri = null;
-        private AssetFileDescriptor fd = null; // >= N
+        private FD fd = null; // >= N
 
         public void Reset()
         {
             if(fd != null)
             {
-                try
-                {
-                    fd.close();
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                }
+                fd.Close();
                 fd = null;
             }
             name = null;
-            uri = null;
         }
 
         public boolean Compare(@NonNull String newName)
@@ -89,49 +82,30 @@ public class SoundAlert {
             Reset();
 
             String filename = n + SoundAlert.ID_FILE_SUFFIX;
-            uri = Uri.parse("file:///android_asset/" + filename);
             name = n;
 
-            if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) // 牛轧糖
-            {
-                try
-                {
-                    fd = m_context.getAssets().openFd(filename);
-                    return fd != null ? ID_LOAD_RESULT_NEW_SUCCESS : ID_LOAD_RESULT_NEW_ERROR;
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                    return ID_LOAD_RESULT_NEW_ERROR;
-                }
-            }
-            return ID_LOAD_RESULT_NEW_SUCCESS;
+            fd = FD.Open(m_context, filename, Configs.ID_CONFIG_WORK_DIRECTORY + "/assets");
+            return fd != null ? ID_LOAD_RESULT_NEW_SUCCESS : ID_LOAD_RESULT_NEW_ERROR;
         }
 
         public boolean PlayerLoadMedia(MediaPlayer player)
         {
-            try
+            if(FD.LoadPlayerAsMedia(fd, player))
             {
-                if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) // 牛轧糖
+                try
                 {
-                    //Logf.e(ID_TAG, fd);
-                    if(fd != null)
-                        player.setDataSource(fd);
-                    else
-                        return false;
+                    Logf.e(ID_TAG, fd);
+                    player.prepare();
+                    return true;
                 }
-                else
+                catch (IOException e)
                 {
-                    player.setDataSource(m_context, uri);
+                    e.printStackTrace();
+                    return false;
                 }
-                player.prepare();
             }
-            catch (IOException e)
-            {
-                e.printStackTrace();
+            else
                 return false;
-            }
-            return true;
         }
     }
 

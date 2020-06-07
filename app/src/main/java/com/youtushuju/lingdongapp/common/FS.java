@@ -57,9 +57,12 @@ public final class FS
 		{
 			File files[] = file.listFiles();
 			long size = 0;
-			for(File f : files)
+			if(files != null)
 			{
-				size += du(f);
+				for(File f : files)
+				{
+					size += du(f);
+				}
 			}
 			size += file.length();
 			return size;
