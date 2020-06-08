@@ -98,9 +98,9 @@ public final class App {
                             if(writer != null)
                                 writer.close();
                         }
-                        catch (IOException ex)
+                        catch (IOException exc)
                         {
-                            ex.printStackTrace();
+                            exc.printStackTrace();
                         }
                     }
                 }
@@ -255,7 +255,7 @@ public final class App {
         }
         catch (IOException e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             file = null;
         }
         finally {
@@ -268,7 +268,7 @@ public final class App {
             }
             catch (IOException e)
             {
-                e.printStackTrace();
+                App.HandleException(e);
             }
         }
 
@@ -294,6 +294,7 @@ public final class App {
         catch (Exception e)
         {
             e.printStackTrace();
+            //App.HandleException(e); // TODO
         }
 
         SharedPreferences.Editor editor = preferences.edit();
@@ -302,5 +303,15 @@ public final class App {
         }
         editor.commit();
         m_inited = true;
+    }
+
+    private static boolean CONST_DUMP_EXCEPTION = true;
+    public static void HandleException(Throwable throwable)
+    {
+        if(throwable == null)
+            return;
+        throwable.printStackTrace();
+        if(CONST_DUMP_EXCEPTION)
+            Logf.DumpException(throwable);
     }
 }

@@ -88,7 +88,7 @@ public class LayoutActivity extends AppCompatActivity {
                 }
                 catch (Exception e)
                 {
-                    e.printStackTrace();
+                    App.HandleException(e);
                 }
             }
         }

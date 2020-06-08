@@ -138,7 +138,7 @@ public class AboutActivity extends AppCompatActivity {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
         }
 
         item = new AboutMenuModel("版本更新", "update", R.drawable.icon_profile, new Runnable() {
@@ -215,7 +215,7 @@ public class AboutActivity extends AppCompatActivity {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             Toast.makeText(this, "检查更新异常", Toast.LENGTH_LONG).show();
             m_loadingDialog.dismiss();
             m_loadingDialog = null;
@@ -234,7 +234,7 @@ public class AboutActivity extends AppCompatActivity {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
         }
         sb.append("版本: " + ver + "\n");
         sb.append("编译时间: " + Common.TimestampToStr(BuildConfig.BUILD_TIMESTAMP) + "\n");

@@ -67,7 +67,7 @@ public final class FD {
 
             m_fis = fis;
             m_fd = fis.getFD();
-            Logf.e(ID_TAG, "打开扩展存储文件: " + m_fd.toString());
+            Logf.e(ID_TAG, "打开扩展存储文件(" + filename + "): " + m_fd.toString());
             return true;
         }
         catch (Exception e)
@@ -96,7 +96,7 @@ public final class FD {
         {
             try
             {
-                Logf.e(ID_TAG, "关闭扩展存储文件: " + m_fd.toString());
+                Logf.e(ID_TAG, "关闭扩展存储文件(" + m_path + "): " + m_fd.toString());
                 m_fis.close();
             }
             catch (Exception ex)
@@ -116,7 +116,7 @@ public final class FD {
         {
             afd = context.getAssets().openFd(filename);
             m_afd = afd;
-            Logf.e(ID_TAG, "打开apk Asset文件: " + m_afd.toString());
+            Logf.e(ID_TAG, "打开apk Asset文件(" + filename + "): " + m_afd.toString());
             return true;
         }
         catch (Exception e)
@@ -132,7 +132,7 @@ public final class FD {
         {
             try
             {
-                Logf.e(ID_TAG, "关闭apk Asset文件: " + m_afd.toString());
+                Logf.e(ID_TAG, "关闭apk Asset文件(" + m_path + "): " + m_afd.toString());
                 m_afd.close();
             }
             catch (Exception e)
@@ -148,9 +148,9 @@ public final class FD {
     public void Close()
     {
         SetFDType(ENUM_FD_NONE);
-        m_path = null;
         CloseFD();
         CloseAssetFD();
+        m_path = null;
     }
 
     private void SetFDType(int type)

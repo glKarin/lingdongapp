@@ -148,7 +148,7 @@ public class SerialActivity extends AppCompatActivity {
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+                App.HandleException(e);
             }
             if(!m_serialPort.InitSerialPort(path, baudrate))
             {

@@ -2,6 +2,7 @@ package com.youtushuju.lingdongapp.api;
 
 import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Logf;
+import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
 import com.youtushuju.lingdongapp.json.JsonResult;
@@ -50,7 +51,7 @@ public class DeviceApiResp {
         }
         catch (Throwable e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             return false;
         }
         return true;

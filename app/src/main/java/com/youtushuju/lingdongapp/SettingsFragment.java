@@ -163,7 +163,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 			catch (Exception e)
 			{
 				configs.SetConfig(Configs.ID_CONFIG_DEBUG, 0);
-				e.printStackTrace();
+				App.HandleException(e);
 			}
 		}
 		else if(Constants.ID_PREFERENCE_SERIAL_DRIVER.equals(key))
@@ -183,7 +183,7 @@ public class SettingsFragment extends PreferenceFragmentCompat implements Prefer
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				App.HandleException(e);
 			}
 		}
 

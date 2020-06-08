@@ -10,6 +10,7 @@ import android.os.Build;
 
 import androidx.annotation.NonNull;
 
+import com.youtushuju.lingdongapp.common.Common;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.FD;
 import com.youtushuju.lingdongapp.common.Logf;
@@ -49,6 +50,7 @@ public class SoundAlert {
     private MediaPlayer m_player = null;
     private MediaSource m_source = null;
     private MediaListener m_listener = null;
+    private boolean m_async = true;
 
     private class MediaSource
     {
@@ -92,17 +94,22 @@ public class SoundAlert {
         {
             if(FD.LoadPlayerAsMedia(fd, player))
             {
-                try
+                if(false) // 不准备媒体
                 {
-                    Logf.e(ID_TAG, fd);
-                    player.prepare();
+                    try
+                    {
+                        Logf.e(ID_TAG, fd);
+                        player.prepare();
+                        return true;
+                    }
+                    catch (IOException e)
+                    {
+                        App.HandleException(e);
+                        return false;
+                    }
+                }
+                else
                     return true;
-                }
-                catch (IOException e)
-                {
-                    e.printStackTrace();
-                    return false;
-                }
             }
             else
                 return false;
@@ -144,7 +151,7 @@ public class SoundAlert {
     {
         MediaPlayer();
 
-        if(name == null)
+        if(Common.StringIsEmpty(name))
         {
             //Stop();
             return;
@@ -156,11 +163,16 @@ public class SoundAlert {
         else if(res == MediaSource.ID_LOAD_RESULT_NEW_SUCCESS)
         {
             Stop();
-            m_source.PlayerLoadMedia(m_player);
-            m_player.start();
+            if(m_source.PlayerLoadMedia(m_player))
+            {
+                //m_player.start();
+                PrepareAndStart(null);
+            }
+            else
+                Logf.e(ID_TAG, "加载新的媒体文件失败");
         }
         else
-            Logf.e(ID_TAG, "加载媒体文件失败");
+            Logf.e(ID_TAG, "加载媒体文件错误");
     }
 
     public void Stop()
@@ -201,7 +213,7 @@ public class SoundAlert {
     {
         MediaPlayer();
 
-        if(name == null)
+        if(Common.StringIsEmpty(name))
         {
             //Stop();
             return;
@@ -216,9 +228,14 @@ public class SoundAlert {
         else if(res == MediaSource.ID_LOAD_RESULT_NEW_SUCCESS)
         {
             Stop();
-            m_source.PlayerLoadMedia(m_player);
-            SetMediaListener(l);
-            m_player.start();
+            if(m_source.PlayerLoadMedia(m_player))
+            {
+                PrepareAndStart(l);
+               /* SetMediaListener(l);
+                m_player.start();*/
+            }
+            else
+                Logf.e(ID_TAG, "加载新的媒体文件失败");
         }
         else
             Logf.e(ID_TAG, "加载媒体文件失败");
@@ -229,5 +246,42 @@ public class SoundAlert {
     {
         public void OnEnd(String name);
         public boolean Once();
+    }
+
+    public void SetAsync(boolean on)
+    {
+        m_async = on;
+    }
+
+    private void PrepareAndStart(final MediaListener listener)
+    {
+        if(m_async)
+        {
+            m_player.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                @Override
+                public void onPrepared(MediaPlayer mp) {
+                    SetMediaListener(listener);
+                    mp.start();
+                    mp.setOnPreparedListener(null);
+                    Logf.e(ID_TAG, "异步准备媒体再播放");
+                }
+            });
+            m_player.prepareAsync();
+        }
+        else
+        {
+            try
+            {
+                m_player.prepare();
+            }
+            catch (IOException e)
+            {
+                App.HandleException(e);
+                return;
+            }
+            SetMediaListener(listener);
+            m_player.start();
+            Logf.e(ID_TAG, "同步准备媒体再播放");
+        }
     }
 }

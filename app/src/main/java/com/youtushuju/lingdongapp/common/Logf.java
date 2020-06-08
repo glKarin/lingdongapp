@@ -23,7 +23,14 @@ public final class Logf
 
 	public static void DumpException(Throwable e)
 	{
-		f(e instanceof Exception ? DEFAULT_RUNTIME_EXCEPTION_TAG : DEFAULT_RUNTIME_ERROR_TAG, Common.ThrowableToString(e));
+		try
+		{
+			f(e instanceof Exception ? DEFAULT_RUNTIME_EXCEPTION_TAG : DEFAULT_RUNTIME_ERROR_TAG, Common.ThrowableToString(e));
+		}
+		catch (Throwable t)
+		{
+			t.printStackTrace();
+		}
 	}
 
 	public static void f(String tag, String format, Object ...args)

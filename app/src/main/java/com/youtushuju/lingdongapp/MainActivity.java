@@ -2072,7 +2072,8 @@ public class MainActivity extends AppCompatActivity {
         if(!StatusMachine.Instance().DeviceIsAccess())
         {
             DeviceBrokenAlarm();
-            return;
+            if(false)
+                return;
         }
         if(m_state == ENUM_STATE_PREVIEW)
             return;

@@ -100,7 +100,7 @@ public final class ActivityUtility {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             return false; // default is release
         }
     }

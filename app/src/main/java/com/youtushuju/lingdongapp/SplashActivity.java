@@ -113,7 +113,7 @@ public class SplashActivity extends AppCompatActivity
 		}
 		catch(Exception e)
 		{
-			e.printStackTrace();
+			App.HandleException(e);
 		}
 
 		findViewById(R.id.splash_indicator).setOnClickListener(new View.OnClickListener(){

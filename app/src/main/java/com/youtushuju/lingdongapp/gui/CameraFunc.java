@@ -197,7 +197,7 @@ public class CameraFunc {
         }
         catch(Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
         }
     }
 
@@ -243,7 +243,7 @@ public class CameraFunc {
         }
         catch(Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
         }
     }
 
@@ -261,7 +261,7 @@ public class CameraFunc {
                 }
                 catch (Exception e)
                 {
-                    e.printStackTrace();
+                    App.HandleException(e);
                 }
                 start += ID_WAIT_PREVIEW_INTERVAL;
                 if(timeout > 0)
@@ -335,7 +335,7 @@ public class CameraFunc {
         }
         catch(Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             m_cameraListener.OnCameraOpenPreviewResult(false);
         }
     }
@@ -357,7 +357,7 @@ public class CameraFunc {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
         }
     }
 
@@ -608,7 +608,7 @@ public class CameraFunc {
         }
         catch(Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
         }
     }
 

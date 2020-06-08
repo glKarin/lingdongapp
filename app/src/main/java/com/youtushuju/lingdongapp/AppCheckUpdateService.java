@@ -120,7 +120,7 @@ public class AppCheckUpdateService extends IntentService {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             bundle.putBoolean("result", false);
             bundle.putString("message", "检查更新异常");
         }

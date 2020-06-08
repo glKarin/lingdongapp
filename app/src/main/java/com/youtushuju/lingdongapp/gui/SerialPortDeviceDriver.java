@@ -286,14 +286,15 @@ public final class SerialPortDeviceDriver {
                     }
                     catch (Exception e)
                     {
-                        e.printStackTrace();
+                        App.HandleException(e);
                     }
                 }
             }
         }
         catch (Throwable t)
         {
-            t.printStackTrace();
+            //t.printStackTrace(); // TODO
+            App.HandleException(t);
             ret = ENUM_RESULT_EXCEPTION;
             m_serialSession = null;
         }

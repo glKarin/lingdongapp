@@ -15,9 +15,12 @@ import java.util.Map;
 public final class DeviceApi {
     private static final String ID_TAG = "DeviceApi";
 
-    private static final String ID_URL_HOST = "47.95.238.76:2018";
+    //private static final String ID_URL_HOST = "47.95.238.76:2018";
     //private static final String ID_URL_HOST = "www.iqust.top";
+    private static final String ID_URL_HOST = "lingx.iqust.top/garbage";
     private static final String ID_URL_PATH = "/api/device";
+    //private static final String ID_URL_SCHEME = "http";
+    private static final String ID_URL_SCHEME = "https";
     private static final int ID_REQUEST_TIMEOUT = 10000;
 
     private DeviceApi() {}
@@ -27,7 +30,7 @@ public final class DeviceApi {
         public void HandleResponse(NetworkReply reply);
     }
 
-    private static final String CONST_API_URL = "http://" + ID_URL_HOST + ID_URL_PATH;
+    private static final String CONST_API_URL = ID_URL_SCHEME + "://" + ID_URL_HOST + ID_URL_PATH;
     private static String APIUrl()
     {
         return CONST_API_URL;

@@ -22,6 +22,7 @@ import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.common.Sys;
 import com.youtushuju.lingdongapp.device.HeartbeatRespStruct;
 import com.youtushuju.lingdongapp.device.SerialSessionStruct;
+import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.gui.SerialPortDeviceDriver;
 import com.youtushuju.lingdongapp.gui.StatusMachine;
 import com.youtushuju.lingdongapp.json.JsonMap;
@@ -104,13 +105,13 @@ public class HeartbeatService extends Service {
             }
             catch (Throwable e)
             {
-                e.printStackTrace();
+                App.HandleException(e);
                 statusMachine.heartbeat_err_count++;
                 Logf.e(ID_TAG, "心跳数据解析错误: " + Common.Now());
             }
             finally {
                 // next heartbeat
-                Logf.e(ID_TAG, m_timerInterval);
+                Logf.e(ID_TAG, "下次心跳时间间隔: " + m_timerInterval);
                 //m_timerInterval = 10000; // for test
                 /*HeartbeatTimerTask m_timerTask = new HeartbeatTimerTask();
                 try
@@ -162,7 +163,7 @@ public class HeartbeatService extends Service {
             }
             catch (Exception e)
             {
-                e.printStackTrace();
+                App.HandleException(e);
             }
             int timeout = 5000; // 0
             SerialPortDeviceDriver.IOResult res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_DROP_SET_MODE, timeout, dropmode); // 会阻塞线程

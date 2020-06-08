@@ -106,7 +106,7 @@ public class UploadLogService extends IntentService {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             bundle.putBoolean("result", false);
             bundle.putString("message", "上传崩溃日志失败");
         }
@@ -153,7 +153,7 @@ public class UploadLogService extends IntentService {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             bundle.putBoolean("result", false);
             bundle.putString("message", "上传运行日志失败");
         }

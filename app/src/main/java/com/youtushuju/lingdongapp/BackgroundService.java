@@ -18,6 +18,7 @@ import androidx.preference.PreferenceManager;
 import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.common.Logf;
+import com.youtushuju.lingdongapp.gui.App;
 
 import java.util.Timer;
 import java.util.TimerTask;
@@ -108,7 +109,7 @@ public class BackgroundService extends Service {
         }
         catch (Exception e)
         {
-            e.printStackTrace();
+            App.HandleException(e);
             m_playEndInterval = Configs.ID_PREFERENCE_DEFAULT_BGM_INTERVAL;
         }
         Logf.e(ID_TAG, "背景音播放间隔: " + m_playEndInterval);
@@ -139,8 +140,11 @@ public class BackgroundService extends Service {
         }
 
         this.Stop();
-        m_player.release();
-        m_player = null;
+        if(m_player != null)
+        {
+            m_player.release();
+            m_player = null;
+        }
 
         m_thread.quit();
         m_thread = null;
@@ -163,6 +167,8 @@ public class BackgroundService extends Service {
 
     private void Play()
     {
+        if(!PlayerIsValid())
+            return;
         if(!m_player.isPlaying())
         {
             m_player.start();
@@ -171,6 +177,8 @@ public class BackgroundService extends Service {
 
     private void Replay()
     {
+        if(!PlayerIsValid())
+            return;
         if(m_player.isPlaying())
             m_player.pause();
         m_player.seekTo(0);
@@ -179,6 +187,8 @@ public class BackgroundService extends Service {
 
     private void Pause()
     {
+        if(!PlayerIsValid())
+            return;
         if(m_player.isPlaying())
         {
             m_player.pause();
@@ -187,10 +197,17 @@ public class BackgroundService extends Service {
 
     private void Stop()
     {
+        if(!PlayerIsValid())
+            return;
         if(m_player.isPlaying())
         {
             m_player.stop();
         }
+    }
+
+    public boolean PlayerIsValid()
+    {
+        return m_player != null;
     }
 
     public static void Start(Context context)
