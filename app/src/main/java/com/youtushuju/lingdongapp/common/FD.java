@@ -234,25 +234,60 @@ public final class FD {
     {
         if(fd == null || player == null)
             return false;
+        // 不直接访问私有成员, 此函数之后可能会移到其他类
         Object obj = fd.FD();
         int type = fd.FDType();
+        //int type = fd.m_fdType;
         try
         {
             if(type == ENUM_FD_ASSET)
             {
                 if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) // 牛轧糖
-                    player.setDataSource((AssetFileDescriptor)obj);
+                {
+                    AssetFileDescriptor afd = (AssetFileDescriptor)obj;
+                    //AssetFileDescriptor afd = fd.m_afd;
+                    player.setDataSource(afd.getFileDescriptor(), afd.getStartOffset(), afd.getLength());
+                }
                 else
                     return false;
             }
             else
+            {
                 player.setDataSource((FileDescriptor)obj);
+                //player.setDataSource(fd.m_fd);
+            }
             return true;
         }
         catch (IOException e)
         {
             e.printStackTrace();
             return false;
+        }
+    }
+
+    public long GetStartOffset()
+    {
+        switch(m_fdType)
+        {
+            case ENUM_FD_FS:
+                return 0L;
+            case ENUM_FD_ASSET:
+                return m_afd.getStartOffset();
+            default:
+                return -1;
+        }
+    }
+
+    public long GetLength()
+    {
+        switch(m_fdType)
+        {
+            case ENUM_FD_FS:
+                return 0L;
+            case ENUM_FD_ASSET:
+                return m_afd.getLength();
+            default:
+                return -1;
         }
     }
 }

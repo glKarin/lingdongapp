@@ -1,12 +1,7 @@
 package com.youtushuju.lingdongapp.gui;
 
 import android.content.Context;
-import android.content.res.AssetFileDescriptor;
-import android.content.res.AssetManager;
-import android.media.MediaDataSource;
 import android.media.MediaPlayer;
-import android.net.Uri;
-import android.os.Build;
 
 import androidx.annotation.NonNull;
 
@@ -26,21 +21,23 @@ public class SoundAlert {
     public static final String ID_SOUND_ALERT_WELCOME = "welcome.ogg";
     public static final String ID_SOUND_ALERT_OPERATION_SUCCESS = "operation_success.ogg";
     public static final String ID_SOUND_ALERT_OPERATION_ERROR = "operation_error.ogg";
+    private static final String CONST_SOUND_MEDIA_SUFFIX = ".mp3";
+    //private static final String CONST_SOUND_MEDIA_SUFFIX = ".wav";
     // 欢迎语，循环播放
-    public static final String CONST_SOUND_ALERT_MESSAGE_WELCOME = CONST_ALERT_DIR + File.separator + "1.mp3"; // 智能垃圾分类，共享绿色环境 使用请按键、扫码或人脸识别后，投放垃圾，扫码下载APP，可获得积分兑换礼品
+    public static final String CONST_SOUND_ALERT_MESSAGE_WELCOME = CONST_ALERT_DIR + File.separator + "1" + CONST_SOUND_MEDIA_SUFFIX; // 智能垃圾分类，共享绿色环境 使用请按键、扫码或人脸识别后，投放垃圾，扫码下载APP，可获得积分兑换礼品
     // 垃圾箱满
-    public static final String CONST_SOUND_ALERT_WARNING_KITCHEN_WASTE_FULL = CONST_ALERT_DIR + File.separator + "2.mp3"; // 厨余垃圾箱已满，请去附近投放
-    public static final String CONST_SOUND_ALERT_WARNING_OTHER_WASTE_FULL = CONST_ALERT_DIR + File.separator + "3.mp3"; // 其他垃圾箱已满，请去附近投放
-    public static final String CONST_SOUND_ALERT_WARNING_RECYCLE_WASTE_FULL = CONST_ALERT_DIR + File.separator + "4.mp3"; // 可回收垃圾箱已满，请去附近投放
-    public static final String CONST_SOUND_ALERT_WARNING_DANGER_WASTE_FULL = CONST_ALERT_DIR + File.separator + "5.mp3"; // 有害垃圾箱已满，请去附近投放
+    public static final String CONST_SOUND_ALERT_WARNING_KITCHEN_WASTE_FULL = CONST_ALERT_DIR + File.separator + "2" + CONST_SOUND_MEDIA_SUFFIX; // 厨余垃圾箱已满，请去附近投放
+    public static final String CONST_SOUND_ALERT_WARNING_OTHER_WASTE_FULL = CONST_ALERT_DIR + File.separator + "3" + CONST_SOUND_MEDIA_SUFFIX; // 其他垃圾箱已满，请去附近投放
+    public static final String CONST_SOUND_ALERT_WARNING_RECYCLE_WASTE_FULL = CONST_ALERT_DIR + File.separator + "4" + CONST_SOUND_MEDIA_SUFFIX; // 可回收垃圾箱已满，请去附近投放
+    public static final String CONST_SOUND_ALERT_WARNING_DANGER_WASTE_FULL = CONST_ALERT_DIR + File.separator + "5" + CONST_SOUND_MEDIA_SUFFIX; // 有害垃圾箱已满，请去附近投放
     // 设备故障
-    public static final String CONST_SOUND_ALERT_ERROR_DEVICE_BROKEN = CONST_ALERT_DIR + File.separator + "6.mp3"; // 系统故障，请去附近投放
+    public static final String CONST_SOUND_ALERT_ERROR_DEVICE_BROKEN = CONST_ALERT_DIR + File.separator + "6" + CONST_SOUND_MEDIA_SUFFIX; // 系统故障，请去附近投放
     // 投放
-    public static final String CONST_SOUND_ALERT_NOTIFICATION_DOOR_OPENING = CONST_ALERT_DIR + File.separator + "7.mp3"; // 投放口已开启，请尽快投递
-    public static final String CONST_SOUND_ALERT_NOTIFICATION_DOOR_CLOSING = CONST_ALERT_DIR + File.separator + "8.mp3"; // 投放口即将关闭，请注意
-    public static final String CONST_SOUND_ALERT_NOTIFICATION_DROP_FINISHED = CONST_ALERT_DIR + File.separator + "9.mp3"; // 投放已完成，登录APP可使用积分兑换礼物哦！
+    public static final String CONST_SOUND_ALERT_NOTIFICATION_DOOR_OPENING = CONST_ALERT_DIR + File.separator + "7" + CONST_SOUND_MEDIA_SUFFIX; // 投放口已开启，请尽快投递
+    public static final String CONST_SOUND_ALERT_NOTIFICATION_DOOR_CLOSING = CONST_ALERT_DIR + File.separator + "8" + CONST_SOUND_MEDIA_SUFFIX; // 投放口即将关闭，请注意
+    public static final String CONST_SOUND_ALERT_NOTIFICATION_DROP_FINISHED = CONST_ALERT_DIR + File.separator + "9" + CONST_SOUND_MEDIA_SUFFIX; // 投放已完成，登录APP可使用积分兑换礼物哦！
     // 清运
-    public static final String CONST_SOUND_ALERT_NOTIFICATION_MAINTENANCE_FINISHED = CONST_ALERT_DIR + File.separator + "10.mp3"; // 清运门已开启，完成后请关门
+    public static final String CONST_SOUND_ALERT_NOTIFICATION_MAINTENANCE_FINISHED = CONST_ALERT_DIR + File.separator + "10" + CONST_SOUND_MEDIA_SUFFIX; // 清运门已开启，完成后请关门
 
     public static final String CONST_SOUND_ALERT_MESSAGE_START_FACE = null;
     public static final String CONST_SOUND_ALERT_ERROR_FACE_NOT_IDENTIFIED = null;
@@ -62,12 +59,17 @@ public class SoundAlert {
 
         public void Reset()
         {
+            Close();
+            name = null;
+        }
+
+        public void Close()
+        {
             if(fd != null)
             {
                 fd.Close();
                 fd = null;
             }
-            name = null;
         }
 
         public boolean Compare(@NonNull String newName)
@@ -92,7 +94,9 @@ public class SoundAlert {
 
         public boolean PlayerLoadMedia(MediaPlayer player)
         {
-            if(FD.LoadPlayerAsMedia(fd, player))
+            boolean ok = (FD.LoadPlayerAsMedia(fd, player));
+            Close();
+            if(ok)
             {
                 if(false) // 不准备媒体
                 {
@@ -141,6 +145,13 @@ public class SoundAlert {
                         if(m_listener.Once())
                             SetMediaListener(null);
                     }
+                }
+            });
+            m_player.setOnErrorListener(new MediaPlayer.OnErrorListener() {
+                @Override
+                public boolean onError(MediaPlayer mp, int what, int extra) {
+                    Logf.e(ID_TAG, "播放音频发生错误: " + m_source.name + " -> " + what + "(" + extra + ")");
+                    return false;
                 }
             });
         }

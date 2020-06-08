@@ -134,7 +134,10 @@ public class HeartbeatService extends Service {
         {
             SerialPortDeviceDriver driver = SerialPortDeviceDriver.Instance();
             if(!driver.CanIO())
+            {
+                Logf.e(ID_TAG, "心跳IO时串口被占用");
                 return null;
+            }
             SerialPortDeviceDriver.IOResult res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_HEARTBEAT, -1); // 会阻塞线程
             String ret = null;
             if(!res.IsSuccess())
@@ -156,7 +159,10 @@ public class HeartbeatService extends Service {
         {
             SerialPortDeviceDriver driver = SerialPortDeviceDriver.Instance();
             if(!driver.CanIO())
+            {
+                Logf.e(ID_TAG, "设置投放模式IO时串口被占用");
                 return false;
+            }
             try
             {
                 Thread.sleep(5000);

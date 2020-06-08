@@ -2069,6 +2069,7 @@ public class MainActivity extends AppCompatActivity {
 
     public void ToOpenMenu()
     {
+        if(false)
         if(!StatusMachine.Instance().DeviceIsAccess())
         {
             DeviceBrokenAlarm();
