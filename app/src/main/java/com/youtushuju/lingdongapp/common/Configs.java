@@ -38,7 +38,7 @@ public final class Configs
 	public static final int ID_PREFERENCE_DEFAULT_OPEN_SCREEN_SAVER_MAX_INTERVAL = 10000;
 	public static final int ID_PREFERENCE_DEFAULT_OPERATE_DEVICE_TIMEOUT = 10000;
 	public static final int ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN = Constants.ID_CONFIG_CAMERA_USAGE_PLAN_CLOSE_WHEN_UNUSED_AND_REOPEN_WHEN_NEED;
-	public static final boolean ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP = false;
+	public static final boolean ID_PREFERENCE_DEFAULT_PREVIEW_CAPTURE_CROP = true;
 	public static final boolean ID_PREFERENCE_DEFAULT_RECORD_HISTORY = true;
 	public static final boolean ID_PREFERENCE_DEFAULT_PLAY_VOICE_ALERT = true;
 	public static final String ID_PREFERENCE_DEFAULT_MAIN_MENU_GEOMETRY = "-10,20,64,64";

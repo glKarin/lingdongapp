@@ -17,6 +17,7 @@ import android.widget.AdapterView;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.gui.ArrayAdapter_base;
@@ -197,10 +198,12 @@ public class ProfileActivity extends AppCompatActivity {
         Intent intent;
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N)
-            intent = new Intent(this, NewSettingsActivity.class);
-        else
+        {
             intent = new Intent(this, SettingsActivity.class);
-        startActivity(intent);
+            startActivity(intent);
+        }
+        else
+            Toast.makeText(this, "安卓系统版本过低(至少需要Android N以上)", Toast.LENGTH_LONG).show();
     }
 
     @Override

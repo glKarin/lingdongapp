@@ -66,7 +66,7 @@
 			android:summary="是否裁剪照片"
 			android:persistent="true"
 			android:title="设置是否裁剪照片"
-			android:defaultValue="false"
+			android:defaultValue="true"
 			/>
 		<ListPreference
 			android:dialogTitle="相机使用计划"

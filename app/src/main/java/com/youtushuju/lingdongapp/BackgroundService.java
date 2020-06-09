@@ -4,9 +4,7 @@ import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.content.res.AssetFileDescriptor;
 import android.media.MediaPlayer;
-import android.net.Uri;
 import android.os.Binder;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -21,12 +19,11 @@ import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.gui.App;
 
 import java.util.Timer;
-import java.util.TimerTask;
 
 public class BackgroundService extends Service {
     private static final String ID_TAG = "BackgroundService";
     private static final String CONST_SERVICE_NAME = "BACKGROUND_SERVICE";
-    private int m_playEndInterval = 1000;
+    private int m_playEndInterval = Configs.ID_PREFERENCE_DEFAULT_BGM_INTERVAL;
     private BackgroundBinder m_binder = new BackgroundBinder();
     private static Intent _intent = null;
     private MediaPlayer m_player = null;
@@ -113,7 +110,7 @@ public class BackgroundService extends Service {
             m_playEndInterval = Configs.ID_PREFERENCE_DEFAULT_BGM_INTERVAL;
         }
         Logf.e(ID_TAG, "背景音播放间隔: " + m_playEndInterval);
-        m_player = MediaPlayer.create(this, R.raw.bgm);
+        m_player = MediaPlayer.create(this, R.raw.bgm2);
         if(m_playEndInterval <= 0)
             m_player.setLooping(true);
         /*else

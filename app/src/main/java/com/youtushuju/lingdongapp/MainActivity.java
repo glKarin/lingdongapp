@@ -82,6 +82,7 @@ import com.youtushuju.lingdongapp.gui.FaceRectView;
 import com.youtushuju.lingdongapp.gui.OperationIntent;
 import com.youtushuju.lingdongapp.gui.ScreenSaverView;
 import com.youtushuju.lingdongapp.gui.SoundAlert;
+import com.youtushuju.lingdongapp.gui.SoundAlert_mediaplayer;
 import com.youtushuju.lingdongapp.gui.StatusMachine;
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
@@ -456,9 +457,13 @@ public class MainActivity extends AppCompatActivity {
                 m_cameraMask.SetState(CameraMaskView.ID_STATE_SCANNING);
                 //if(m_deviceFunc.IsCanStart())
                 //m_deviceFunc.Reset();
-                final Bitmap bitmap = m_textureView.getBitmap();
+                Bitmap bitmap = m_textureView.getBitmap();
                 m_lastVerifyTime = time;
-                HandleCapturePreview(bitmap);
+                if(!HandleCapturePreview(bitmap))
+                {
+                    bitmap.recycle();
+                    bitmap = null;
+                }
             }
             else
             {
@@ -1077,7 +1082,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 处理人脸图像数据
-    private void HandleCapturePreview(final Bitmap bitmap) {
+    private boolean HandleCapturePreview(final Bitmap bitmap) {
         if (false) // 检测到人脸时关闭屏保 // 需要相机一直预览
         {
             runOnUiThread(new Runnable() {
@@ -1112,7 +1117,11 @@ public class MainActivity extends AppCompatActivity {
         }
         // 新线程执行
         if(runnable != null)
+        {
             m_deviceHandler.post(runnable);
+            return true;
+        }
+        return false;
     }
 
     @Override
@@ -1770,7 +1779,9 @@ public class MainActivity extends AppCompatActivity {
         if(!m_playAlert)
             return;
         if(m_soundAlert == null)
-            m_soundAlert = new SoundAlert(this);
+        {
+            m_soundAlert = new SoundAlert_mediaplayer(this);
+        }
         m_soundAlert.Play(name);
     }
 
@@ -1779,7 +1790,9 @@ public class MainActivity extends AppCompatActivity {
         if(!m_playAlert)
             return;
         if(m_soundAlert == null)
-            m_soundAlert = new SoundAlert(this);
+        {
+            m_soundAlert = new SoundAlert_mediaplayer(this);
+        }
         m_soundAlert.PlayWithCallback(name, l);
     }
 
@@ -2065,6 +2078,19 @@ public class MainActivity extends AppCompatActivity {
                 ScanFace(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR);
             }
         });
+    }
+
+    public void ToDropWasteByScanCode(final String name)
+    {
+        if(!StatusMachine.Instance().DeviceIsAccess())
+        {
+            DeviceBrokenAlarm();
+            return;
+        }
+        if(m_state == ENUM_STATE_PREVIEW)
+            return;
+
+        ShowToast("扫码开门: " + name, Toast.LENGTH_LONG);
     }
 
     public void ToOpenMenu()

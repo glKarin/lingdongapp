@@ -30,6 +30,12 @@ public class MainScreenSaverView_native extends MainScreenSaverView {
                 case R.id.main_screensaver_menu_button:
                     m_mainActivity.ToOpenMenu();
                     break;
+                case R.id.main_screensaver_kitchen_waste_scancode_button:
+                    m_mainActivity.ToDropWasteByScanCode("waste");
+                    break;
+                case R.id.main_screensaver_other_waste_scancode_button:
+                    m_mainActivity.ToDropWasteByScanCode("other");
+                    break;
                 default:
                     break;
             }
@@ -53,6 +59,10 @@ public class MainScreenSaverView_native extends MainScreenSaverView {
         view = m_mainActivity.findViewById(R.id.main_screensaver_kitchen_waste_button);
         view.setOnClickListener(m_buttonListener);
         view = m_mainActivity.findViewById(R.id.main_screensaver_other_waste_button);
+        view.setOnClickListener(m_buttonListener);
+        view = m_mainActivity.findViewById(R.id.main_screensaver_kitchen_waste_scancode_button);
+        view.setOnClickListener(m_buttonListener);
+        view = m_mainActivity.findViewById(R.id.main_screensaver_other_waste_scancode_button);
         view.setOnClickListener(m_buttonListener);
     }
 

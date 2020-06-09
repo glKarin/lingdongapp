@@ -92,10 +92,6 @@
             android:label="设置"
             android:theme="@style/AppTheme" />
         <activity
-            android:name=".NewSettingsActivity"
-            android:label="设置"
-            android:theme="@style/AppTheme" />
-        <activity
             android:name=".DemoActivity"
             android:label="Demo"
             android:theme="@style/AppTheme" />

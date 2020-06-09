@@ -36,10 +36,8 @@
             android:weightSum="1">
 
             <include layout="@layout/main_screensaver_kitchen_waste_button"
-                android:id="@+id/main_screensaver_kitchen_waste_button"
                 />
             <include layout="@layout/main_screensaver_other_waste_button"
-                android:id="@+id/main_screensaver_other_waste_button"
                 />
         </LinearLayout>
 

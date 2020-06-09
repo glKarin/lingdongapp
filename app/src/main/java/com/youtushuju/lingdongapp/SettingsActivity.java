@@ -1,18 +1,12 @@
 package com.youtushuju.lingdongapp;
-import android.content.Context;
-import android.hardware.camera2.CameraCharacteristics;
-import android.hardware.camera2.CameraManager;
-import android.preference.*;
-import android.os.*;
-import android.text.InputType;
-import android.view.Window;
 
-import com.youtushuju.lingdongapp.common.Configs;
-import com.youtushuju.lingdongapp.common.Constants;
+import android.os.Bundle;
+
+import androidx.appcompat.app.AppCompatActivity;
+
 import com.youtushuju.lingdongapp.gui.App;
 
-// 不再维护
-public class SettingsActivity extends PreferenceActivity
+public class SettingsActivity extends AppCompatActivity
 {
 	private static final String ID_TAG = "SettingsActivity";
 
@@ -20,34 +14,9 @@ public class SettingsActivity extends PreferenceActivity
 	protected void onCreate(Bundle savedInstanceState)
 	{
 		super.onCreate(savedInstanceState);
-		
-		addPreferencesFromResource(R.xml.settings_preference);
-		Preference preference;
 
-		preference = findPreference(Constants.ID_PREFERENCE_FACE_FREQUENCY);
-		((EditTextPreference)(preference)).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
-		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_FACE_FREQUENCY);
-
-		ListPreference listPreference = (ListPreference) findPreference(Constants.ID_PREFERENCE_FACE_CAMERA);
-		preference.setDefaultValue("" + Configs.ID_PREFERENCE_DEFAULT_FACE_CAMERA);
-
-		preference = findPreference(Constants.ID_PREFERENCE_SERIAL_PATH);
-		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_SERIAL_PATH);
-
-		preference = findPreference(Constants.ID_PREFERENCE_SERIAL_BAUDRATE);
-		((EditTextPreference)(preference)).getEditText().setInputType(InputType.TYPE_CLASS_NUMBER);
-		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_SERIAL_BAUDRATE);
-
-		preference = findPreference(Constants.ID_PREFERENCE_FACE_IMAGE_QUALITY);
-		preference.setDefaultValue(Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY);
-		preference.setOnPreferenceChangeListener(new Preference.OnPreferenceChangeListener() {
-			@Override
-			public boolean onPreferenceChange(Preference preference, Object newValue) {
-				preference.setSummary(newValue.toString());
-				return true;
-			}
-		});
-
+		//setContentView(R.layout.settings_page);
+		getSupportFragmentManager().beginTransaction().replace(android.R.id.content, new SettingsFragment()).commit();
 		App.Instance().PushActivity(this);
 	}
 
