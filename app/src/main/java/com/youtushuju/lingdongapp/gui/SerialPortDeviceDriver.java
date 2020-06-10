@@ -12,6 +12,7 @@ import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.common.Sys;
+import com.youtushuju.lingdongapp.common.VarRef;
 import com.youtushuju.lingdongapp.device.DropModeReqStruct;
 import com.youtushuju.lingdongapp.device.DropModeRespStruct;
 import com.youtushuju.lingdongapp.device.GetOpenDoorReqStruct;
@@ -24,6 +25,8 @@ import com.youtushuju.lingdongapp.device.SerialPortFunc;
 import com.youtushuju.lingdongapp.device.SerialReqStruct;
 import com.youtushuju.lingdongapp.device.SerialRespStruct;
 import com.youtushuju.lingdongapp.device.SerialSessionStruct;
+import com.youtushuju.lingdongapp.device.SmartCodeReqStruct;
+import com.youtushuju.lingdongapp.device.SmartCodeRespStruct;
 
 import java.util.Queue;
 
@@ -54,9 +57,11 @@ public final class SerialPortDeviceDriver {
     public static final String ENUM_ACTION_HEARTBEAT = "Heartbeat";
     public static final String ENUM_ACTION_OPEN_MAINTENANCE_DOOR = "OpenMaintenanceDoor";
     public static final String ENUM_ACTION_DROP_SET_MODE = "SetDropMode";
+    public static final String ENUM_ACTION_WAITING_CODE_RESULT = "WaitingCodeResult";
 
     //private static final char ID_END_CHARACTER = '\r';
     private static final char ID_END_CHARACTER = '}';
+    private static final char ID_BEGIN_CHARACTER = '{';
 
     private String m_buffer = ""; // 缓存的数据
     private String m_lastRecvData = "";
@@ -274,8 +279,11 @@ public final class SerialPortDeviceDriver {
                 ret = Heartbeat(timeout);
             else if(ENUM_ACTION_DROP_SET_MODE.equals(func))
                 ret = SetDropMode((String)args[0], timeout);
+            else if(ENUM_ACTION_WAITING_CODE_RESULT.equals(func))
+                ret = WaitingCodeResult(timeout);
             else
                 ret = ENUM_RESULT_FUNC_EXCEPT;
+
             if(ret >= 0)
             {
                 if(m_delay > 0)
@@ -300,8 +308,9 @@ public final class SerialPortDeviceDriver {
         }
         finally {
             Shutdown(); // 自动关闭, 每次读写重新打开和关闭
-            Unlock();
+            //Unlock();
         }
+
         result.res = ret;
         result.session = m_serialSession;
         return result;
@@ -352,12 +361,14 @@ public final class SerialPortDeviceDriver {
         }
         else
         {
-            int res = ReadData(timeout);
+            VarRef<String> ref = new VarRef<String>();
+            int res = ReadData(timeout, ref);
             if(res > 0) // success
             {
+                String jsonData = ref.ref; // m_lastRecvData
                 PutOpenDoorRespStruct resp = new PutOpenDoorRespStruct();
                 m_serialResp = resp;
-                boolean suc = resp.Restore(m_lastRecvData);
+                boolean suc = resp.Restore(jsonData);
                 if(!suc)
                 {
                     // TODO: 继续???
@@ -504,12 +515,14 @@ public final class SerialPortDeviceDriver {
             return ENUM_RESULT_NOT_WAIT;
         else
         {
-            int res = ReadData(timeout);
+            VarRef<String> ref = new VarRef<String>();
+            int res = ReadData(timeout, ref);
             if(res > 0) // success
             {
+                String jsonData = ref.ref; // m_lastRecvData
                 GetOpenDoorRespStruct resp = new GetOpenDoorRespStruct();
                 m_serialResp = resp;
-                boolean suc = resp.Restore(m_lastRecvData);
+                boolean suc = resp.Restore(jsonData);
                 if(!suc)
                 {
                     // TODO: 继续???
@@ -534,10 +547,10 @@ public final class SerialPortDeviceDriver {
     }
 
     // 结果暂时写入 m_lastRecvData
-    private int ReadData(int timeout)
+    synchronized private int ReadData(int timeout, VarRef<String> retRef)
     {
         if(timeout == 0)
-            return 0;
+            return 0; // 立即返回
 
         if(!m_usingCallback)
             SetState(ID_STATE_RECVING);
@@ -579,8 +592,11 @@ public final class SerialPortDeviceDriver {
 
             if(data != null) // 数据接收完毕
             {
-                int index = data.indexOf('{');
+                // 去掉左花括号前的字符
+                int index = data.indexOf(ID_BEGIN_CHARACTER);
                 String ret = data.substring(index);
+                if(retRef != null)
+                    retRef.Ref(ret);
                 m_lastRecvData = ret;
                 return ret.length();
             }
@@ -590,11 +606,12 @@ public final class SerialPortDeviceDriver {
                 long now = System.currentTimeMillis();
                 if(now - m_sendTime >= timeout)
                 {
-                    return -2;
+                    return -2; // 读取超时
                 }
             }
         }
-        return -1;
+
+        return -1; // 读取错误
     }
 
     public int Heartbeat(int timeout)
@@ -634,12 +651,14 @@ public final class SerialPortDeviceDriver {
         }
         else
         {
-            int res = ReadData(timeout);
+            VarRef<String> ref = new VarRef<String>();
+            int res = ReadData(timeout, ref);
             if(res > 0) // success
             {
+                String jsonData = ref.ref; // m_lastRecvData
                 HeartbeatRespStruct resp = new HeartbeatRespStruct();
                 m_serialResp = resp;
-                boolean suc = resp.Restore(m_lastRecvData);
+                boolean suc = resp.Restore(jsonData);
                 if(!suc)
                 {
                     // TODO: 继续???
@@ -707,12 +726,14 @@ public final class SerialPortDeviceDriver {
         }
         else
         {
-            int res = ReadData(timeout);
+            VarRef<String> ref = new VarRef<String>();
+            int res = ReadData(timeout, ref);
             if(res > 0) // success
             {
+                String jsonData = ref.ref; // m_lastRecvData
                 DropModeRespStruct resp = new DropModeRespStruct();
                 m_serialResp = resp;
-                boolean suc = resp.Restore(m_lastRecvData);
+                boolean suc = resp.Restore(jsonData);
                 if(!suc)
                 {
                     // TODO: 继续???
@@ -736,21 +757,81 @@ public final class SerialPortDeviceDriver {
         }
     }
 
-    private /*synchronized*/ void Lock()
+    public int WaitingCodeResult(int timeout)
+    {
+        if(m_state == ID_STATE_INIT)
+        {
+            if (m_serialPortListener != null)
+                m_serialPortListener.OnMessage("开始发送请求");
+            SetState(ID_STATE_READY);
+        }
+
+        if(m_state != ID_STATE_READY)
+        {
+            if (m_serialPortListener != null)
+                m_serialPortListener.OnFatal("上次发送流程未结束");
+            return ENUM_RESULT_LAST_NOT_FINISHED;
+        }
+
+        SmartCodeReqStruct req = new SmartCodeReqStruct();
+        m_serialReq = req;
+        m_serialResp = null;
+        SerialSessionStruct session = new SerialSessionStruct();
+        m_serialSession = session; // always new instance
+        session.Request(req);
+
+        // 不需要发送
+
+        if(timeout == 0) // 不等待
+        {
+            return ENUM_RESULT_NOT_WAIT;
+        }
+        else
+        {
+            VarRef<String> ref = new VarRef<String>();
+            int res = ReadData(timeout, ref);
+            if(res > 0) // success
+            {
+                String jsonData = ref.ref; // m_lastRecvData
+                SmartCodeRespStruct resp = new SmartCodeRespStruct();
+                m_serialResp = resp;
+                boolean suc = resp.Restore(jsonData);
+                if(!suc)
+                {
+                    // TODO: 继续???
+                }
+                session.Response(resp);
+                if (m_serialPortListener != null && m_state == ID_STATE_RECVING)
+                    m_serialPortListener.OnRecv(m_lastRecvData, m_lastSendData, resp, req);
+                SetState(ID_STATE_DONE);
+                Logf.d(ID_TAG, "读取结束: " + m_lastRecvData);
+                return m_lastRecvData.length();
+            }
+            else if(res == -2)
+            {
+                Logf.w(ID_TAG, "读取超时");
+                SetState(ID_STATE_TIMEOUT);
+                if (m_serialPortListener != null && (m_state == ID_STATE_SENDED || m_state == ID_STATE_RECVING))
+                    m_serialPortListener.OnTimeout(m_lastSendData, timeout);
+                return ENUM_RESULT_TIMEOUT;
+            }
+            return ENUM_RESULT_OTHER;
+        }
+    }
+
+    private synchronized void Lock()
     {
         //synchronized (this){
             m_lock = true;
         //}
     }
 
-    private /*synchronized*/ boolean IsLock()
+    private boolean IsLock()
     {
-        //synchronized (this){
-            return m_lock;
-        //}
+        return m_lock;
     }
 
-    private /*synchronized*/ void Unlock()
+    private synchronized void Unlock()
     {
        // synchronized (this){
             m_lock = false;

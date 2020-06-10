@@ -8,4 +8,8 @@
     <integer name="open_result_anim_delay">500</integer>
     <integer name="close_result_anim_delay">500</integer>
 
+    <string name="shortcuts_settings_disable_message">设置已被禁用</string>
+    <string name="shortcuts_settings_long_label">应用全局配置</string>
+    <string name="shortcuts_settings_short_label">设置</string>
+
 </resources>

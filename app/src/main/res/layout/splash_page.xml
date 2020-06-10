@@ -81,6 +81,9 @@
 	<!--<include
 		layout="@layout/main_screen_saver"
 		/>-->
+	<include
+		layout="@layout/main_qrcode_panel"
+		/>
 
 </RelativeLayout>
 

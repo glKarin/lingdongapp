@@ -14,7 +14,7 @@ public final class PutOpenDoorRespStruct extends SerialRespStruct {
 
     public PutOpenDoorRespStruct()
     {
-        super();
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR);
     }
 
     public PutOpenDoorRespStruct(String deviceId, String token, String res, String weightOld, String weightNew, String weightAll)

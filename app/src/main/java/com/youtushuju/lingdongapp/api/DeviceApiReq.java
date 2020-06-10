@@ -15,6 +15,7 @@ public class DeviceApiReq {
     public String method;
     public String imei;
     public Map<String, Object> data;
+    public String description;
 
     public DeviceApiReq()
     {
@@ -26,11 +27,31 @@ public class DeviceApiReq {
         this.imei = imei;
     }
 
+    public DeviceApiReq(String method, String imei, String desc)
+    {
+        this(method, imei);
+        this.description = desc;
+    }
+
     public DeviceApiReq AddData(String name, Object value)
     {
         if(data == null)
             data = new HashMap<String, Object>();
         data.put(name, value);
+        return this;
+    }
+
+    public DeviceApiReq RemoveData(String name)
+    {
+        if(data != null)
+            data.remove(name);
+        return this;
+    }
+
+    public DeviceApiReq ClearData()
+    {
+        if(data != null)
+            data.clear();
         return this;
     }
 
@@ -52,6 +73,6 @@ public class DeviceApiReq {
 
     public String toString()
     {
-        return "Request -> " + Dump();
+        return description + ": Request -> " + Dump();
     }
 }

@@ -26,6 +26,7 @@ public final class DeviceApiDef {
     public static final String ID_DEVICE_API_METHOD_RUBBISH_RECORD = "RubbishRecord";
     public static final String ID_DEVICE_API_METHOD_CLEAR_RUBBISH = "ClearRubbish";
     public static final String ID_DEVICE_API_METHOD_BASE = "Base";
+    public static final String ID_DEVICE_API_METHOD_QRCODE_LOGIN = "QrcodeLogin";
 
     public static final String ID_KITCHEN_WASTE_DOOR_ID = SerialDataDef.ID_DOOR_ID_1; // 厨余垃圾
     public static final String ID_OTHER_WASTE_DOOR_ID = SerialDataDef.ID_DOOR_ID_2; // 其他垃圾

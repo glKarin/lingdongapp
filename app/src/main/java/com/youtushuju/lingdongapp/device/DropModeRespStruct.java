@@ -4,7 +4,7 @@ public final class DropModeRespStruct extends SerialRespStruct {
 
     public DropModeRespStruct()
     {
-        super();
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_DROP_MODE);
     }
 
     public DropModeRespStruct(String token, String res)

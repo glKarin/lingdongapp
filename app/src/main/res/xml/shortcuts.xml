@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shortcuts xmlns:android="http://schemas.android.com/apk/res/android">
+    <shortcut
+        android:enabled="true"
+        android:icon="@drawable/icon_settings"
+        android:shortcutDisabledMessage="@string/shortcuts_settings_disable_message"
+        android:shortcutId="settings"
+        android:shortcutLongLabel="@string/shortcuts_settings_long_label"
+        android:shortcutShortLabel="@string/shortcuts_settings_short_label">
+
+        <intent
+            android:action="android.intent.action.VIEW"
+            android:targetClass="com.youtushuju.lingdongapp.SettingsActivity"
+            android:targetPackage="com.youtushuju.lingdongapp" />
+        <categories android:name="android.shortcut.conversation" />
+    </shortcut>
+</shortcuts>

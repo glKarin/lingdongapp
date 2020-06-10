@@ -12,10 +12,14 @@ public class SerialRespStruct extends JsonDataStruct {
         super();
     }
 
+    public SerialRespStruct(String type)
+    {
+        this.type = type;
+    }
+
     public SerialRespStruct(String type, String token, String res)
     {
-        super();
-        this.type = type;
+        this(type);
         this.token = token;
         this.res = res;
     }

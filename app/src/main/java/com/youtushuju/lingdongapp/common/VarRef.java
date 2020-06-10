@@ -23,4 +23,9 @@ public final class VarRef<T>
         ref = null;
         return old;
     }
+
+	public T Ref()
+	{
+		return ref;
+	}
 }

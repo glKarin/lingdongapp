@@ -90,14 +90,13 @@ public class SplashActivity extends AppCompatActivity
 		setContentView(R.layout.splash_page);
 		App app = App.Instance();
 
-		app.Init(this);
+		//app.Init(this);
+		app.PushActivity(this);
 
 		if((int)Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG) == 0)
 			findViewById(R.id.splash_debug_panel).setVisibility(View.GONE);
 
 		SetupUI();
-
-		app.PushActivity(this);
 
 		//CheckAppNecessaryPermission(false, true);
 	}
@@ -320,7 +319,7 @@ public class SplashActivity extends AppCompatActivity
 	{
 		Object ret = null;
 
-		if(true) return  null;
+		if(true) return "" + null;
 
 		Intent intent = new Intent(this, LayoutActivity.class);
 		startActivity(intent);

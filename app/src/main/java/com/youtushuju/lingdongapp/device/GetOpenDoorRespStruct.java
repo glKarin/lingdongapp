@@ -12,7 +12,7 @@ public final class GetOpenDoorRespStruct extends SerialRespStruct {
     public String weightAll;
     public GetOpenDoorRespStruct()
     {
-        super();
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_GET_OPEN_DOOR);
     }
 
     public GetOpenDoorRespStruct(String deviceId, String token, String res, String weightOld, String weightNew, String weightAll)

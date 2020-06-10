@@ -9,7 +9,7 @@ public final class HeartbeatRespStruct extends SerialRespStruct {
 
     public HeartbeatRespStruct()
     {
-        super();
+        super(SerialDataDef.ID_SERIAL_DATA_TYPE_HEARTBEAT);
     }
 
     public HeartbeatRespStruct(String token, String res)

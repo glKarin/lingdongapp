@@ -123,6 +123,7 @@ public final class App {
     public App PushActivity(Activity a)
     {
         m_activityStack.push(a);
+        Init(a);
         Logf.d(ID_TAG, m_activityStack.toString());
         return this;
     }
@@ -175,6 +176,9 @@ public final class App {
 
     public void Reboot()
     {
+        // TODO
+        Logf.e(ID_TAG, "App重启中");
+        Exit(0);
     }
 
     public boolean CleanLog()
@@ -279,6 +283,8 @@ public final class App {
     {
         if(m_inited)
             return;
+
+        Logf.e(ID_TAG, "App初始化");
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(context);
         Configs configs = Configs.Instance();
         boolean buildOnDebug = ActivityUtility.BuildOnDebug(context);
@@ -303,6 +309,11 @@ public final class App {
         }
         editor.commit();
         m_inited = true;
+    }
+
+    public void Shutdown()
+    {
+        Logf.e(ID_TAG, "App已销毁");
     }
 
     private static boolean CONST_DUMP_EXCEPTION = true;

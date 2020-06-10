@@ -4,11 +4,13 @@ import android.content.Context;
 import android.os.Handler;
 import android.os.Looper;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.annotation.AttrRes;
@@ -26,6 +28,7 @@ import java.util.List;
 public class ScrollImage extends FrameLayout {
     private static final String ID_TAG = "ScrollImage";
     private ViewPager m_viewPager;
+    private LinearLayout m_indicatorView;
     private ImagePagerAdapter m_adapter;
     private int m_interval = 3000;
     private boolean m_autoStart = true;
@@ -68,10 +71,17 @@ public class ScrollImage extends FrameLayout {
     private void Setup()
     {
         ImagePageModel item;
+        Context context;
 
-        m_viewPager = new ViewPager(getContext());
+        context = getContext();
+        m_viewPager = new ViewPager(context);
         FrameLayout.LayoutParams params = new FrameLayout.LayoutParams(LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
         addView(m_viewPager, params);
+        m_indicatorView = new LinearLayout(context);
+        params = new FrameLayout.LayoutParams(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT, Gravity.CENTER_HORIZONTAL | Gravity.BOTTOM);
+        m_indicatorView.setGravity(Gravity.CENTER);
+        addView(m_indicatorView, params);
+
         m_adapter = new ImagePagerAdapter(new ArrayList<ImagePageModel>());
         m_viewPager.addOnPageChangeListener(new ViewPager.OnPageChangeListener() {
             private int m_currentIndex = -1;
@@ -84,14 +94,17 @@ public class ScrollImage extends FrameLayout {
                 if (position == 0)
                 {
                     m_currentIndex = m_adapter.getCount() - 2;
+                    UpdateIndicator(m_currentIndex);
                 }
                 else if (position == m_adapter.getCount() - 1)
                 {
                     m_currentIndex = 1;
+                    UpdateIndicator(m_currentIndex);
                 }
                 else
                 {
                     m_currentIndex = -1;
+                    UpdateIndicator(position);
                 }
             }
 
@@ -128,6 +141,8 @@ public class ScrollImage extends FrameLayout {
 
         m_viewPager.setOffscreenPageLimit(m_adapter.m_list.size());
         m_viewPager.setAdapter(m_adapter);
+
+        InitIndicator();
 
         if(m_autoStart)
             Start(0);
@@ -179,6 +194,46 @@ public class ScrollImage extends FrameLayout {
         int index = m_viewPager.getCurrentItem();
         int next = (index + i) % m_adapter.m_list.size();
         m_viewPager.setCurrentItem(next, true);
+    }
+
+    private void InitIndicator()
+    {
+        Context context;
+        View view;
+        LinearLayout.LayoutParams params;
+
+        int max = Math.max(m_adapter.m_list.size() - 2, 0);
+        m_indicatorView.removeAllViews();
+        if(max == 0)
+            return;
+
+        context = getContext();
+        int sizeDp = ActivityUtility.dp2px(context, 10);
+        int marginDp = ActivityUtility.dp2px(context, 2);
+        for(int i = 0; i < max; i++)
+        {
+            view = new View(context);
+            params = new LinearLayout.LayoutParams(sizeDp, sizeDp);
+            params.setMargins(marginDp, marginDp, marginDp, marginDp);
+            view.setBackgroundResource(R.drawable.carousel_indicator);
+            m_indicatorView.addView(view, params);
+        }
+    }
+
+    private void UpdateIndicator(int index)
+    {
+        View view;
+
+        int count = m_indicatorView.getChildCount();
+        if(count == 0)
+            return;
+
+        int newIndex = Math.min(Math.max(index - 1, 0), count - 1);
+        for(int i = 0; i < count; i++)
+        {
+            view = m_indicatorView.getChildAt(i);
+            view.setBackgroundResource(i == newIndex ? R.drawable.carousel_indicator_current : R.drawable.carousel_indicator);
+        }
     }
 
     private static class ImagePageModel

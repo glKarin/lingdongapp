@@ -36,9 +36,9 @@ public class ProfileActivity extends AppCompatActivity {
         setContentView(R.layout.profile_page);
 
         App app = App.Instance();
-        app.Init(this);
+        //app.Init(this);
 
-       m_contentMenu = (ListView)findViewById(R.id.profile_content);
+        m_contentMenu = (ListView)findViewById(R.id.profile_content);
 
         SetupUI();
 
