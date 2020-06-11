@@ -21,6 +21,8 @@ import com.youtushuju.lingdongapp.common.Configs;
 import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
+import com.youtushuju.lingdongapp.gui.CircleProgressIndicatorView;
+import com.youtushuju.lingdongapp.gui.PipelineView;
 import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
 
@@ -29,55 +31,14 @@ import java.util.*;
 public class SplashActivity extends AppCompatActivity
 {
 	private static final String ID_TAG = "SplashActivity";
-	private static final int NAV_TO_MAIN_PAGE = 0;
-	private static final int UPDATE_TIMER = 1;
-	private static final int TIMER_INTERVAL = 500;
 	private static final int SPLASH_DELAY = 3500;
 	
 	private boolean m_navLocked = false;
-	private Timer m_timer = null;
 	private int m_timerDelay = SPLASH_DELAY;
 	private boolean m_started = false;
 	private AlertDialog m_permissionDialog = null;
 	private boolean m_granted = false;
-	
-	private Handler m_handler = new Handler(){
-		@Override
-		public void handleMessage(Message msg)
-		{
-			switch(msg.what)
-			{
-				case UPDATE_TIMER:
-				{
-					if(m_timerDelay > 0)
-					{
-						m_timerDelay -= TIMER_INTERVAL;
-						if(m_timerDelay < 0)
-						{
-							m_timerDelay = 0;
-						}
-						TextView delayView = (TextView)findViewById(R.id.splash_delay);
-						if(m_timerDelay > 0)
-							delayView.setText(String.format("%d", Math.round((double)m_timerDelay / 1000.0)));
-						else
-						{
-							ToMainPage();
-						}
-					}
-				}
-					break;
-				default:
-					break;
-			}
-		}
-		
-	};
-	private Runnable m_callback = new Runnable(){
-		public void run()
-		{
-			ToMainPage();
-		}
-	};
+	private CircleProgressIndicatorView m_indicator;
 
 	@Override
 	protected void onCreate(Bundle savedInstanceState)
@@ -95,6 +56,7 @@ public class SplashActivity extends AppCompatActivity
 
 		if((int)Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG) == 0)
 			findViewById(R.id.splash_debug_panel).setVisibility(View.GONE);
+		m_indicator = (CircleProgressIndicatorView)findViewById(R.id.splash_indicator);
 
 		SetupUI();
 
@@ -115,12 +77,40 @@ public class SplashActivity extends AppCompatActivity
 			App.HandleException(e);
 		}
 
-		findViewById(R.id.splash_indicator).setOnClickListener(new View.OnClickListener(){
+		m_indicator.SetProgressListener(new CircleProgressIndicatorView.ProgressListener() {
+			@Override
+			public void OnProgress(CircleProgressIndicatorView view) {
+
+			}
+
+			@Override
+			public void OnReady(CircleProgressIndicatorView view) {
+
+			}
+
+			@Override
+			public void OnStarted(CircleProgressIndicatorView view) {
+
+			}
+
+			@Override
+			public void OnFinished(CircleProgressIndicatorView view) {
+				view.Shutdown();
+				ToMainPage();
+			}
+
+			@Override
+			public void OnStateChanged(CircleProgressIndicatorView view) {
+
+			}
+		});
+
+		m_indicator.setOnClickListener(new View.OnClickListener(){
 			public void onClick(View view)
 			{
 				if(m_navLocked)
 					return;
-				m_handler.removeCallbacks(m_callback);
+				m_indicator.Shutdown();
 				ToMainPage();
 			}
 		});
@@ -151,7 +141,6 @@ public class SplashActivity extends AppCompatActivity
 
 	private void Skip()
 	{
-		m_handler.removeCallbacks(m_callback);
 		ToMainPage();
 	}
 	
@@ -162,12 +151,8 @@ public class SplashActivity extends AppCompatActivity
 		if(m_navLocked)
 			return;
 		m_navLocked = true;
-		findViewById(R.id.splash_indicator).setVisibility(View.INVISIBLE);
-		if(m_timer != null)
-		{
-			m_timer.cancel();
-			m_timer.purge();
-		}
+		m_indicator.setVisibility(View.INVISIBLE);
+		m_indicator.Shutdown();
 		Intent intent = new Intent(SplashActivity.this, MainActivity.class);
 		startActivity(intent);
 		finish();
@@ -184,17 +169,7 @@ public class SplashActivity extends AppCompatActivity
 			m_permissionDialog.dismiss();
 			m_permissionDialog = null;
 		}
-		if(m_timerDelay > 0)
-		{
-			m_timer = new Timer();
-			m_timer.scheduleAtFixedRate(new TimerTask(){
-				public void run()
-				{
-					m_handler.sendEmptyMessage(UPDATE_TIMER);
-				}
-			}, TIMER_INTERVAL, TIMER_INTERVAL);
-		}
-		else
+		if(m_timerDelay <= 0)
 		{
 			Skip();
 		}
@@ -319,7 +294,7 @@ public class SplashActivity extends AppCompatActivity
 	{
 		Object ret = null;
 
-		if(true) return "" + null;
+		if(true) return null;
 
 		Intent intent = new Intent(this, LayoutActivity.class);
 		startActivity(intent);

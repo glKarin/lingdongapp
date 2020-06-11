@@ -1,0 +1,14 @@
+<set xmlns:android="http://schemas.android.com/apk/res/android"
+    android:interpolator="@android:anim/decelerate_interpolator"
+    android:ordering="together"
+    android:shareInterpolator="true" >
+
+    <objectAnimator
+        android:propertyName="alpha"
+        android:duration="@integer/close_result_anim_delay"
+        android:valueFrom="1.0"
+        android:valueTo="0.0"
+        android:valueType="floatType"
+        />
+
+</set>

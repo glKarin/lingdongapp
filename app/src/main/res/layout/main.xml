@@ -10,49 +10,51 @@
     <!-- The primary full-screen view. This can be replaced with whatever view
          is needed to present your content, e.g. VideoView, SurfaceView,
          TextureView, etc. -->
-    <RelativeLayout
+    <FrameLayout
         android:id="@+id/main_content"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-        <com.youtushuju.lingdongapp.gui.DynamicTextureView
-            android:id="@+id/main_camera_texture"
-            android:layout_centerInParent="true"
+
+        <!-- 相机预览视图 -->
+        <RelativeLayout
+            android:id="@+id/main_camera_view"
+            android:layout_gravity="center"
             android:layout_width="match_parent"
             android:layout_height="match_parent">
-        </com.youtushuju.lingdongapp.gui.DynamicTextureView>
 
-        <com.youtushuju.lingdongapp.gui.FaceRectView
-            android:id="@+id/main_face_rect_layer"
-            android:layout_centerInParent="true"
-            android:visibility="invisible"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"/>
-
-        <RelativeLayout
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:orientation="vertical"
-            android:layout_centerInParent="true"
-            >
-            <com.youtushuju.lingdongapp.gui.CameraMaskView
-                android:id="@+id/main_camera_mask_layer"
-                android:layout_width="match_parent"
+            <com.youtushuju.lingdongapp.gui.DynamicTextureView
+                android:id="@+id/main_camera_texture"
                 android:layout_centerInParent="true"
-                android:layout_height="match_parent"/>
+                android:layout_width="match_parent"
+                android:layout_height="match_parent">
+            </com.youtushuju.lingdongapp.gui.DynamicTextureView>
 
-            <include
-                android:id="@+id/main_person_view"
-                layout="@layout/main_person"
-                />
+            <RelativeLayout
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:orientation="vertical"
+                android:layout_centerInParent="true"
+                >
+                <com.youtushuju.lingdongapp.gui.CameraMaskView
+                    android:id="@+id/main_camera_mask_layer"
+                    android:layout_width="match_parent"
+                    android:layout_centerInParent="true"
+                    android:layout_height="match_parent"/>
+
+                <include
+                    android:id="@+id/main_person_view"
+                    layout="@layout/main_person"
+                    />
+            </RelativeLayout>
         </RelativeLayout>
 
-        <include
+        <!--<include
             android:id="@+id/main_maintenance_dialog"
-            layout="@layout/main_maintenance_panel"/>
+            layout="@layout/main_maintenance_panel"/>-->
         <include
             android:id="@+id/main_result_dialog"
             layout="@layout/main_result_panel"/>
-    </RelativeLayout>
+    </FrameLayout>
 
     <!-- This FrameLayout insets its children based on system windows using
          android:fitsSystemWindows. -->

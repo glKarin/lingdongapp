@@ -8,22 +8,30 @@ import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.FrameLayout;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.youtushuju.lingdongapp.MainActivity;
 import com.youtushuju.lingdongapp.R;
+import com.youtushuju.lingdongapp.api.UserModel;
 
 import java.util.ArrayList;
 import java.util.List;
 
-public class MainQRCodeView extends MainActivityView_base {
-    private static final String ID_TAG = "MainQRCodeView";
+public class MainMaintenanceDialogView extends MainActivityView_base {
+    private static final String ID_TAG = "MainMaintenanceDialogView";
+    private UserModel m_user;
 
-    public MainQRCodeView(MainActivity activity, Handler handler)
+    public MainMaintenanceDialogView(MainActivity activity, Handler handler)
     {
         super(activity, handler);
-        Create();
+    }
+
+    public void SetUser(UserModel user)
+    {
+        m_user = user;
     }
 
     public void Create()
@@ -31,17 +39,32 @@ public class MainQRCodeView extends MainActivityView_base {
         super.Create();
         ViewHolder viewHolder = (ViewHolder)m_viewHolder;
 
-        List<PipelineView.PipelineItemModel> list = new ArrayList<PipelineView.PipelineItemModel>();
-        list.add(new PipelineView.PipelineItemModel("扫码二维码", 10000));
-        list.add(new PipelineView.PipelineItemModel("开门投放垃圾", 10000));
-        list.add(new PipelineView.PipelineItemModel("正在关门", -1));
-        viewHolder.pipeline.SetList(list);
-        viewHolder.pipeline.Ready();
+        viewHolder.m_door3Button.setOnClickListener(m_clickListener);
+        viewHolder.m_door4Button.setOnClickListener(m_clickListener);
+        if(m_user.IsAdministrator())
+        {
+            viewHolder.m_maintenanceMenuButton.setOnClickListener(m_clickListener);
+            viewHolder.m_maintenanceMenuButton.setVisibility(View.VISIBLE);
+        }
+        else
+        {
+            viewHolder.m_maintenanceMenuButton.setOnClickListener(null);
+            viewHolder.m_maintenanceMenuButton.setVisibility(View.GONE);
+        }
     }
 
+    private View.OnClickListener m_clickListener = new View.OnClickListener()
+    {
+        @Override
+        public void onClick(View v) {
+            m_mainActivity.ChooseMaintenance(m_user, v.getId());
+        }
+    };
+
     private class ViewHolder extends MainActivityView_base.ViewHolder {
-        public TextView label_view;
-        public PipelineView pipeline;
+        public TextView m_door3Button;
+        public TextView m_door4Button;
+        public ImageView m_maintenanceMenuButton;
     };
 
     protected void AddView(View view, FrameLayout layout)
@@ -53,21 +76,22 @@ public class MainQRCodeView extends MainActivityView_base {
 
     protected View GenView(LayoutInflater inflater)
     {
-        View view = inflater.inflate(R.layout.main_qrcode_panel, null);
+        View view = inflater.inflate(R.layout.main_maintenance_panel, null);
         return view;
     }
 
     protected MainActivityView_base.ViewHolder GenViewHolder(View view)
     {
         ViewHolder viewHolder = new ViewHolder();
-        viewHolder.label_view = view.findViewById(R.id.main_qrcode_lebel);
-        viewHolder.pipeline = view.findViewById(R.id.main_qrcode_pipeline);
+        viewHolder.m_door3Button = (TextView)view.findViewById(R.id.main_maintenance_door3);
+        viewHolder.m_door4Button = (TextView)view.findViewById(R.id.main_maintenance_door4);
+        viewHolder.m_maintenanceMenuButton = (ImageView)view.findViewById(R.id.main_maintenance_menu_btn);
         return viewHolder;
     }
 
     protected AnimatorSet GetOpenAnimation()
     {
-        AnimatorSet animatorSet = (AnimatorSet) AnimatorInflater.loadAnimator(m_mainActivity, R.animator.pipeline_open_anim);
+        AnimatorSet animatorSet = (AnimatorSet) AnimatorInflater.loadAnimator(m_mainActivity, R.animator.result_dialog_open_anim);
         animatorSet.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -81,7 +105,6 @@ public class MainQRCodeView extends MainActivityView_base {
 
             @Override
             public void onAnimationEnd(Animator animation) {
-
             }
 
             @Override
@@ -99,7 +122,7 @@ public class MainQRCodeView extends MainActivityView_base {
 
     protected AnimatorSet GetCloseAnimation()
     {
-        AnimatorSet animatorSet = (AnimatorSet) AnimatorInflater.loadAnimator(m_mainActivity, R.animator.pipeline_open_anim);
+        AnimatorSet animatorSet = (AnimatorSet) AnimatorInflater.loadAnimator(m_mainActivity, R.animator.result_dialog_close_anim);
         animatorSet.addListener(new Animator.AnimatorListener() {
             @Override
             public void onAnimationStart(Animator animation) {
@@ -110,7 +133,7 @@ public class MainQRCodeView extends MainActivityView_base {
                 m_mainActivity.runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        m_view.setVisibility(View.INVISIBLE);
+                        Shutdown();
                     }
                 });
             }
@@ -127,5 +150,16 @@ public class MainQRCodeView extends MainActivityView_base {
         });
 
         return animatorSet;
+    }
+
+    public void Close(boolean anim) {
+        super.Close(anim);
+        m_user = null;
+    }
+
+    public void Open(UserModel user, boolean anim) {
+        SetUser(user);
+        Create();
+        super.Open(anim);
     }
 }
