@@ -96,7 +96,7 @@ public final class FD {
         {
             try
             {
-                Logf.e(ID_TAG, "关闭扩展存储文件(" + m_path + "): " + m_fd.toString());
+                Logf.e(ID_TAG, "关闭扩展存储文件(" + m_path + "): " + m_fis.getFD().toString());
                 m_fis.close();
             }
             catch (Exception ex)

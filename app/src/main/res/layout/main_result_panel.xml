@@ -5,6 +5,7 @@
     android:orientation="vertical"
     android:padding="10dp"
     android:layout_gravity="center"
+    android:gravity="center"
     android:background="@drawable/main_result_background"
 >
 
@@ -14,7 +15,7 @@
         android:id="@+id/main_result_icon"
         android:layout_width="80dp"
         android:layout_height="80dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="10dp"
         android:layout_marginBottom="20dp"
         android:layout_gravity="center_horizontal"
         />
@@ -22,11 +23,13 @@
     <TextView
         android:id="@+id/main_result_message"
         android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_marginRight="20dp"
         android:layout_marginLeft="20dp"
-        android:layout_height="160dp"
+        android:layout_marginTop="20dp"
+        android:layout_marginBottom="20dp"
         android:gravity="center"
-        android:textSize="24dp"
+        android:textAppearance="@style/TextAppearance.AppCompat.Large"
         android:textStyle="bold"
         />
 </LinearLayout>

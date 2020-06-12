@@ -1,7 +1,7 @@
 package com.youtushuju.lingdongapp.device;
 
 public final class SmartCodeRespStruct extends SerialRespStruct {
-    public String code;
+    public String Code;
 
     public SmartCodeRespStruct()
     {

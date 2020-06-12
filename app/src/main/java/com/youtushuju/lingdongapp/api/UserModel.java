@@ -13,6 +13,7 @@ public class UserModel {
 
     private String m_id = null;
     private String m_username = null;
+    private String m_usericon = null;
     private Bitmap m_photo = null;
     private String m_isEmployee = ENUM_USER_ROLE_NORMAL;
 
@@ -117,5 +118,15 @@ public class UserModel {
         if(!Common.StringIsEmpty(m_isEmployee))
             return "其他人员(" + m_isEmployee + ")";
         return "未识别人员";
+    }
+
+    public String Usericon()
+    {
+        return m_usericon;
+    }
+
+    public void SetUsericon(String usericon)
+    {
+        m_usericon = usericon;
     }
 }

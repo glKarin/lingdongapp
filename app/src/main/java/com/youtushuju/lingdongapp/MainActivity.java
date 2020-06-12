@@ -37,14 +37,11 @@ import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.TextureView;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.WindowManager;
-import android.webkit.JavascriptInterface;
 import android.widget.FrameLayout;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -66,27 +63,24 @@ import com.youtushuju.lingdongapp.common.Constants;
 import com.youtushuju.lingdongapp.device.PutOpenDoorReqStruct;
 import com.youtushuju.lingdongapp.device.PutOpenDoorRespStruct;
 import com.youtushuju.lingdongapp.device.SerialDataDef;
-import com.youtushuju.lingdongapp.device.SerialReqStruct;
-import com.youtushuju.lingdongapp.device.SerialRespStruct;
 import com.youtushuju.lingdongapp.device.SerialSessionStruct;
+import com.youtushuju.lingdongapp.device.SmartCodeRespStruct;
 import com.youtushuju.lingdongapp.gui.ActivityUtility;
 import com.youtushuju.lingdongapp.gui.App;
 import com.youtushuju.lingdongapp.gui.CameraFunc;
 import com.youtushuju.lingdongapp.gui.CameraMaskView;
 import com.youtushuju.lingdongapp.gui.MainMaintenanceDialogView;
 import com.youtushuju.lingdongapp.gui.MainQRCodeView;
+import com.youtushuju.lingdongapp.gui.MainResultDialogView;
 import com.youtushuju.lingdongapp.gui.MainScreenSaverView;
 import com.youtushuju.lingdongapp.gui.MainScreenSaverView_native;
 import com.youtushuju.lingdongapp.gui.MainScreenSaverView_webview;
 import com.youtushuju.lingdongapp.gui.SerialPortDeviceDriver;
 import com.youtushuju.lingdongapp.gui.DynamicTextureView;
-import com.youtushuju.lingdongapp.gui.FaceRectView;
 import com.youtushuju.lingdongapp.gui.OperationIntent;
-import com.youtushuju.lingdongapp.gui.ScreenSaverView;
 import com.youtushuju.lingdongapp.gui.SoundAlert;
 import com.youtushuju.lingdongapp.gui.SoundAlert_mediaplayer;
 import com.youtushuju.lingdongapp.gui.StatusMachine;
-import com.youtushuju.lingdongapp.json.JSON;
 import com.youtushuju.lingdongapp.json.JsonMap;
 
 import java.io.ByteArrayOutputStream;
@@ -148,11 +142,8 @@ public class MainActivity extends AppCompatActivity {
     private int m_cameraUsagePlan = Configs.ID_PREFERENCE_DEFAULT_CAMERA_USAGE_PLAN; // 相机使用计划
     private Size m_textureViewInitSize = null; // TextureView初始宽高
     private int m_imageQuality = Configs.ID_PREFERENCE_DEFAULT_FACE_IMAGE_QUALITY; // 图像质量
-    private View m_resultDialog = null; // 结果对话框
     private Handler m_handler = new Handler(Looper.getMainLooper()); // main thread UI线程处理队列
     private int m_debugMode = 0; // 调试模式
-    private AnimatorSet m_resultDialogOpenAnimation = null; // 结果对话框打开动画
-    private AnimatorSet m_resultDialogCloseAnimation = null; // 结果对话框关闭动画
     private RecordServices m_recordDB = null; // 记录数据库
     private boolean m_recordHistory = Configs.ID_PREFERENCE_DEFAULT_RECORD_HISTORY; // 是否储存本地记录
     private boolean m_allowExit = Configs.ID_PREFERENCE_DEFAULT_ALLOW_EXIT; // 是否允许退出
@@ -162,17 +153,15 @@ public class MainActivity extends AppCompatActivity {
     private OperationIntent m_optIntent = new OperationIntent(); // 刷脸意图
     private int m_verifyFaceMaxInterval = Configs.ID_PREFERENCE_DEFAULT_OPEN_SCREEN_SAVER_MAX_INTERVAL; // 检测不到人脸则进入屏保的间隔
     private MainMaintenanceDialogView m_maintenanceDialog = new MainMaintenanceDialogView(this, m_handler); // 清维门对话框
+    private MainResultDialogView m_resultDialog = new MainResultDialogView(this, m_handler); // 结果对话框
+    private MainQRCodeView m_qrcodeDialog = new MainQRCodeView(this, m_handler); // 扫码对话框
+    private long m_lastVerifyTime = 0L; // 上次检测到人脸的时间
+    private int m_scanCodeTimeout = 60000; // 扫码超时
 
     // 设备交互
     private LingDongApi m_lingdongApi = null; // 灵动API
     private SerialPortDeviceDriver m_deviceFunc = null; // 串口功能封装
     private CameraFunc m_camera = null; // 相机功能封装
-
-    // 测试
-    private View m_apiDebugView = null;
-    private View m_serialPortDebugView = null;
-    private View m_afterApiDebugView = null;
-    private long m_lastVerifyTime = 0L; // 上次检测到人脸的时间
 
     // 相机线程
     private HandlerThread m_cameraHandlerThread = null;
@@ -189,7 +178,7 @@ public class MainActivity extends AppCompatActivity {
             StopPreview();
             m_optIntent.Reset();
             //CloseSerialPortDriver();
-            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+            CloseScanQRCodeDialog(false);
             CloseMaintenanceDialog(false);
             CloseResultDialog(true);
 
@@ -197,12 +186,6 @@ public class MainActivity extends AppCompatActivity {
             OpenScreenSaver(true);
             m_hideFacePanel.run();
 
-            ((TextView)m_afterApiDebugView.findViewById(R.id.main_request_debug_text)).setText("");
-            ((TextView)m_afterApiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-            ((TextView)m_apiDebugView.findViewById(R.id.main_request_debug_text)).setText("");
-            ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-            ((TextView)m_serialPortDebugView.findViewById(R.id.main_request_debug_text)).setText("");
-            ((TextView)m_serialPortDebugView.findViewById(R.id.main_response_debug_text)).setText("");
             m_cameraMask.SetState(CameraMaskView.ID_STATE_READY);
             PlayBGM();
         }
@@ -211,7 +194,7 @@ public class MainActivity extends AppCompatActivity {
     private final Runnable m_waitNextOperation = new Runnable() {
         @Override
         public void run() {
-            findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
+            CloseScanQRCodeDialog(false);
             CloseMaintenanceDialog(false);
             CloseResultDialog(true);
 
@@ -219,12 +202,6 @@ public class MainActivity extends AppCompatActivity {
             //m_deviceFunc.Reset();
             m_hideFacePanel.run();
 
-            ((TextView)m_afterApiDebugView.findViewById(R.id.main_request_debug_text)).setText("");
-            ((TextView)m_afterApiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-            ((TextView)m_apiDebugView.findViewById(R.id.main_request_debug_text)).setText("");
-            ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-            ((TextView)m_serialPortDebugView.findViewById(R.id.main_request_debug_text)).setText("");
-            ((TextView)m_serialPortDebugView.findViewById(R.id.main_response_debug_text)).setText("");
             m_cameraMask.SetState(CameraMaskView.ID_STATE_READY);
         }
     };
@@ -404,7 +381,7 @@ public class MainActivity extends AppCompatActivity {
 
         @Override
         public void OnCameraChanged(CameraFunc.CameraInfoModel info) {
-            ((TextView)findViewById(R.id.main_camera_info_text)).setText(info.toString());
+            Logf.e(ID_TAG, info.toString());
         }
     };
 
@@ -678,13 +655,6 @@ public class MainActivity extends AppCompatActivity {
                 (this, m_handler);
         m_screenSaverView.Setup();
 
-        m_resultDialog = findViewById(R.id.main_result_dialog);
-
-        // 测试
-        m_apiDebugView = findViewById(R.id.main_api_debug_panel);
-        m_serialPortDebugView = findViewById(R.id.main_serial_port_debug_panel);
-        m_afterApiDebugView = findViewById(R.id.main_after_api_debug_panel);
-
         m_cameraHandlerThread = new HandlerThread("_Camera_preview_thread");
         m_cameraHandlerThread.start();
         m_cameraHandler = new Handler(m_cameraHandlerThread.getLooper());
@@ -735,76 +705,6 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        findViewById(R.id.main_menu_open_screensaver).setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                if(m_screenSaverView.IsVisible())
-                    CloseScreenSaver(true);
-                else
-                    OpenScreenSaver(true);
-            }
-        });
-
-        ((TextView)m_apiDebugView.findViewById(R.id.main_title_debug_text)).setText("人脸识别API");
-        ((TextView)m_serialPortDebugView.findViewById(R.id.main_title_debug_text)).setText("本地串口IO");
-        ((TextView)m_afterApiDebugView.findViewById(R.id.main_title_debug_text)).setText("上报重量API");
-
-        m_resultDialogOpenAnimation = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.result_dialog_open_anim);
-        m_resultDialogOpenAnimation.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        m_resultDialog.setVisibility(View.VISIBLE);
-                    }
-                });
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                animation.end();
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-                animation.end();
-            }
-        });
-        m_resultDialogCloseAnimation = (AnimatorSet) AnimatorInflater.loadAnimator(this, R.animator.result_dialog_close_anim);
-        m_resultDialogCloseAnimation.addListener(new Animator.AnimatorListener() {
-            @Override
-            public void onAnimationStart(Animator animation) {
-            }
-
-            @Override
-            public void onAnimationEnd(Animator animation) {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        m_resultDialog.setVisibility(View.INVISIBLE);
-                    }
-                });
-            }
-
-            @Override
-            public void onAnimationCancel(Animator animation) {
-                animation.end();
-            }
-
-            @Override
-            public void onAnimationRepeat(Animator animation) {
-                animation.end();
-            }
-        });
-        m_resultDialogOpenAnimation.setTarget(m_resultDialog);
-        m_resultDialogCloseAnimation.setTarget(m_resultDialog);
-
         m_personView.setAlpha(0.0f);
         m_personView.setVisibility(View.INVISIBLE);
     }
@@ -831,15 +731,6 @@ public class MainActivity extends AppCompatActivity {
                 @Override
                 public void run() {
                     CloseScreenSaver(true);
-                }
-            });
-        }
-        if(m_debugMode != 0)
-        {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    findViewById(R.id.main_response_debug_view).setVisibility(View.VISIBLE);
                 }
             });
         }
@@ -970,8 +861,6 @@ public class MainActivity extends AppCompatActivity {
         m_debugMode = (int)(Configs.Instance().GetConfig(Configs.ID_CONFIG_DEBUG));
         m_debugMode = 0;
 
-        findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
-
         HeartbeatService.Bind(this, m_heartbeatConn);
         BackgroundService.Bind(this, m_backgroundConn);
         m_lingdongApi.DeviceControlNavGesture(false);
@@ -1023,7 +912,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onPause() {
         super.onPause();
 
-        SetState(ENUM_STATE_SCREENSAVER);
+        SetState(ENUM_STATE_READY);
         m_optIntent.Reset();
         //CloseSerialPortDriver();
         mHideHandler.postDelayed(m_hideFacePanel, 100);
@@ -1031,12 +920,11 @@ public class MainActivity extends AppCompatActivity {
 
         CloseCamera();
         OpenScreenSaver(false);
+        CloseScanQRCodeDialog(false);
         CloseMaintenanceDialog(false);
         CloseResultDialog(false);
 
         StopAlert();
-
-        ((TextView)findViewById(R.id.main_camera_info_text)).setText("");
 
         HeartbeatService.Unbind(this, m_heartbeatConn);
         BackgroundService.Unbind(this, m_backgroundConn);
@@ -1149,16 +1037,6 @@ public class MainActivity extends AppCompatActivity {
 
         if(m_debugMode != 0)
         {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-                String json = DeviceApi.MakeRequestJson(DeviceApiDef.ID_DEVICE_API_METHOD_FACE_LOGIN, Sys.GetIMEI(MainActivity.this),
-                        "base64", "DEBUG_IMAGE_BASE64_CODE......"
-                        );
-                ((TextView)m_apiDebugView.findViewById(R.id.main_request_debug_text)).setText(json);
-                }
-            });
         }
 
         StatusMachine.Instance().verify_face_count++;
@@ -1167,12 +1045,6 @@ public class MainActivity extends AppCompatActivity {
         {
             if(m_debugMode != 0)
             {
-                runOnUiThread(new Runnable() {
-                    @Override
-                    public void run() {
-                        ((TextView)m_apiDebugView.findViewById(R.id.main_response_debug_text)).setText(resp.json);
-                    }
-                });
             }
 
             if(resp.IsSuccess())
@@ -1429,34 +1301,13 @@ public class MainActivity extends AppCompatActivity {
 
         if(m_debugMode != 0)
         {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                ((TextView)m_afterApiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-                String json = DeviceApi.MakeRequestJson(DeviceApiDef.ID_DEVICE_API_METHOD_RUBBISH_RECORD, Sys.GetIMEI(MainActivity.this),
-                            "weightOld", resp.weightOld,
-                            "weightNew", resp.weightNew,
-                            "weightAll", resp.weightAll,
-                            "userId", user.Id(),
-                            "dropChannel", resp.device_id,
-                            "dropStatus", resp.res
-                        );
-                ((TextView)m_afterApiDebugView.findViewById(R.id.main_request_debug_text)).setText(json);
-                }
-            });
         }
         final DeviceApiResp apiResp = DeviceApi.UploadWeight(Sys.GetIMEI(MainActivity.this), user.Id(), resp.weightOld, resp.weightNew, resp.weightAll, resp.res, resp.device_id);
         if(apiResp != null)
         {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if(m_debugMode != 0)
-                    {
-                        ((TextView)m_afterApiDebugView.findViewById(R.id.main_response_debug_text)).setText(apiResp.json);
-                    }
-                }
-            });
+            if(m_debugMode != 0)
+            {
+            }
             try
             {
                 String uuid = (String)((JsonMap)apiResp.data).Get("uuid");
@@ -1477,8 +1328,10 @@ public class MainActivity extends AppCompatActivity {
     }
 
     // 打开结果对话框, 串口网络线程
-    private void OpenResultDialog(final boolean suc, final String message, String alert, boolean anim)
+    public void OpenResultDialog(final boolean suc, final String message, String alert, final boolean anim)
     {
+        CloseScanQRCodeDialog(false);
+        CloseMaintenanceDialog(false);
         CloseResultDialog(false);
 
         if(alert != null)
@@ -1486,33 +1339,23 @@ public class MainActivity extends AppCompatActivity {
         runOnUiThread(new Runnable() {
             @Override
             public void run() {
-                ((ImageView)m_resultDialog.findViewById(R.id.main_result_icon)).setImageResource(R.mipmap.ic_launcher);
-                TextView textView = (TextView)m_resultDialog.findViewById(R.id.main_result_message);
-                textView.setText(message);
-                textView.setTextColor(suc ? Color.GREEN  : Color.RED);
+                m_resultDialog.Open(suc, message, anim);
+                m_handler.postDelayed(m_finishOperation, ID_OPERATION_FINISHED_INTERVAL);
             }
         });
-        if(anim)
-            m_resultDialogOpenAnimation.start();
-        else
-            m_resultDialogOpenAnimation.end();
         //runOnUiThread(m_finishOperation);
-        m_handler.postDelayed(m_finishOperation, ID_OPERATION_FINISHED_INTERVAL);
+        //m_handler.postDelayed(m_finishOperation, ID_OPERATION_FINISHED_INTERVAL);
     }
 
     // 关闭结果对话框, 主线程
-    private void CloseResultDialog(boolean anim)
+    private void CloseResultDialog(final boolean anim)
     {
-        if(m_resultDialog.getVisibility() != View.VISIBLE)
-            return;
-        if(anim)
-        {
-            m_resultDialogCloseAnimation.start();
-        }
-        else
-        {
-            m_resultDialogCloseAnimation.end();
-        }
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                m_resultDialog.Close(anim);
+            }
+        });
     }
 
     // 播放语音
@@ -1622,34 +1465,13 @@ public class MainActivity extends AppCompatActivity {
 
         if(m_debugMode != 0)
         {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    ((TextView)m_afterApiDebugView.findViewById(R.id.main_response_debug_text)).setText("");
-                    String json = DeviceApi.MakeRequestJson(DeviceApiDef.ID_DEVICE_API_METHOD_CLEAR_RUBBISH, Sys.GetIMEI(MainActivity.this),
-                            "weightOld", resp.weightOld,
-                            "weightNew", resp.weightNew,
-                            "weightAll", resp.weightAll,
-                            "employee", user.Id(),
-                            "clearChannel", resp.device_id,
-                            "clearStatus", resp.res
-                    );
-                    ((TextView)m_afterApiDebugView.findViewById(R.id.main_request_debug_text)).setText(json);
-                }
-            });
         }
         final DeviceApiResp apiResp = DeviceApi.CleanDevice(Sys.GetIMEI(MainActivity.this), user.Id(), resp.weightOld, resp.weightNew, resp.weightAll, resp.res, resp.device_id);
         if(apiResp != null)
         {
-            runOnUiThread(new Runnable() {
-                @Override
-                public void run() {
-                    if(m_debugMode != 0)
-                    {
-                        ((TextView)m_afterApiDebugView.findViewById(R.id.main_response_debug_text)).setText(apiResp.json);
-                    }
-                }
-            });
+            if(m_debugMode != 0)
+            {
+            }
             try
             {
                 String uuid = (String)((JsonMap)apiResp.data).Get("uuid");
@@ -1779,7 +1601,7 @@ public class MainActivity extends AppCompatActivity {
             DeviceBrokenAlarm();
             return;
         }
-        if(m_state == ENUM_STATE_PREVIEW)
+        if(m_state != ENUM_STATE_SCREENSAVER)
             return;
 
         Logf.i(ID_TAG, "扫脸设置垃圾类别: " + name);
@@ -1787,8 +1609,6 @@ public class MainActivity extends AppCompatActivity {
         m_handler.post(new Runnable(){
             @Override
             public void run() {
-                findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
-
                 if("waste".equals(name))
                     m_optIntent/*.SetType(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR)*/.SetData("door_id", DeviceApiDef.ID_KITCHEN_WASTE_DOOR_ID);
                 else if("other".equals(name))
@@ -1811,16 +1631,14 @@ public class MainActivity extends AppCompatActivity {
             DeviceBrokenAlarm();
             return;
         }
-        if(m_state == ENUM_STATE_PREVIEW)
+        if(m_state != ENUM_STATE_SCREENSAVER)
             return;
 
         Logf.i(ID_TAG, "扫码设置垃圾类别: " + name);
-        SetState(ENUM_STATE_PREVIEW);
+        SetState(ENUM_STATE_SCANNER);
         m_handler.post(new Runnable(){
             @Override
             public void run() {
-                findViewById(R.id.main_response_debug_view).setVisibility(View.GONE);
-
                 if("waste".equals(name))
                     m_optIntent/*.SetType(OperationIntent.ENUM_FACE_INTENT_OPEN_DOOR)*/.SetData("door_id", DeviceApiDef.ID_KITCHEN_WASTE_DOOR_ID);
                 else if("other".equals(name))
@@ -1845,7 +1663,7 @@ public class MainActivity extends AppCompatActivity {
             if(false)
                 return;
         }
-        if(m_state == ENUM_STATE_PREVIEW)
+        if(m_state != ENUM_STATE_SCREENSAVER)
             return;
         SetState(ENUM_STATE_PREVIEW);
         Logf.i(ID_TAG, "请求打开菜单");
@@ -1877,13 +1695,11 @@ public class MainActivity extends AppCompatActivity {
         m_optIntent.SetType(type);
 
         m_lastVerifyTime = System.currentTimeMillis();
-        CloseScreenSaver(true);
+        //CloseScreenSaver(true);
         StopBGM();
         PlayAlert(SoundAlert.CONST_SOUND_ALERT_MESSAGE_START_FACE);
 
-        MainQRCodeView view = new MainQRCodeView(this, m_handler);
-        view.Open(true);
-        ShowToast("扫码开门: " + type, Toast.LENGTH_LONG);
+        OpenScanQRCodeDialog(true);
     }
 
     public void ChooseMaintenance(UserModel user, int type)
@@ -1984,4 +1800,346 @@ public class MainActivity extends AppCompatActivity {
         }
     };
 
+    // 等待扫码结果
+    private SerialPortDeviceDriver.IOResult DoRecvScanCodeResult()
+    {
+        SerialPortDeviceDriver.IOResult res = m_deviceFunc.IO(SerialPortDeviceDriver.ENUM_ACTION_WAITING_CODE_RESULT, m_scanCodeTimeout, m_optIntent.<String>GetData_t("door_id")); // 会阻塞线程
+        if(!res.IsSuccess())
+        {
+            // TODO: 处理???
+            Logf.e(ID_TAG, "获取扫码结果失败");
+            if(res.res == SerialPortDeviceDriver.ENUM_RESULT_TIMEOUT)
+                Logf.e(ID_TAG, "获取扫码结果失败原因: 超时");
+        }
+        return res;
+    }
+
+    // 扫码结果登录, 返回人员对象, 网络线程
+    private UserModel DoLoginByCode(String code)
+    {
+        UserModel user = null;
+        if(Common.StringIsEmpty(code))
+            return user;
+
+        user = new UserModel();
+        if(m_debugMode != 0)
+        {
+        }
+
+        StatusMachine.Instance().scan_code_count++;
+        final DeviceApiResp resp = DeviceApi.LoginByQRCode(Sys.GetIMEI(MainActivity.this), code);
+        if(resp != null)
+        {
+            if(m_debugMode != 0)
+            {
+            }
+
+            if(resp.IsSuccess())
+            {
+                if(resp.data == null || resp.data instanceof String) // MISMATCHED
+                {
+                    if(ActivityUtility.BuildOnDebug(this)/* && false*/) // TODO: 仅开发测试
+                    {
+                        user.SetId(UserModel.CONST_TEST_USER_ID);
+                        user.SetUsername("开发者");
+                        user.SetIsEmployee(UserModel.ENUM_USER_ROLE_ADMIN);
+                        user.SetIsEmployee(UserModel.ENUM_USER_ROLE_MAINTENANCE);
+                        user.SetIsEmployee("0,1,2");
+                    }
+                    Logf.e(ID_TAG, "未识别人员扫码: " + Common.Now());
+                }
+                else
+                {
+                    try
+                    {
+                        JsonMap data = (JsonMap)resp.data;
+                        String name = data.<String>GetT("username");
+                        String uid = data.Get("id").toString();
+                        String icon = data.<String>GetT("usericon");
+                        user.SetId(uid);
+                        user.SetUsername(name);
+                        user.SetIsEmployee(data.Get("isEmployee").toString());
+                        user.SetUsericon(icon);
+                    }
+                    catch (Throwable e)
+                    {
+                        e.printStackTrace();
+                        Logf.e(ID_TAG, "扫码识别失败: " + Common.Now());
+                    }
+                }
+            }
+            else
+            {
+                if(ActivityUtility.BuildOnDebug(this)/* && false*/) // TODO: 仅开发测试
+                {
+                    user.SetId(UserModel.CONST_TEST_USER_ID);
+                    user.SetUsername("开发者");
+                    user.SetIsEmployee(UserModel.ENUM_USER_ROLE_ADMIN);
+                    user.SetIsEmployee(UserModel.ENUM_USER_ROLE_MAINTENANCE);
+                    user.SetIsEmployee("0,1,2");
+                }
+                Logf.e(ID_TAG, "扫码识别服务器错误: " + Common.Now());
+            }
+        }
+        else
+        {
+            Logf.e(ID_TAG, "请求扫码识别服务器异常: " + Common.Now());
+        }
+
+        return user;
+    }
+
+    private class OptScanCodeRunnable implements Runnable {
+        @Override
+        public void run() {
+            // 开始流程
+            long now = System.currentTimeMillis();
+            SerialPortDeviceDriver.IOResult result = DoRecvScanCodeResult();
+            if(!result.IsSuccess())
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_qrcodeDialog.SetScanCodeResult(false);
+                        OpenResultDialog(false, "识别错误", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED,true);
+                    }
+                });
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_FACE_VERIFY_FAIL);
+                return;
+            }
+            SerialSessionStruct session = result.session;
+            final int res = result.res;
+            if(!session.IsValid()) // 扫码结果获取失败
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_qrcodeDialog.SetScanCodeResult(false);
+                        if(res == SerialPortDeviceDriver.ENUM_RESULT_TIMEOUT)
+                            OpenResultDialog(false, "扫码超时", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED, true);
+                        else
+                            OpenResultDialog(false, "扫码失败", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED, true);
+                    }
+                });
+                return;
+            }
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    m_qrcodeDialog.SetScanCodeResult(true);
+                }
+            });
+            SmartCodeRespStruct smartCodeResp = (SmartCodeRespStruct)session.resp;
+            final UserModel user = DoLoginByCode(smartCodeResp.Code);
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    m_qrcodeDialog.SetUserLoginResult(user);
+                }
+            });
+            if(user == null) // 人脸识别异常
+            {
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_FACE_VERIFY_FAIL);
+                OpenResultDialog(false, "识别错误", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED,true);
+                return;
+            }
+
+            if(!user.IsValid()) // 无效人员
+            {
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_FACE_VERIFY_FAIL);
+                OpenResultDialog(false, "未识别身份", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED,true);
+                return;
+            }
+            //m_cameraMask.SetState(CameraMaskView.ID_STATE_FACE_VERIFY_SUCCESS);
+
+            //m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESSING);
+            PlayAlert(SoundAlert.CONST_SOUND_ALERT_NOTIFICATION_DOOR_OPENING); // TODO: 提前播放语音
+            // 提前定时提醒
+            Timer timer = new Timer();
+            timer.schedule(new TimerTask() {
+                @Override
+                public void run() {
+                    PlayAlert(SoundAlert.CONST_SOUND_ALERT_NOTIFICATION_DOOR_CLOSING);
+                }
+            }, Math.min(6000, (int)((float)m_operateDeviceTimeout * 0.6)));
+            // 继续开门操作
+            result = DoOpenDoor();
+            try
+            {
+                timer.purge();
+                timer.cancel();
+                timer = null;
+            }
+            catch (Exception e) // TODO: forbid canceled exception
+            {
+                e.printStackTrace();
+            }
+            finally {
+                timer = null;
+            }
+            if(result == null) // 开门错误
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_qrcodeDialog.SetOpenDoorResult(false);
+                        OpenResultDialog(false, "设备异常", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED,true);
+                    }
+                });
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_FAIL);
+                return;
+            }
+            session = result.session;
+            final int res2 = result.res;
+            if(!session.IsValid()) // 开门失败
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_qrcodeDialog.SetOpenDoorResult(false);
+                        if(res2 == SerialPortDeviceDriver.ENUM_RESULT_TIMEOUT)
+                            OpenResultDialog(false, "操作超时", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED, true);
+                        else
+                            OpenResultDialog(false, "开门失败", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED, true);
+                    }
+                });
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_FAIL);
+                return;
+            }
+            if(!session.IsValidSession()
+                    || !session.IsPair() // TODO: 是否需要检测请求与相应的token???
+            )
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_qrcodeDialog.SetOpenDoorResult(false);
+                        OpenResultDialog(false, "开门失败", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED, true);
+                    }
+                });
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_FAIL);
+                if(!session.IsPair())
+                    Logf.e(ID_TAG, "返回数据无效");
+                else
+                    Logf.e(ID_TAG, "无效对话");
+                return;
+            }
+            final PutOpenDoorReqStruct req = (PutOpenDoorReqStruct)session.req;
+            final PutOpenDoorRespStruct resp = (PutOpenDoorRespStruct)session.resp;
+            StatusMachine.Instance().SetDoorStatus(req.door_id, resp.res);
+            if(!resp.IsSuccess())
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_qrcodeDialog.SetOpenDoorResult(false);
+                        if(PutOpenDoorRespStruct.CONST_RES_FULL.equals(resp.res))
+                        {
+                            if(DeviceApiDef.ID_KITCHEN_WASTE_DOOR_ID.equals(req.door_id))
+                            {
+                                OpenResultDialog(false, "满载", SoundAlert.CONST_SOUND_ALERT_WARNING_KITCHEN_WASTE_FULL, true);
+                                return;
+                            }
+                            else if(DeviceApiDef.ID_KITCHEN_WASTE_DOOR_ID.equals(req.door_id))
+                            {
+                                OpenResultDialog(false, "满载", SoundAlert.CONST_SOUND_ALERT_WARNING_RECYCLE_WASTE_FULL, true);
+                                return;
+                            }
+                        }
+                        else
+                            OpenResultDialog(false, "开门失败", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED, true);
+                    }
+                });
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_FAIL);
+                Logf.e(ID_TAG, "返回开门数据返回失败结果: " + resp.res);
+                return;
+            }
+
+            runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    m_qrcodeDialog.SetOpenDoorResult(true);
+                }
+            });
+            //m_cameraMask.SetState(CameraMaskView.ID_STATE_PROCESS_SUCCESS);
+
+            // 继续上报重量
+            String uuid = DoUploadWeight(session, user);
+            if(uuid != null)
+            {
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_UPLOAD_SUCCESS);
+
+                // 存储至本地数据库
+                if(m_recordHistory)
+                {
+                    if(m_recordDB == null)
+                        m_recordDB = new RecordServices(MainActivity.this);
+                    try
+                    {
+                        RecordModel item = new RecordModel();
+                        item.SetName(user.Username());
+                        item.SetTime(now);
+                        item.SetDevice(req.door_id);
+                        item.SetWeight(resp.weightOld + "," + resp.weightNew + "," + resp.weightAll);
+                        item.SetOperation(SerialDataDef.ID_SERIAL_DATA_TYPE_PUT_OPEN_DOOR);
+                        item.SetResult(RecordModel.ID_RESULT_SUCCESS);
+                        item.SetUuid(uuid);
+                        item.SetCreateTime(System.currentTimeMillis());
+                        if(m_recordDB.Add(item))
+                            Logf.i(ID_TAG, "结果写入数据库成功: " + item.Id());
+                        else
+                            Logf.e(ID_TAG, "结果写入数据库失败");
+                    }
+                    catch(Exception e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_qrcodeDialog.SetUploadResult(true);
+                        OpenResultDialog(true, "上报重量成功", SoundAlert.CONST_SOUND_ALERT_NOTIFICATION_DROP_FINISHED, true);
+                    }
+                });
+            }
+            else
+            {
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        m_qrcodeDialog.SetUploadResult(false);
+                        OpenResultDialog(false, "开门失败", SoundAlert.CONST_SOUND_ALERT_ERROR_OPEN_DOOR_FAILED, true);
+                    }
+                });
+                //m_cameraMask.SetState(CameraMaskView.ID_STATE_UPLOAD_FAIL);
+            }
+            // 流程结束
+        }
+    }
+
+    // 打开扫码对话框, 串口网络线程
+    private void OpenScanQRCodeDialog(final boolean anim)
+    {
+        CloseScanQRCodeDialog(false);
+
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                m_qrcodeDialog.Open(true);
+                m_deviceHandler.post(new OptScanCodeRunnable());
+            }
+        });
+    }
+
+    // 关闭扫码对话框, 主线程
+    private void CloseScanQRCodeDialog(final boolean anim)
+    {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                m_qrcodeDialog.Close(anim);
+            }
+        });
+    }
 }

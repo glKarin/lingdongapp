@@ -3,12 +3,12 @@ package com.youtushuju.lingdongapp.gui;
 import android.animation.Animator;
 import android.animation.AnimatorInflater;
 import android.animation.AnimatorSet;
+import android.graphics.Color;
 import android.os.Handler;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -17,77 +17,56 @@ import com.youtushuju.lingdongapp.MainActivity;
 import com.youtushuju.lingdongapp.R;
 import com.youtushuju.lingdongapp.api.UserModel;
 
-import java.util.ArrayList;
-import java.util.List;
+public class MainResultDialogView extends MainActivityView_base {
+    private static final String ID_TAG = "MainResultDialogView";
+    private boolean m_success = true;
+    private String m_message;
 
-public class MainMaintenanceDialogView extends MainActivityView_base {
-    private static final String ID_TAG = "MainMaintenanceDialogView";
-    private UserModel m_user;
-
-    public MainMaintenanceDialogView(MainActivity activity, Handler handler)
+    public MainResultDialogView(MainActivity activity, Handler handler)
     {
         super(activity, handler);
-    }
-
-    public void SetUser(UserModel user)
-    {
-        m_user = user;
     }
 
     public void Create()
     {
         super.Create();
         ViewHolder viewHolder = (ViewHolder)m_viewHolder;
-
-        viewHolder.m_door3Button.setOnClickListener(m_clickListener);
-        viewHolder.m_door4Button.setOnClickListener(m_clickListener);
-        if(m_user.IsAdministrator())
-        {
-            viewHolder.m_maintenanceMenuButton.setOnClickListener(m_clickListener);
-            viewHolder.m_maintenanceMenuButton.setVisibility(View.VISIBLE);
-        }
-        else
-        {
-            viewHolder.m_maintenanceMenuButton.setOnClickListener(null);
-            viewHolder.m_maintenanceMenuButton.setVisibility(View.GONE);
-        }
+        viewHolder.message_view.setText(m_message);
+        viewHolder.message_view.setTextColor(m_success ? Color.GREEN : Color.RED);
+        viewHolder.icon_view.setImageResource(m_success ? R.drawable.icon_success : R.drawable.icon_error);
     }
 
     private View.OnClickListener m_clickListener = new View.OnClickListener()
     {
         @Override
         public void onClick(View v) {
-            m_mainActivity.ChooseMaintenance(m_user, v.getId());
         }
     };
 
     private class ViewHolder extends MainActivityView_base.ViewHolder {
-        public TextView m_door3Button;
-        public TextView m_door4Button;
-        public ImageView m_maintenanceMenuButton;
+        public TextView message_view;
+        public ImageView icon_view;
     };
 
     protected void AddView(View view, FrameLayout layout)
     {
-        int widthDp = 360;
-        //int heightDp = 320;
-        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(ActivityUtility.dp2px(m_mainActivity, widthDp), ViewGroup.LayoutParams.WRAP_CONTENT);
+        int px = ActivityUtility.dp2px(m_mainActivity, 240);
+        FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(px, px);
         layoutParams.gravity = Gravity.CENTER;
         layout.addView(m_view, layoutParams);
     }
 
     protected View GenView(LayoutInflater inflater)
     {
-        View view = inflater.inflate(R.layout.main_maintenance_panel, null);
+        View view = inflater.inflate(R.layout.main_result_panel, null);
         return view;
     }
 
     protected MainActivityView_base.ViewHolder GenViewHolder(View view)
     {
         ViewHolder viewHolder = new ViewHolder();
-        viewHolder.m_door3Button = (TextView)view.findViewById(R.id.main_maintenance_door3);
-        viewHolder.m_door4Button = (TextView)view.findViewById(R.id.main_maintenance_door4);
-        viewHolder.m_maintenanceMenuButton = (ImageView)view.findViewById(R.id.main_maintenance_menu_btn);
+        viewHolder.message_view = (TextView)view.findViewById(R.id.main_result_message);
+        viewHolder.icon_view = (ImageView)view.findViewById(R.id.main_result_icon);
         return viewHolder;
     }
 
@@ -157,11 +136,13 @@ public class MainMaintenanceDialogView extends MainActivityView_base {
 
     public void Close(boolean anim) {
         super.Close(anim);
-        m_user = null;
+        m_message = null;
+        m_success = true;
     }
 
-    public void Open(UserModel user, boolean anim) {
-        SetUser(user);
+    public void Open(boolean suc, String message, boolean anim) {
+        m_message = message;
+        m_success = suc;
         Create();
         super.Open(anim);
     }

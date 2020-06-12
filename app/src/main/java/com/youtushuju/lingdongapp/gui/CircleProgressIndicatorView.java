@@ -330,6 +330,11 @@ public class CircleProgressIndicatorView extends View
         SetProgress(next);
     }
 
+    public boolean IsFinished()
+    {
+        return m_state == ENUM_STATE_FINISHED;
+    }
+
     public boolean IsOver()
     {
         return m_progress > m_endValue;
@@ -420,7 +425,6 @@ public class CircleProgressIndicatorView extends View
         else
             m_progress = m_endValue;
 
-        Logf.e(ID_TAG, m_labelFormatter + "-------------------");
         m_path = new Path();
         m_closedPath = new Path();
         m_size = new Size(circleRadius, circleRadius);

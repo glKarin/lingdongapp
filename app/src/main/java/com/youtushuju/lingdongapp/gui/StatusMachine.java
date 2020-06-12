@@ -24,6 +24,7 @@ public final class StatusMachine {
     public int heartbeat_suc_count = 0; // 心跳成功次数
     public int heartbeat_err_count = 0; // 心跳失败次数
     public int verify_face_count = 0; // 刷脸总次数
+    public int scan_code_count = 0; // 扫码总次数
 
     private static StatusMachine _instance = null;
 
@@ -98,6 +99,7 @@ public final class StatusMachine {
         sb.append("  * 同步心跳成功次数: " + heartbeat_suc_count).append("\n");
         sb.append("  * 同步心跳失败次数: " + heartbeat_err_count).append("\n");
         sb.append("  * 刷脸次数: " + verify_face_count).append("\n");
+        sb.append("  * 扫码次数: " + scan_code_count).append("\n");
         return sb.toString();
     }
 }

@@ -10,7 +10,7 @@
 
         <intent
             android:action="android.intent.action.VIEW"
-            android:targetClass="com.youtushuju.lingdongapp.SettingsActivity"
+            android:targetClass="com.youtushuju.lingdongapp.ProfileActivity"
             android:targetPackage="com.youtushuju.lingdongapp" />
         <categories android:name="android.shortcut.conversation" />
     </shortcut>

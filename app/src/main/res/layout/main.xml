@@ -48,21 +48,6 @@
             </RelativeLayout>
         </RelativeLayout>
 
-        <!--<include
-            android:id="@+id/main_maintenance_dialog"
-            layout="@layout/main_maintenance_panel"/>-->
-        <include
-            android:id="@+id/main_result_dialog"
-            layout="@layout/main_result_panel"/>
-    </FrameLayout>
-
-    <!-- This FrameLayout insets its children based on system windows using
-         android:fitsSystemWindows. -->
-    <FrameLayout
-        android:id="@+id/main_second_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
         <!-- Webview屏保实现 -->
         <!--<include
             android:id="@+id/main_screensaver_view"
@@ -74,9 +59,25 @@
             layout="@layout/main_screen_saver"
             />
 
-        <include
+        <!-- dynamic create -->
+        <!--<include
+            android:id="@+id/main_maintenance_dialog"
+            layout="@layout/main_maintenance_panel"/>-->
+        <!--<include
+            android:id="@+id/main_result_dialog"
+            layout="@layout/main_result_panel"/>-->
+    </FrameLayout>
+
+    <!-- This FrameLayout insets its children based on system windows using
+         android:fitsSystemWindows. -->
+    <FrameLayout
+        android:id="@+id/main_second_content"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent">
+
+        <!--<include
             android:id="@+id/main_response_debug_view"
-            layout="@layout/main_response_debug"/>
+            layout="@layout/main_response_debug"/>-->
 
         <LinearLayout
             android:id="@+id/main_layer"

@@ -31,7 +31,7 @@ import com.youtushuju.lingdongapp.device.SmartCodeRespStruct;
 import java.util.Queue;
 
 public final class SerialPortDeviceDriver {
-    private static final String ID_TAG = "DeviceFunc";
+    private static final String ID_TAG = "SerialPortDeviceDriver";
     public static final int ID_STATE_INIT = 0; // 初始化
     public static final int ID_STATE_READY = 1; // 等待中
     public static final int ID_STATE_SENDING = 2; // 准备发送
@@ -229,27 +229,32 @@ public final class SerialPortDeviceDriver {
 
         SetState(ID_STATE_SENDING);
         ReadySend();
-        m_lastSendData = req.Dump() + '\r'; // 添加回车符
-        Logf.d(ID_TAG, "发送串口数据(%s), 长度(%d)", m_lastSendData, m_lastSendData.length());
+        if(req != null)
+        {
+            m_lastSendData = req.Dump() + '\r'; // 添加回车符
+            Logf.d(ID_TAG, "发送串口数据(%s), 长度(%d)", m_lastSendData, m_lastSendData.length());
 
-        SetState(ID_STATE_SENDED); // 提前设置为发送完成
-        final int len = m_serialPortDriver.Send(
-                //m_lastSendData.getBytes()
-                Common.String8BitsByteArray(m_lastSendData) // TODO: 8bits
-        );
-        if (len <= 0) {
-            SetState(ID_STATE_UNSEND);
+            SetState(ID_STATE_SENDED); // 提前设置为发送完成
+            final int len = m_serialPortDriver.Send(
+                    //m_lastSendData.getBytes()
+                    Common.String8BitsByteArray(m_lastSendData) // TODO: 8bits
+            );
+            if (len <= 0) {
+                SetState(ID_STATE_UNSEND);
+                if (m_serialPortListener != null)
+                    m_serialPortListener.OnError("串口写入错误: " + len);
+                if (m_serialPortListener != null)
+                    m_serialPortListener.OnSend(m_lastSendData, req,false);
+                return false;
+            }
+
             if (m_serialPortListener != null)
-                m_serialPortListener.OnError("串口写入错误: " + len);
-            if (m_serialPortListener != null)
-                m_serialPortListener.OnSend(m_lastSendData, req,false);
-            return false;
+                m_serialPortListener.OnSend(m_lastSendData,  req,true);
         }
+        else
+            SetState(ID_STATE_SENDED); // 提前设置为发送完成
 
         m_sendTime = System.currentTimeMillis();
-
-        if (m_serialPortListener != null)
-            m_serialPortListener.OnSend(m_lastSendData,  req,true);
 
         return true;
     }
@@ -341,6 +346,7 @@ public final class SerialPortDeviceDriver {
 
         SetDoorId(device);
         PutOpenDoorReqStruct req = new PutOpenDoorReqStruct(m_device);
+        req.Finish();
         m_serialReq = req;
         m_serialResp = null;
         SerialSessionStruct session = new SerialSessionStruct();
@@ -395,7 +401,7 @@ public final class SerialPortDeviceDriver {
     // 执行动作时调用
     private void ReadySend()
     {
-        m_serialReq.Finish();
+        //m_serialReq.Finish();
         m_lastRecvData = "";
         m_lastSendData = "";
         m_buffer = "";
@@ -497,6 +503,7 @@ public final class SerialPortDeviceDriver {
 
         SetDoorId(device);
         GetOpenDoorReqStruct req = new GetOpenDoorReqStruct(m_device);
+        req.Finish();
         m_serialReq = req;
         m_serialResp = null;
         SerialSessionStruct session = new SerialSessionStruct();
@@ -631,6 +638,7 @@ public final class SerialPortDeviceDriver {
         }
 
         HeartbeatReqStruct req = new HeartbeatReqStruct();
+        req.Finish();
         m_serialReq = req;
         m_serialResp = null;
         SerialSessionStruct session = new SerialSessionStruct();
@@ -706,6 +714,7 @@ public final class SerialPortDeviceDriver {
         }
 
         DropModeReqStruct req = new DropModeReqStruct(dropMode);
+        req.Finish();
         m_serialReq = req;
         m_serialResp = null;
         SerialSessionStruct session = new SerialSessionStruct();
@@ -780,7 +789,9 @@ public final class SerialPortDeviceDriver {
         m_serialSession = session; // always new instance
         session.Request(req);
 
-        // 不需要发送
+        // 不需要发送, 仅打开串口
+        //Send(req); // TODO: for test
+        Send(null);
 
         if(timeout == 0) // 不等待
         {

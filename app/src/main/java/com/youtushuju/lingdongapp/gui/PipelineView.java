@@ -13,6 +13,7 @@ import android.widget.TextView;
 import androidx.annotation.Nullable;
 
 import com.youtushuju.lingdongapp.R;
+import com.youtushuju.lingdongapp.common.Logf;
 
 import java.util.List;
 
@@ -149,10 +150,17 @@ public class PipelineView extends ScrollView
         }
     }
 
+    public void Stop()
+    {
+        PipelineItemModel currentItem = m_list.get(m_current);
+        currentItem.Error();
+    }
+
     public void Timeout()
     {
         if(m_pipelineListener != null)
             m_pipelineListener.OnTimeout(this, m_current);
+        Logf.e(ID_TAG, "流程步骤超时: " + m_current);
     }
 
     private void Relayout()
@@ -252,7 +260,9 @@ public class PipelineView extends ScrollView
                     @Override
                     public void OnFinished(CircleProgressIndicatorView view) {
                         if(time_limit > 0)
+                        {
                             m_pipelineView.Timeout();
+                        }
                     }
 
                     @Override
@@ -263,6 +273,7 @@ public class PipelineView extends ScrollView
             }
             m_viewHolder.indicator.SetDrawBorder(true);
             m_viewHolder.indicator.SetEndValue(time_limit);
+            m_viewHolder.indicator.SetProgress(time_limit);
             m_viewHolder.indicator.SetLabelFormatter(CircleProgressIndicatorView.ENUM_LABEL_FORMATTER_SECOND);
             m_viewHolder.indicator.SetAutoGrow(true);
             SetState(ENUM_STATE_PROCESSING);
@@ -278,7 +289,8 @@ public class PipelineView extends ScrollView
             }
             m_viewHolder.content.getPaint().setFakeBoldText(current); // 当前加粗
             m_viewHolder.indicator.SetDrawBorder(false);
-            m_viewHolder.indicator.Finish();
+            if(m_viewHolder.indicator.IsFinished())
+                m_viewHolder.indicator.Finish();
             m_viewHolder.indicator.SetLabelFormatter(CircleProgressIndicatorView.ENUM_LABEL_FORMATTER_NONE);
             SetState(ENUM_STATE_FINISHED);
         }
@@ -293,7 +305,8 @@ public class PipelineView extends ScrollView
             }
             m_viewHolder.content.getPaint().setFakeBoldText(current); // 当前加粗
             m_viewHolder.indicator.SetDrawBorder(false);
-            m_viewHolder.indicator.Finish();
+            if(m_viewHolder.indicator.IsFinished())
+                m_viewHolder.indicator.Finish();
             m_viewHolder.indicator.SetLabelFormatter(CircleProgressIndicatorView.ENUM_LABEL_FORMATTER_NONE);
             SetState(ENUM_STATE_WARNING);
         }
@@ -308,7 +321,8 @@ public class PipelineView extends ScrollView
             }
             m_viewHolder.content.getPaint().setFakeBoldText(current); // 当前加粗
             m_viewHolder.indicator.SetDrawBorder(false);
-            m_viewHolder.indicator.Finish();
+            if(m_viewHolder.indicator.IsFinished())
+                m_viewHolder.indicator.Finish();
             m_viewHolder.indicator.SetLabelFormatter(CircleProgressIndicatorView.ENUM_LABEL_FORMATTER_NONE);
             SetState(ENUM_STATE_ERROR);
         }

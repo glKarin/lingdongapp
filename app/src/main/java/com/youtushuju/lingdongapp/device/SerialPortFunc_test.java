@@ -18,7 +18,7 @@ public final class SerialPortFunc_test extends SerialPortFunc {
             "       \"weightOld\":	\"5000\"," +
             "       \"weightNew\":	\"6600\"," +
             "       \"weightAll\":	\"7770\"," +
-            "       \"res\":	\"00\"," +
+            "       \"res\":	\"01\"," +
             "       \"token\":	\"123456\"" +
             "}";
     private static final String CONST_TEST_GET_OPEN_DOOR = "{" +
@@ -37,6 +37,12 @@ public final class SerialPortFunc_test extends SerialPortFunc {
             "}";
     private static final String CONST_TEST_DROP_MODE = "{" +
             "       \"type\":	\"dropMode\"," +
+            "       \"res\":	\"01\","  +
+            "       \"token\":	\"123456\"" +
+            "}";
+    private static final String CONST_TEST_SMART_CODE = "{" +
+            "       \"type\":	\"SmartCode\"," +
+            "       \"Code\":	\"jfxv/frCKC/zbc7tFUYteg==\","  +
             "       \"res\":	\"01\","  +
             "       \"token\":	\"123456\"" +
             "}";
@@ -139,6 +145,7 @@ public final class SerialPortFunc_test extends SerialPortFunc {
                 CONST_TEST_GET_OPEN_DOOR,
                 CONST_TEST_HEARTBEAT,
                 CONST_TEST_DROP_MODE,
+                CONST_TEST_SMART_CODE,
         };
         int index = m_lastData.lastIndexOf('\r');
         String json = m_lastData.substring(0, index);
