@@ -98,6 +98,11 @@ public final class SerialPortDeviceDriver {
         {
             return res >= 0;
         }
+
+        public boolean SessionIsSuccess()
+        {
+            return session != null && session.IsPair();
+        }
     }
 
     // TODO: UNUSED

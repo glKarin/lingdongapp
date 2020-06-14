@@ -55,14 +55,14 @@ public class HeartbeatService extends Service {
                 statusMachine.heartbeat_count++;
 
                 String res = DoHeartbeat();
-                statusMachine.device_status = res;
-
-                if(Common.StringIsEmpty(res))
+                if(Common.StringIsEmpty(res)) // !!!如果心跳IO时串口读写被占用/请求+答复有错误, 则不修改当前的设备状态!!!
                 {
                     Logf.e(ID_TAG, "串口返回心跳设备状态错误");
                     statusMachine.heartbeat_err_count++;
                     return;
                 }
+
+                statusMachine.device_status = res;
                 String desc = HeartbeatRespStruct.GetDeviceStatusName(res);
                 m_binder.GetDeviceStatus(res, desc);
                 /*if(true)
@@ -98,6 +98,15 @@ public class HeartbeatService extends Service {
                 int heartbeatTime = (int)data.get("heartbeatTime"); // 分钟
                 m_timerInterval = Math.max(heartbeatTime * 60000, Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL); // 毫秒
                 String dropmode = data.<String>GetT("dropmode");
+
+                try
+                {
+                    Thread.sleep(5000);
+                }
+                catch (Exception e)
+                {
+                    App.HandleException(e);
+                }
 
                 DoSetDropMode(dropmode);
                 statusMachine.heartbeat_suc_count++;
@@ -143,14 +152,28 @@ public class HeartbeatService extends Service {
             if(!res.IsSuccess())
             {
                 // TODO: 处理???
-                Logf.e(ID_TAG, "获取心跳设备状态失败: " + res.res);
+                Logf.e(ID_TAG, "获取心跳设备状态->读写错误: " + res.res);
+            }
+            else if(!res.SessionIsSuccess())
+            {
+                // TODO: 处理???
+                String reason = "对话为NULL";
+                if(res.session.req != null)
+                    reason = "请求: " + res.session.req.toString();
+                else
+                    reason = "请求: NULL";
+                if(res.session.resp != null)
+                    reason += ", 答复: " + res.session.resp.toString();
+                else
+                    reason += ", 答复: NULL";
+                Logf.e(ID_TAG, "获取心跳设备状态->对话无效: " + reason);
             }
             else
             {
                 SerialSessionStruct session = res.session;
                 HeartbeatRespStruct resp = (HeartbeatRespStruct)session.resp;
                 ret = resp.res;
-                Logf.e(ID_TAG, "获取心跳设备状态结果: " + ret);
+                Logf.e(ID_TAG, "获取心跳设备状态->结果: " + ret);
             }
             return ret;
         }
@@ -163,21 +186,13 @@ public class HeartbeatService extends Service {
                 Logf.e(ID_TAG, "设置投放模式IO时串口被占用");
                 return false;
             }
-            try
-            {
-                Thread.sleep(5000);
-            }
-            catch (Exception e)
-            {
-                App.HandleException(e);
-            }
             int timeout = 5000; // 0
             SerialPortDeviceDriver.IOResult res = driver.IO(SerialPortDeviceDriver.ENUM_ACTION_DROP_SET_MODE, timeout, dropmode); // 会阻塞线程
             boolean ret = res.IsSuccess();
             if(!ret)
             {
                 // TODO: 处理???
-                Logf.e(ID_TAG, "传递心跳投放模式失败: " + res.res);
+                Logf.e(ID_TAG, "传递心跳投放模式失败: " + res.res + "???(一般该错误可忽略)");
             }
             return ret;
         }

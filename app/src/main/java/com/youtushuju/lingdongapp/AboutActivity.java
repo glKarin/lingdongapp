@@ -258,7 +258,7 @@ public class AboutActivity extends AppCompatActivity {
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("关于程序");
-        builder.setMessage("优途数据灵动人脸程序");
+        builder.setMessage(getResources().getString(R.string.app_name) + "程序");
         builder.setIcon(R.drawable.icon_profile);
         builder.setPositiveButton("确定", null);
         AlertDialog dialog = builder.create();

@@ -216,7 +216,7 @@ public class ProfileActivity extends AppCompatActivity {
     {
         AlertDialog.Builder builder = new AlertDialog.Builder(this);
         builder.setTitle("退出程序");
-        builder.setMessage("退出灵动人脸程序?");
+        builder.setMessage(String.format("退出%s程序?", getResources().getString(R.string.app_name)));
         builder.setIcon(R.drawable.icon_profile);
         builder.setPositiveButton("确定", new DialogInterface.OnClickListener() {
             @Override

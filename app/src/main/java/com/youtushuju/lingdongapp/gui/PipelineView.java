@@ -160,7 +160,7 @@ public class PipelineView extends ScrollView
     {
         if(m_pipelineListener != null)
             m_pipelineListener.OnTimeout(this, m_current);
-        Logf.e(ID_TAG, "流程步骤超时: " + m_current);
+        Logf.e(ID_TAG, "流程步骤到时: " + m_current);
     }
 
     private void Relayout()

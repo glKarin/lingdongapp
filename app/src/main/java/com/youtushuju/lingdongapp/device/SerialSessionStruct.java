@@ -30,7 +30,7 @@ public final class SerialSessionStruct<T extends SerialReqStruct, U extends Seri
     {
         if(!IsValidSession())
             return false;
-        if(!req.token.equals(resp.token))
+        if(!req.type.equals(resp.type)) // TODO: !token
             return false;
         return true;
     }

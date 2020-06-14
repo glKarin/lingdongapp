@@ -32,7 +32,7 @@ public class SerialRespStruct extends JsonDataStruct {
     public boolean IsValid()
     {
         return !Common.StringIsBlank(type)
-                && !Common.StringIsBlank(token)
+                /*&& !Common.StringIsBlank(token)*/ // token可能不返回
                 && !Common.StringIsBlank(res)
                 ;
     }
