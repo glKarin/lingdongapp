@@ -3,6 +3,8 @@ package com.youtushuju.lingdongapp.gui;
 import androidx.annotation.NonNull;
 
 import com.youtushuju.lingdongapp.common.Common;
+import com.youtushuju.lingdongapp.common.Logf;
+import com.youtushuju.lingdongapp.device.DropModeReqStruct;
 import com.youtushuju.lingdongapp.device.HeartbeatRespStruct;
 import com.youtushuju.lingdongapp.device.PutOpenDoorRespStruct;
 import com.youtushuju.lingdongapp.device.SerialDataDef;
@@ -13,10 +15,14 @@ import java.util.Set;
 
 public final class StatusMachine {
     private static final String ID_TAG = "StatusMachine";
+    // 当前状态
     public String device_status = HeartbeatRespStruct.CONST_RES_ONLINE; //  当前设备状态, 由心跳返回
     public Map<String, String> door_status = new HashMap<String, String>(); // 所有门状态
+    public Map<String, Integer> door_count = new HashMap<String, Integer>(); // 所有门投递次数
+    public String drop_mode = "[]";
     // 时间戳
-    public long heartbeat_timestamp = 0; // 最近心跳时间
+    public long heartbeat_timestamp = 0; // 最近成功心跳时间
+    public long heartbeat_start_timestamp = 0; // 最近心跳时间
     public long boot_timestamp = 0; // 启动时间
     public long shutdown_timestamp = 0; // 销毁时间
     // 计数
@@ -57,7 +63,12 @@ public final class StatusMachine {
         door_status.put(SerialDataDef.ID_DOOR_ID_11, PutOpenDoorRespStruct.CONST_RES_SUCCESS);
         door_status.put(SerialDataDef.ID_DOOR_ID_12, PutOpenDoorRespStruct.CONST_RES_SUCCESS);
 
-        device_status = HeartbeatRespStruct.CONST_RES_ONLINE;
+        door_count.put(SerialDataDef.ID_DOOR_ID_1, 0);
+        door_count.put(SerialDataDef.ID_DOOR_ID_2, 0);
+
+        device_status = HeartbeatRespStruct.CONST_RES_OFFLINE;
+
+        drop_mode = DropModeReqStruct.MakeDropMode(DropModeReqStruct.CONST_DROP_MODE_FACE, DropModeReqStruct.CONST_DROP_MODE_CODE, DropModeReqStruct.CONST_DROP_MODE_KEY);
     }
 
     public boolean DoorIsFull(String doorId)
@@ -73,6 +84,13 @@ public final class StatusMachine {
         if(!door_status.containsKey(doorId))
             throw new IllegalArgumentException("传入门ID无效: " + doorId + ", 状态: " + res);
         door_status.put(doorId, res);
+    }
+
+    public void IncrDoorCount(String doorId)
+    {
+        if(!door_status.containsKey(doorId))
+            throw new IllegalArgumentException("传入门ID无效: " + doorId);
+        door_count.put(doorId, door_count.get(doorId).intValue() + 1);
     }
 
     public boolean DeviceIsAccess()
@@ -93,7 +111,9 @@ public final class StatusMachine {
 
         sb.append("  * 程序启动时间: " + Common.TimestampToStr(boot_timestamp)).append("\n");
         sb.append("  * 程序销毁时间: " + (shutdown_timestamp > 0 ? Common.TimestampToStr(shutdown_timestamp) : "未结束")).append("\n");
-        sb.append("  * 最近同步心跳时间: " + (heartbeat_timestamp > 0 ? Common.TimestampToStr(heartbeat_timestamp) : "从未同步")).append("\n");
+        sb.append("  * 最近开始同步心跳时间: " + (heartbeat_start_timestamp > 0 ? Common.TimestampToStr(heartbeat_start_timestamp) : "从未同步")).append("\n");
+        sb.append("  * 最近成功同步心跳时间: " + (heartbeat_timestamp > 0 ? Common.TimestampToStr(heartbeat_timestamp) : "从未同步成功")).append("\n");
+        sb.append("  * 当前投放模式: " + drop_mode).append("\n");
 
         sb.append("  * 同步心跳次数: " + heartbeat_count).append("\n");
         sb.append("  * 同步心跳成功次数: " + heartbeat_suc_count).append("\n");
@@ -101,5 +121,20 @@ public final class StatusMachine {
         sb.append("  * 刷脸次数: " + verify_face_count).append("\n");
         sb.append("  * 扫码次数: " + scan_code_count).append("\n");
         return sb.toString();
+    }
+
+    public boolean AllowDropByFace()
+    {
+        return DropModeReqStruct.AllowDropMode(DropModeReqStruct.CONST_DROP_MODE_FACE, drop_mode);
+    }
+
+    public boolean AllowDropByKey()
+    {
+        return DropModeReqStruct.AllowDropMode(DropModeReqStruct.CONST_DROP_MODE_KEY, drop_mode);
+    }
+
+    public boolean AllowDropByCode()
+    {
+        return DropModeReqStruct.AllowDropMode(DropModeReqStruct.CONST_DROP_MODE_CODE, drop_mode);
     }
 }

@@ -12,4 +12,19 @@
     <color name="file_menu_name_color">#FFCCCCCC</color>
 
     <color name="system_info_path_color">#FF87CEFA</color>
+
+    <!-- 厨余垃圾按钮 -->
+    <color name="kitchen_waste_border_color">#32CD32</color>
+    <color name="kitchen_waste_background_color">#FFFFFF</color>
+    <color name="kitchen_waste_text_color">#32CD32</color>
+    <color name="kitchen_waste_border_disable_color">#999999</color>
+    <color name="kitchen_waste_background_disable_color">#EEEEEE</color>
+    <color name="kitchen_waste_text_disable_color">#666666</color>
+    <!-- 其他垃圾按钮 -->
+    <color name="other_waste_border_color">#FF4500</color>
+    <color name="other_waste_background_color">#FFFFFF</color>
+    <color name="other_waste_text_color">#FF4500</color>
+    <color name="other_waste_border_disable_color">#999999</color>
+    <color name="other_waste_background_disable_color">#EEEEEE</color>
+    <color name="other_waste_text_disable_color">#666666</color>
 </resources>

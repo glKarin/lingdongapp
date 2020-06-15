@@ -64,6 +64,6 @@
 
 
 	<string-array name="update_info">
-		<item>扫码投放.</item>
+		<item>投放模式判断.</item>
 	</string-array>
 </resources>

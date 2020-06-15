@@ -30,6 +30,7 @@
             app:layout_constraintBottom_toTopOf="@id/main_screensaver_other_waste_scancode_button"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:text="其他垃圾"
+            android:textColor="#000000"
             />
 
         <TextView
@@ -49,6 +50,7 @@
             android:layout_marginBottom="10dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:text="扫码投递"
+            android:textColor="@color/other_waste_text_color"
             />
 
         <TextView
@@ -68,6 +70,7 @@
             android:layout_marginBottom="10dp"
             android:textAppearance="@style/TextAppearance.AppCompat.Medium"
             android:text="刷脸投递"
+            android:textColor="@color/other_waste_text_color"
             />
 
     </androidx.constraintlayout.widget.ConstraintLayout>

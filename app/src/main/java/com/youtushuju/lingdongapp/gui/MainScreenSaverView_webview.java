@@ -42,6 +42,11 @@ public class MainScreenSaverView_webview extends MainScreenSaverView {
         m_windowObject.NotifyDeviceStatus(code, desc);
     }
 
+    public void SetDropMode(String mode)
+    {
+        // UNIMPLEMENTS
+    }
+
     // 屏保webview宿主对象
     private ScreenSaverWindowObject m_windowObject = new ScreenSaverWindowObject();
     private class ScreenSaverWindowObject extends ScreenSaverView.WindowObject {

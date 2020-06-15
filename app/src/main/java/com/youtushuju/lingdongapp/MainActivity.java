@@ -53,6 +53,7 @@ import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.common.Sys;
 import com.youtushuju.lingdongapp.database.RecordModel;
 import com.youtushuju.lingdongapp.database.RecordServices;
+import com.youtushuju.lingdongapp.device.DropModeReqStruct;
 import com.youtushuju.lingdongapp.device.GetOpenDoorReqStruct;
 import com.youtushuju.lingdongapp.device.GetOpenDoorRespStruct;
 import com.youtushuju.lingdongapp.device.HeartbeatRespStruct;
@@ -1174,9 +1175,9 @@ public class MainActivity extends AppCompatActivity {
     private boolean OpenSerialPortDriver() { return false; } // UNUSED: DeviceFunc里自动控制
 
     // 关闭串口文件
-    private void CloseSerialPortDriver() // UNUSED: 不要影响心跳服务的串口读写
+    private void CloseSerialPortDriver() // UNUSED: 串口读写驱动不需要维护开关
     {
-        m_deviceFunc.Shutdown(); // TODO: others?
+        //m_deviceFunc.Shutdown(); // TODO: others?
     }
 
     // 发送串口开门数据, 串口线程
@@ -1541,6 +1542,11 @@ public class MainActivity extends AppCompatActivity {
             if(!HeartbeatRespStruct.DeviceIsNormal(code))
                 DeviceBrokenAlarm();
         }
+
+        @Override
+        public void OnGetDropMode(String mode) {
+            SetDropMode(mode);
+        }
     };
 
     private void DeviceBrokenAlarm()
@@ -1596,9 +1602,15 @@ public class MainActivity extends AppCompatActivity {
 
     public void ToDropWaste(final String name)
     {
-        if(!StatusMachine.Instance().DeviceIsAccess())
+        StatusMachine statusMachine = StatusMachine.Instance();
+        if(!statusMachine.DeviceIsAccess())
         {
             DeviceBrokenAlarm();
+            return;
+        }
+        if(!statusMachine.AllowDropByFace()) // 检查是否允许人脸投放
+        {
+            DropModeDisabled(DropModeReqStruct.CONST_DROP_MODE_FACE);
             return;
         }
         if(m_state != ENUM_STATE_SCREENSAVER)
@@ -1626,9 +1638,15 @@ public class MainActivity extends AppCompatActivity {
 
     public void ToDropWasteByScanCode(final String name)
     {
-        if(!StatusMachine.Instance().DeviceIsAccess())
+        StatusMachine statusMachine = StatusMachine.Instance();
+        if(!statusMachine.DeviceIsAccess())
         {
             DeviceBrokenAlarm();
+            return;
+        }
+        if(!statusMachine.AllowDropByCode()) // 检查是否允许扫码投放
+        {
+            DropModeDisabled(DropModeReqStruct.CONST_DROP_MODE_CODE);
             return;
         }
         if(m_state != ENUM_STATE_SCREENSAVER)
@@ -1675,9 +1693,24 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    public void NotifyDeviceStatus(String code, String desc)
+    public void NotifyDeviceStatus(final String code, final String desc)
     {
-        m_screenSaverView.NotifyDeviceStatus(code, desc);
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                m_screenSaverView.NotifyDeviceStatus(code, desc);
+            }
+        });
+    }
+
+    public void SetDropMode(final String mode)
+    {
+        runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                m_screenSaverView.SetDropMode(mode);
+            }
+        });
     }
 
     public View GetFrontContentView()
@@ -2141,5 +2174,10 @@ public class MainActivity extends AppCompatActivity {
                 m_qrcodeDialog.Close(anim);
             }
         });
+    }
+
+    private void DropModeDisabled(String mode)
+    {
+        Toast.makeText(this, DropModeReqStruct.GetDropModeName(mode) + "不被允许, 请尝试其他方式!", Toast.LENGTH_LONG).show();
     }
 }

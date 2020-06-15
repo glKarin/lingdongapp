@@ -35,6 +35,7 @@ abstract public class MainScreenSaverView {
     public abstract void onResume();
     public abstract void onPause();
     public abstract void NotifyDeviceStatus(String code, String message);
+    public abstract void SetDropMode(String mode);
 
     public boolean IsVisible()
     {

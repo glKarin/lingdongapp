@@ -33,8 +33,8 @@ import java.util.TimerTask;
 public class HeartbeatService extends Service {
     private static final String ID_TAG = "HeartbeatService";
     private static final String CONST_SERVICE_NAME = "HEARTBEAT_SERVICE";
-    private int m_timerInterval = Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL;
-    private Timer m_timer = null;
+    private int m_timerInterval = 0;
+    //private Timer m_timer = null;
     private HeartbeatBinder m_binder = new HeartbeatBinder();
     private static Intent _intent = null;
     private HandlerThread m_thread;
@@ -47,11 +47,14 @@ public class HeartbeatService extends Service {
     {
         public void run()
         {
+            if(m_timerInterval <= 0) // 第一次心跳时为0
+                m_timerInterval = Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL;
             StatusMachine statusMachine = StatusMachine.Instance();
             try
             {
                 long ts = System.currentTimeMillis();
                 Logf.e(ID_TAG, "开始同步心跳: " + Common.TimestampToStr(ts));
+                statusMachine.heartbeat_start_timestamp = ts;
                 statusMachine.heartbeat_count++;
 
                 String res = DoHeartbeat();
@@ -68,6 +71,10 @@ public class HeartbeatService extends Service {
                 /*if(true)
                     return;*/
                 DeviceApiResp resp = DeviceApi.Heartbeat(Sys.GetIMEI(HeartbeatService.this), res, desc);
+                // test
+                /*m_binder.GetDropMode(null);
+                statusMachine.drop_mode = null;*/
+
                 if(resp == null)
                 {
                     Logf.e(ID_TAG, "心跳Api请求错误");
@@ -98,6 +105,8 @@ public class HeartbeatService extends Service {
                 int heartbeatTime = (int)data.get("heartbeatTime"); // 分钟
                 m_timerInterval = Math.max(heartbeatTime * 60000, Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL); // 毫秒
                 String dropmode = data.<String>GetT("dropmode");
+                statusMachine.drop_mode = dropmode;
+                m_binder.GetDropMode(dropmode);
 
                 try
                 {
@@ -212,11 +221,18 @@ public class HeartbeatService extends Service {
             if(m_listener != null)
                 m_listener.OnGetDeviceStatus(code, desc);
         }
+
+        private void GetDropMode(String mode)
+        {
+            if(m_listener != null)
+                m_listener.OnGetDropMode(mode);
+        }
     }
 
     public interface DeviceStatusListener
     {
         public void OnGetDeviceStatus(String code, String desc);
+        public void OnGetDropMode(String mode);
     }
 
     @Override

@@ -50,7 +50,7 @@ public class MainResultDialogView extends MainActivityView_base {
 
     protected void AddView(View view, FrameLayout layout)
     {
-        int px = ActivityUtility.dp2px(m_mainActivity, 240);
+        int px = ActivityUtility.dp2px(m_mainActivity, 320);
         FrameLayout.LayoutParams layoutParams = new FrameLayout.LayoutParams(px, px);
         layoutParams.gravity = Gravity.CENTER;
         layout.addView(m_view, layoutParams);

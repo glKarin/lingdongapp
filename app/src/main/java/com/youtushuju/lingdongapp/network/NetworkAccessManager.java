@@ -17,11 +17,44 @@ public class NetworkAccessManager
 	private static final String ID_TAG = "NetworkAccessManager";
 	private int m_timeout = 0;
 	private boolean m_sslVerify = false;
-	private boolean m_followRediection = false;
+	private boolean m_followRedirection = false;
+	private List<Thread> m_threadPool = null;
+	private boolean m_debugMode = true;
 	
 	public NetworkAccessManager()
 	{
 		super();
+	}
+
+	private synchronized void AddThread(Thread thread)
+	{
+		if(m_threadPool == null)
+			m_threadPool = new ArrayList<Thread>();
+		m_threadPool.add(thread);
+		LogThreadPool();
+	}
+
+	private synchronized void RemoveThread(Thread thread)
+	{
+		if(m_threadPool == null)
+			return;
+		m_threadPool.remove(thread);
+		LogThreadPool();
+	}
+
+	private void LogThreadPool()
+	{
+		if(!m_debugMode)
+			return;
+		if(m_threadPool == null)
+		{
+			Logf.e(ID_TAG, "线程池为空");
+			return;
+		}
+		StringBuffer sb = new StringBuffer();
+		for (Thread t : m_threadPool)
+			sb.append(t.toString()).append("\n");
+		Logf.e(ID_TAG, "当前线程池：\n" + sb.toString());
 	}
 	
 	public NetworkAccessManager SetTimeout(int t)
@@ -38,7 +71,7 @@ public class NetworkAccessManager
 
 	public NetworkAccessManager SetFollowRediection(boolean r)
 	{
-		m_followRediection = r;
+		m_followRedirection = r;
 		return this;
 	}
 
@@ -57,7 +90,7 @@ public class NetworkAccessManager
 			conn.setRequestMethod(req.Method());
 			if(m_timeout > 0)
 				conn.setConnectTimeout(m_timeout);
-			if(!m_followRediection)
+			if(!m_followRedirection)
 				conn.setFollowRedirects(true);
 			String scheme = url.getProtocol();
 			if(!m_sslVerify)
@@ -94,7 +127,7 @@ public class NetworkAccessManager
 			conn.connect();
 
 			int respCode = conn.getResponseCode();
-			Logf.d(ID_TAG, "[Harmattan]: reaponse code -> " + respCode);
+			Logf.d(ID_TAG, "[Harmattan]: response code -> " + respCode);
 			reply = new NetworkReply_local();
 			reply.SetReplyResult(respCode);
 			reply.SetNetworkRequest(req);
@@ -103,7 +136,7 @@ public class NetworkAccessManager
 				inputStream = conn.getInputStream();
 				reply.Read(inputStream);
 				if(reply.GetReplyLength() < 256 && false)
-					Logf.d(ID_TAG, "[Harmattan]: reaponse -> " + new String(reply.GetReplyData()));
+					Logf.d(ID_TAG, "[Harmattan]: response -> " + new String(reply.GetReplyData()));
 				inputStream.close();
 			}
 		}
@@ -135,16 +168,19 @@ public class NetworkAccessManager
 		if(url == null)
 			return false;
 
-		Runnable thread = new Runnable(){
+		Runnable runnable = new Runnable(){
 			public void run()
 			{
 				NetworkReply reply = Send(req);
 					
 				if(handler != null)
 					handler.Handle(reply);
+				RemoveThread(Thread.currentThread());
 			}
 		};
-		new Thread(thread).start();
+		Thread thread = new Thread(runnable);
+		AddThread(thread);
+		thread.start();
 		return true;
 	}
 
@@ -250,7 +286,7 @@ public class NetworkAccessManager
 		return SyncRequest(req);
 	}
 	
-	private class NetworkReply_local extends NetworkReply
+	private static class NetworkReply_local extends NetworkReply
 	{
 		public int Read(InputStream inputStream)
 		{

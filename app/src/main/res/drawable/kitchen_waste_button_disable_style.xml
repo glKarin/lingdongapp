@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android" >
+    <solid android:color="@color/kitchen_waste_background_disable_color" />
+    <stroke
+        android:width="@dimen/waste_disable_border_width"
+        android:color="@color/kitchen_waste_border_disable_color" />
+
+    <padding
+        android:bottom="@dimen/waste_disable_padding"
+        android:left="@dimen/waste_disable_padding"
+        android:right="@dimen/waste_disable_padding"
+        android:top="@dimen/waste_disable_padding" />
+    <corners android:radius="@dimen/waste_disable_radius" />
+
+</shape>
