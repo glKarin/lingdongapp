@@ -72,8 +72,9 @@ public class HeartbeatService extends Service {
                     return;*/
                 DeviceApiResp resp = DeviceApi.Heartbeat(Sys.GetIMEI(HeartbeatService.this), res, desc);
                 // test
-                /*m_binder.GetDropMode(null);
-                statusMachine.drop_mode = null;*/
+                /*String __mode = "[01]";
+                m_binder.GetDropMode(__mode);
+                statusMachine.drop_mode = __mode;*/
 
                 if(resp == null)
                 {
@@ -105,6 +106,7 @@ public class HeartbeatService extends Service {
                 int heartbeatTime = (int)data.get("heartbeatTime"); // 分钟
                 m_timerInterval = Math.max(heartbeatTime * 60000, Configs.CONST_DEFAULT_HEARTBEAT_INTERVAL); // 毫秒
                 String dropmode = data.<String>GetT("dropmode");
+                Logf.e(ID_TAG, "获取投放模式: " + dropmode);
                 statusMachine.drop_mode = dropmode;
                 m_binder.GetDropMode(dropmode);
 

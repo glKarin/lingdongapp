@@ -12,6 +12,7 @@ import android.widget.TextView;
 
 import com.youtushuju.lingdongapp.MainActivity;
 import com.youtushuju.lingdongapp.R;
+import com.youtushuju.lingdongapp.common.Logf;
 import com.youtushuju.lingdongapp.device.DropModeReqStruct;
 import com.youtushuju.lingdongapp.device.HeartbeatRespStruct;
 
@@ -97,9 +98,11 @@ public class MainScreenSaverView_native extends MainScreenSaverView {
 
     public void SetDropMode(String mode)
     {
+        Logf.e(ID_TAG, "收到投放模式: " + mode);
         Resources resources = m_mainActivity.getResources();
         boolean allowFace = DropModeReqStruct.AllowDropMode(DropModeReqStruct.CONST_DROP_MODE_FACE, mode);
         boolean allowCode = DropModeReqStruct.AllowDropMode(DropModeReqStruct.CONST_DROP_MODE_CODE, mode);
+        Logf.e(ID_TAG, "投放模式: 扫脸(%b), 扫码(%b)", allowFace, allowCode);
 
         if(allowFace)
         {

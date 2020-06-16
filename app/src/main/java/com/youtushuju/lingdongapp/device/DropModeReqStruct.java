@@ -1,6 +1,7 @@
 package com.youtushuju.lingdongapp.device;
 
 import com.youtushuju.lingdongapp.common.Common;
+import com.youtushuju.lingdongapp.common.Logf;
 
 public final class DropModeReqStruct extends SerialReqStruct {
     public static final String CONST_DROP_MODE_FACE = "01";
@@ -59,7 +60,7 @@ public final class DropModeReqStruct extends SerialReqStruct {
 
     public static boolean DropModeIsValid(String rule)
     {
-        return rule != null && rule.matches("^[.*]$");
+        return rule != null && rule.matches("^\\[(.*)\\]$");
     }
 
     public static boolean AllowDropMode(String target, String rule)
