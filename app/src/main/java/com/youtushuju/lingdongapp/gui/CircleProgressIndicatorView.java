@@ -418,6 +418,7 @@ public class CircleProgressIndicatorView extends View
             m_backgroundRadiusType = ta.getInt(R.styleable.CircleProgressIndicatorView_backgroundRadiusType, m_backgroundRadiusType);
             m_drawBorder = ta.getBoolean(R.styleable.CircleProgressIndicatorView_drawBorder, m_drawBorder);
             circleRadius = ta.getInt(R.styleable.CircleProgressIndicatorView_circleRadius, circleRadius);
+            ta.recycle();
         }
 
         if(IsCW())
