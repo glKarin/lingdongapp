@@ -145,7 +145,7 @@ public class CircleProgressIndicatorView extends View
 
     private void SetLabel(String label)
     {
-        if(m_label != label)
+        if(true)
         {
             m_label = label;
             invalidate();

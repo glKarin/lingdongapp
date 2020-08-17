@@ -64,7 +64,7 @@ public class FileBrowser {
         if(files == null)
         {
             // 当目录无法访问时也更新当前路径
-            if(m_currentPath != path)
+            if(!path.equals(m_currentPath))
             {
                 m_currentPath = path;
                 if(m_onCurrentChangedListener != null)
@@ -111,7 +111,7 @@ public class FileBrowser {
         }
 
         int mask = FileBrowserCurrentChangedListener.ID_FILE_BROWSER_CURRENT_CHANGE_LIST;
-        if(m_currentPath != path)
+        if(!path.equals(m_currentPath))
         {
             m_currentPath = path;
             mask |= FileBrowserCurrentChangedListener.ID_FILE_BROWSER_CURRENT_CHANGE_PATH;
@@ -124,7 +124,7 @@ public class FileBrowser {
 
     public FileBrowser SetCurrentPath(String path)
     {
-        if(m_currentPath != path)
+        if(path != null && !path.equals(m_currentPath))
         {
             if(ListFiles(path))
             {
