@@ -206,9 +206,9 @@ public class FileBrowserActivity extends AppCompatActivity {
             m_fileBrowser.SetOnCurrentChangedListener(new FileBrowser.FileBrowserCurrentChangedListener() {
                 @Override
                 public void OnCurrentChanged(FileBrowser browser, int mask) {
-                    if((mask | ID_FILE_BROWSER_CURRENT_CHANGE_LIST) != 0)
+                    if((mask & ID_FILE_BROWSER_CURRENT_CHANGE_LIST) != 0)
                         SetData(browser.FileList());
-                    if(m_partner != null && ((mask | ID_FILE_BROWSER_CURRENT_CHANGE_PATH) != 0))
+                    if(m_partner != null && ((mask & ID_FILE_BROWSER_CURRENT_CHANGE_PATH) != 0))
                         m_partner.setText(browser.CurrentPath());
                 }
             });
